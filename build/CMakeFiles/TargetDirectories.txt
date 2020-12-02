@@ -1,0 +1,3 @@
+/home/klemen/CLionProjects/TowerDefense/build/CMakeFiles/rebuild_cache.dir
+/home/klemen/CLionProjects/TowerDefense/build/CMakeFiles/edit_cache.dir
+/home/klemen/CLionProjects/TowerDefense/build/CMakeFiles/TowerDefense.dir
