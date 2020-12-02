@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     //(void) io;
-    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    //ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);

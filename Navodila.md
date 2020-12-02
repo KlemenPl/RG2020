@@ -37,8 +37,9 @@ cd build
 cmake ../
 make
 ```
+
 Po izvršenih ukazih bo nastala nova datoteka `TowerDefense.exe` znotraj `build` imenika.
-`TowerDefense.xe` datoteka mora biti na istem nivoju kakor `res/` in 'external/' imenika.
+`TowerDefense.exe` datoteka mora biti na istem nivoju kakor `res/` in 'external/' imenika.
 
 #### Uporabljene knjižnice:
 - GLFW (ustvarjanje okna in za uporabnikov vnos) - https://www.glfw.org/

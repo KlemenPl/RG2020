@@ -17,8 +17,7 @@ if (NOT OPENGL_FOUND)
 endif ()
 
 add_subdirectory(external/glfw-3.3.2)
-include_directories(external/glew-2.1.0/include/
-                    external/glad/include/
+include_directories(external/glad/include/
                     )
 
 set(SOURCE src/main.cpp)
@@ -29,12 +28,10 @@ set(EXTERNAL
     )
 
 # GLFW library
-link_libraries(${GLEW_LIBRARY})
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_executable(${PROJECT_NAME} ${SOURCE} ${src} ${libs})
-
 
 target_link_libraries(${PROJECT_NAME} ${EXTERNAL})
