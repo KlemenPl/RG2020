@@ -1,3 +1,4 @@
+# @formatter:off
 cmake_minimum_required(VERSION 3.17)
 project(TowerDefense)
 
@@ -12,8 +13,23 @@ file(GLOB src
         "src/*"
         )
 
+include_directories(external/glew-2.1.0/
+                    external/glew-2.1.0/include/
+                    external/glfw-3.3.2/
+                    external/glfw-3.3.2/include/
+                    )
+
+find_package(OpenGL REQUIRED)
+if (NOT OPENGL_FOUND)
+    message("ERROR: OpenGL not found")
+endif ()
+
 set(SOURCE src/main.cpp)
 set(PROJECT_NAME TowerDefense)
+set(EXTERNAL
+    ${OPENGL_LIBRARY}
+    glfw
+    GLEW)
 
 add_executable(${PROJECT_NAME} ${SOURCE} ${src} ${libs})
 
@@ -21,13 +37,11 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
-FIND_PACKAGE(OpenGL REQUIRED)
+target_link_libraries(${PROJECT_NAME} ${EXTERNAL})
 
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} glfw)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} OpenGL::GL)
-
-find_package(GLEW REQUIRED)
-target_link_libraries(${PROJECT_NAME} GLEW::GLEW)
-
-
-target_link_libraries(${PROJECT_NAME} assimp)
+# GLFW libraries
+##add_subdirectory(libs/glfw)
+##set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+##set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+##set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+##TARGET_LINK_LIBRARIES(${PROJECT_NAME} glfw)
