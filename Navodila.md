@@ -11,9 +11,10 @@ Windows bo ob zagonu opozoril da je datoteka lahko škodljiva, vendar jo je popo
 
 Postopek je precej enostaven. Naprej potrebujemo programe za idelavo izvršljive datoteke:
 
-`sudo apt install cmake make gcc`
+Debian based:
+`sudo apt install cmake make gcc g++ libgl1-mesa-dev`
 
-Namesto `gcc` prevajalnika se lahko uporabi tudi drugi poljubni prevajalnik.
+Fedora: `sudo dnf install cmake make gcc g++ libXrandr-devel.x86_64 libXinerama-devel.x86_64 libXcursor-devel.x86_64 libXi-devel.x86_64`
 
 ```
 mkdir build && cd build
