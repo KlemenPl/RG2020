@@ -1,5 +1,5 @@
 #include <iostream>
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "../libs/imgui/imgui.h"
 #include "../libs/imgui/imgui_impl_glfw.h"
@@ -18,11 +18,10 @@ int main(int argc, char *argv[])
 
     GLFWwindow *window = glfwCreateWindow(1280, 720, "Test", nullptr, nullptr);
     glfwMakeContextCurrent(window);
-
-    if (glewInit() != GLEW_OK)
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cout << "Error: glewInit()!" << std::endl;
-        return 1;
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
     }
 
     // ImGUI setup
@@ -30,11 +29,12 @@ int main(int argc, char *argv[])
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     //(void) io;
-    //ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init((char*) glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
+    char glsl_version[] = "#version 330";
+    ImGui_ImplOpenGL3_Init(glsl_version);
 
 
 
@@ -113,10 +113,10 @@ int main(int argc, char *argv[])
         //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
-            //GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            GLFWwindow* backup_current_context = glfwGetCurrentContext();
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
-            //glfwMakeContextCurrent(backup_current_context);
+            glfwMakeContextCurrent(backup_current_context);
         }
 
         glfwSwapBuffers(window);

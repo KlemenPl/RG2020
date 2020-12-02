@@ -1,3 +1,4 @@
 # Project exclude paths
 /cmake-build-debug/
 /raw_assets/
+/build/
