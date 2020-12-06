@@ -1,6 +1,6 @@
 ## Navodila:
 
-#### Zagon igre:
+#### Zagon igre (priporočeno):
 
 Zaženi `TowerDefense` za Linux, `TowerDefense.exe` za Windows, za macOS pa uporabi WINE(wine is not an emulator). 
 Windows bo ob zagonu opozoril da je datoteka lahko škodljiva, vendar jo je popolnoma varno zagnati.

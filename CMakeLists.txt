@@ -8,7 +8,13 @@ file(GLOB libs
         "external/glad/src/glad.c"
         "libs/imgui/*"
         "libs/stb_image/*"
+        )
+
+file(GLOB src
         "src/*"
+        "src/engine/*"
+        "src/engine/graphics/*"
+        "src/engine/math/*"
         )
 
 find_package(OpenGL REQUIRED)

@@ -4,6 +4,8 @@
 #include "../libs/imgui/imgui.h"
 #include "../libs/imgui/imgui_impl_glfw.h"
 #include "../libs/imgui/imgui_impl_opengl3.h"
+#include "engine/math/Vector.h"
+#include "engine/math/Matrix.h"
 
 int main(int argc, char *argv[])
 {
@@ -18,7 +20,7 @@ int main(int argc, char *argv[])
 
     GLFWwindow *window = glfwCreateWindow(1280, 720, "Test", nullptr, nullptr);
     glfwMakeContextCurrent(window);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
@@ -27,7 +29,7 @@ int main(int argc, char *argv[])
     // ImGUI setup
     //IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO &io = ImGui::GetIO();
     //(void) io;
     //ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
@@ -36,7 +38,7 @@ int main(int argc, char *argv[])
     char glsl_version[] = "#version 330";
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-
+    Mat<4, 4, float> matrix;
 
     // OpenGL configuration
     // --------------------
@@ -76,9 +78,12 @@ int main(int argc, char *argv[])
         {
             if (ImGui::BeginMenu("File"))
             {
-                if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
-                if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
-                if (ImGui::MenuItem("Close", "Ctrl+W"))  { my_tool_active = false; }
+                if (ImGui::MenuItem("Open..", "Ctrl+O"))
+                { /* Do stuff */ }
+                if (ImGui::MenuItem("Save", "Ctrl+S"))
+                { /* Do stuff */ }
+                if (ImGui::MenuItem("Close", "Ctrl+W"))
+                { my_tool_active = false; }
                 ImGui::EndMenu();
             }
             ImGui::EndMenuBar();
@@ -88,11 +93,11 @@ int main(int argc, char *argv[])
         ImGui::ColorEdit4("Color", my_color);
 
         // Plot some values
-        const float my_values[] = { 0.2f, 0.1f, 1.0f, 0.5f, 0.9f, 2.2f };
+        const float my_values[] = {0.2f, 0.1f, 1.0f, 0.5f, 0.9f, 2.2f};
         ImGui::PlotLines("Frame Times", my_values, IM_ARRAYSIZE(my_values));
 
         // Display contents in a scrolling region
-        ImGui::TextColored(ImVec4(1,1,0,1), "Important Stuff");
+        ImGui::TextColored(ImVec4(1, 1, 0, 1), "Important Stuff");
         ImGui::BeginChild("Scrolling");
         for (int n = 0; n < 50; n++)
             ImGui::Text("%04d: Some text", n);
@@ -104,7 +109,7 @@ int main(int argc, char *argv[])
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(0,0,0,1);
+        glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -113,7 +118,7 @@ int main(int argc, char *argv[])
         //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
-            GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            GLFWwindow *backup_current_context = glfwGetCurrentContext();
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
             glfwMakeContextCurrent(backup_current_context);
