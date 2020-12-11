@@ -37,6 +37,8 @@ struct vec_vals4
     T w = 0;
 };
 
+#define vals(i) (float&)(&this->x)[i]
+
 template<int length, typename T, typename V>
 class Vector : public V
 {
@@ -69,9 +71,9 @@ public:
         this->w = _z;
     }
 
-    T &operator[](int i)
+    T &operator[](int i) const
     {
-        return (&this->x)[i];
+        return vals(i);
     }
 
     // addition
@@ -80,7 +82,7 @@ public:
         Vector<length, T, V> res;
 
         for (int i = 0; i < length; i++)
-            res[i] = (&this->x)[i] + vec[i];
+            res[i] = vals(i) + vec[i];
 
         return res;
     }
@@ -91,27 +93,27 @@ public:
         Vector<length, T, V> res;
 
         for (int i = 0; i < length; i++)
-            res[i] = (&this->x)[i] + value;
+            res[i] = vals(i) + value;
 
         return res;
     }
 
     // add assign
-    Vector<length, T, V> &operator+=(Vector<length, T, V> &v) const
+    Vector<length, T, V> &operator+=(const Vector<length, T, V> &v)
     {
         for (int i = 0; i < length; i++)
-            (&this->x)[i] += v[i];
+            vals(i) += v[i];
         return *this;
     }
 
 
     // subtraction
-    Vector<length, T, V> operator-(Vector<length, T, V> &vec) const
+    Vector<length, T, V> operator-(const Vector<length, T, V> &vec) const
     {
         Vector<length, T, V> res;
 
         for (int i = 0; i < length; i++)
-            res[i] = (&this->x)[i] - vec[i];
+            res[i] = vals(i) - vec[i];
 
         return res;
     }
@@ -122,7 +124,7 @@ public:
         Vector<length, T, V> res;
 
         for (int i = 0; i < length; i++)
-            res[i] = (&this->x)[i] - value;
+            res[i] = vals(i) - value;
 
         return res;
     }
@@ -131,7 +133,7 @@ public:
     Vector<length, T, V> &operator-=(Vector<length, T, V> &v)
     {
         for (int i = 0; i < length; i++)
-            (&this->x)[i] -= v[i];
+            vals(i) -= v[i];
         return *this;
     }
 
@@ -142,7 +144,7 @@ public:
         Vector<length, T, V> res;
 
         for (int i = 0; i < length; i++)
-            res[i] = (&this->x)[i] * vec[i];
+            res[i] = vals(i) * vec[i];
 
         return res;
     }
@@ -153,7 +155,7 @@ public:
         Vector<length, T, V> res;
 
         for (int i = 0; i < length; i++)
-            res[i] = (&this->x)[i] * value;
+            res[i] = vals(i) * value;
 
         return res;
     }
@@ -162,7 +164,7 @@ public:
     Vector<length, T, V> &operator*=(Vector<length, T, V> &v)
     {
         for (int i = 0; i < length; i++)
-            (&this->x)[i] *= v[i];
+            vals(i) *= v[i];
         return *this;
     }
 
@@ -172,7 +174,7 @@ public:
         Vector<length, T, V> res;
 
         for (int i = 0; i < length; i++)
-            res[i] = (&this->x)[i] / vec[i];
+            res[i] = vals(i) / vec[i];
 
         return res;
     }
@@ -183,7 +185,7 @@ public:
         Vector<length, T, V> res;
 
         for (int i = 0; i < length; i++)
-            res[i] = (&this->x)[i] / value;
+            res[i] = vals(i) / value;
 
         return res;
     }
@@ -192,7 +194,7 @@ public:
     Vector<length, T, V> &operator/=(Vector<length, T, V> &v)
     {
         for (int i = 0; i < length; i++)
-            (&this->x)[i] /= v[i];
+            vals(i) /= v[i];
         return *this;
     }
 
@@ -203,7 +205,7 @@ public:
         Vector<length, T, V> res;
 
         for (int i = 0; i < length; i++)
-            res[i] = (&this->x)[i];
+            res[i] = vals(i);
 
         return res;
     }
@@ -212,7 +214,7 @@ public:
     Vector<length, T, V> &operator=(Vector<length, T, V> v)
     {
         for (int i = 0; i < length; i++)
-            (&this->x)[i] = v[i];
+            vals(i) = v[i];
         return *this;
     }
 
@@ -252,7 +254,7 @@ public:
     }
 
     // add to stream
-    friend std::ostream &operator<<(std::ostream &os, Vector<length, T, V> &vec)
+    friend std::ostream &operator<<(std::ostream &os,  Vector<length, T, V> vec)
     {
         for (int i = 0; i < length; i++)
             os << vec[i] << " ";

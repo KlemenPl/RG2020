@@ -8,18 +8,28 @@
 #include <unordered_map>
 #include <cstring>
 #include <string>
+#include "../math/Matrix.h"
 
-enum ShaderType {
+enum ShaderType :char{
     VERTEX,
     FRAGMENT,
     GEOMETRY,
     SHADER_PROGRAM
 };
 
+struct ShaderSourceArgument {
+    ShaderType shaderType;
+    std::string identifier;
+    std::string argument;
+
+
+};
+
 class Shader
 {
 private:
-    unsigned int ID;
+
+    // to minimize number of calls to opengl
     std::unordered_map<std::string, unsigned int> uniformCache;
 
     // returns uniform location for shader (will also cache invalid uniforms)
@@ -28,8 +38,6 @@ private:
 public:
     // constructor
     Shader();
-
-    ~Shader();
 
     // binds shader, and returns refrence for chaining
     Shader& bind();
@@ -40,7 +48,16 @@ public:
 
     void setUniform(const std::string &name, float value);
 
+    void setUniform(const std::string &name, int amount, float *values);
+    void setUniform(const std::string &name, int amount, int *values);
 
+    void setUniform(const std::string &name, int v1, int v2);
+
+    void setUniform(const std::string &name, const Mat4f& mat4F, bool transpose = false);
+
+    void dispose() const;
+
+    unsigned int ID;
 };
 
 

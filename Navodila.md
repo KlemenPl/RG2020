@@ -2,8 +2,8 @@
 
 #### Zagon igre (priporočeno):
 
-Zaženi `TowerDefense` za Linux, `TowerDefense.exe` za Windows, za macOS pa uporabi WINE(wine is not an emulator). 
-Windows bo ob zagonu opozoril da je datoteka lahko škodljiva, vendar jo je popolnoma varno zagnati.
+Zaženi `TowerDefense` za Linux, `TowerDefense.exe` za Windows, za macOS pa se lahko uporabi WINE(WINE is not an emulator - www.winehq.org). 
+Windows bo ob zagonu opozoril da je datoteka lahko škodljiva, ker jo ne prepozna, vendar jo je popolnoma varno zagnati.
 
 #### Izdelava izvršljive datoteke iz izvorne kode:
 
@@ -20,7 +20,7 @@ Fedora: `sudo dnf install cmake make gcc g++ libXrandr-devel.x86_64 libXinerama-
 mkdir build && cd build
 cmake ../
 make
-./TowerDefense &
+./TowerDefense
 ```
 
 Po izvršenih ukazih bo nastala nova datoteka `TowerDefense` znotraj `build` imenika.
@@ -45,8 +45,10 @@ Po izvršenih ukazih bo nastala nova datoteka `TowerDefense.exe` znotraj `build`
 #### Uporabljene knjižnice:
 - GLFW (ustvarjanje okna in za uporabnikov vnos) - https://www.glfw.org/
 - GLEW (dostop do OpenGL konteksta) - http://glew.sourceforge.net/
-- stb (nalaganje slik, Public Domain :D) - https://github.com/nothings/stb
+- stb_image (nalaganje slik, Public Domain :D) - https://github.com/nothings/stb
 - Assimp (nalaganje objektov) - https://assimp.org/
 - Dear_ImGui (UI za razhroščevanje igre) - https://github.com/ocornut/imgui
+- stb_truetype (font) - https://github.com/nothings/stb/blob/master/stb_truetype.h
+- raudio.h (audio) - https://www.raylib.com/ (od raylib-a je samo uporabljena raudo.h knjižnica, ki je samostojna)
 
 Za urejanje projekta se lahko uporablja poljubni urejevalnik besedila oziroma IDE, ki podpira cmake (jaz sem uporabljal CLion od JetBrains)

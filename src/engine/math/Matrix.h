@@ -5,6 +5,8 @@
 #ifndef TOWERDEFENSE_MATRIX_H
 #define TOWERDEFENSE_MATRIX_H
 
+#include <ostream>
+
 template<int sizeX, int sizeY, typename T>
 class Mat
 {
@@ -13,6 +15,15 @@ public:
 
     Mat() : vals{}
     {};
+
+    explicit Mat(T fill) : vals{}
+    {
+        for (int i = 0; i < sizeX; i++)
+            for (int j = 0; j < sizeY; j++)
+                if(i==j)
+                    vals[i*4+j] = fill;
+
+    }
 
     explicit Mat(const T values[sizeX * sizeY]) : vals{}
     {
@@ -31,12 +42,12 @@ public:
     Mat(const Mat<sizeX, sizeY, T> &mat) : vals{}
     {
         for (int i = 0; i < sizeX * sizeY; i++)
-            vals[i] = mat.m_Vals[i];
+            vals[i] = mat.vals[i];
     }
 
-    T &operator[](int i)
+    T &operator[](int i) const
     {
-        return &(vals[i]);
+        return (vals[i]);
     }
 
     T &getIndex(int i)
@@ -71,7 +82,7 @@ public:
     }
 
     // add assign
-    Mat<sizeX, sizeY, T> &operator+=(const Mat<sizeX, sizeY, T> &mat) const
+    const Mat<sizeX,sizeY,T>& operator+=(const Mat<sizeX, sizeY, T> &mat) const
     {
         for (int i = 0; i < sizeX * sizeY; i++)
             this[i] = this[i] += mat[i];
@@ -123,7 +134,7 @@ public:
             {
                 res[i * sizeX + j] = 0;
                 for (int k = 0; k < sizeX; k++)
-                    res[i * sizeX + j] += this[i * sizeX + k] * mat[k * sizeY + j];
+                    res[i * sizeX + j] += vals[i * sizeX + k] * mat[k * sizeY + j];
             }
         }
 
@@ -167,10 +178,13 @@ public:
     // assignment (copy)
     Mat<sizeX, sizeY, T> &operator=(const Mat<sizeX, sizeY, T> &mat)
     {
-        for (int i = 0; i < sizeX * sizeY; i++)
-            vals[i] = mat[i];
+        if (&mat != this)
+            for (int i = 0; i < sizeX * sizeY; i++)
+                vals[i] = mat[i];
         return *this;
     }
+
+    // logic operators
 
     bool operator==(const Mat &rhs) const
     {
@@ -198,7 +212,21 @@ public:
         return !(*this < rhs);
     }
 
+    friend std::ostream& operator<<(std::ostream& os, const Mat<sizeX, sizeY, T>& f)
+    {
+        for (int i = 0; i < sizeX * sizeY; i++)
+        {
+            if (i % sizeX == 0 && i > 0)
+                os << "\n";
+            os << f.vals[i] << "\t";
+        }
+        return os;
+    }
 
 };
+
+// some common matrix types
+typedef Mat<4, 4, float> Mat4f;
+typedef Mat<3, 3, float> Mat3f;
 
 #endif //TOWERDEFENSE_MATRIX_H

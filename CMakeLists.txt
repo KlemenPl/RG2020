@@ -2,19 +2,21 @@
 cmake_minimum_required(VERSION 3.17)
 project(TowerDefense)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE  DEBUG)
 
-file(GLOB libs
+file(GLOB_RECURSE libs
         "external/glad/src/glad.c"
-        "libs/imgui/*"
-        "libs/stb_image/*"
+        "external/imgui/*.cpp"
+        "external/stb_image/*.cpp"
+        "external/stb_truetype/*.cpp"
+        "external/raudio/*.c"
         )
 
-file(GLOB src
-        "src/*"
-        "src/engine/*"
-        "src/engine/graphics/*"
-        "src/engine/math/*"
+file(GLOB_RECURSE src
+        "src/*.cpp"
+        "src/.h"
+        "src/.hpp"
         )
 
 find_package(OpenGL REQUIRED)
@@ -23,8 +25,12 @@ if (NOT OPENGL_FOUND)
 endif ()
 
 add_subdirectory(external/glfw-3.3.2)
-include_directories(external/glad/include/
-                    )
+
+include_directories(external/glad/include/)
+include_directories(external/imgui/)
+include_directories(external/stb_image/)
+include_directories(external/stb_truetype/)
+include_directories(external/raudio/)
 
 set(SOURCE src/main.cpp)
 set(PROJECT_NAME TowerDefense)
@@ -32,6 +38,7 @@ set(EXTERNAL
     ${OPENGL_LIBRARY}
     glfw
     )
+
 
 # GLFW library
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
