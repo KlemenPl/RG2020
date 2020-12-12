@@ -15,8 +15,8 @@ file(GLOB_RECURSE libs
 
 file(GLOB_RECURSE src
         "src/*.cpp"
-        "src/.h"
-        "src/.hpp"
+        "src/*.h"
+        "src/*.hpp"
         )
 
 find_package(OpenGL REQUIRED)

@@ -15,6 +15,15 @@
 #include "../graphics/BitmapFont.h"
 
 /*
+ * TODO 12.12.2020: generate the corner points in a geometry shader with a single center point, rotation and size
+ * (will help to reduce load on the CPU)
+ *
+ * TODO 12.12.2020: use "Instancing" approach to see, if performance is better
+ *
+ */
+
+
+/*
  * Renderer for rendering 2D stuff (sprites, text, primitives...)
  * Uses batching for better performance.
  *

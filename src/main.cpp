@@ -16,7 +16,8 @@
 #include "engine/rendering/RenderingCapabilities.h"
 
 #include <raudio.h>
-#include <imstb_truetype.h>
+
+#define RUN_BUNNYMARK 0
 
 // Callback function for printing debug statements
 void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
@@ -174,6 +175,9 @@ int main(int argc, char *argv[])
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_CCW);
+
 
     // OpenGL configuration
     // --------------------
@@ -235,9 +239,6 @@ int main(int argc, char *argv[])
     ResourceManager::loadFont("res/fonts/Apocalypse.ttf","roboto");
 
 
-    Texture2D fontTexture;
-    //fontTexture.ID=ftex;
-    fontTexture.ID=ResourceManager::getFont("roboto").bitmapTexture.ID;
 
     //ResourceManager::loadTexture("res/textures/rabbit.png", "rabbit", true);
     for (auto &str:textures)

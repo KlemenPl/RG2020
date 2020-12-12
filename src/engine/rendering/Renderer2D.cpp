@@ -59,7 +59,7 @@ Renderer2D::Renderer2D(Shader *shader) : shader((Shader *) shader)
 
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
+    //glBufferStorage(GL_ARRAY_BUFFER, verticesSize * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
     glBufferData(GL_ARRAY_BUFFER, verticesSize * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
 
     glEnableVertexAttribArray(0); // position
@@ -353,9 +353,12 @@ void Renderer2D::draw(BitmapFont &font, const std::string &text, const Vec2f &po
 void Renderer2D::flush()
 {
 
-    // sending data to CPU
+    // updating VBO
     glBufferSubData(GL_ARRAY_BUFFER, 0, drawOffset * sizeof(float), vertices);
+
+    // setting projection matrix
     shader->bind();
+    // todo: only set projMatrix when projMatrix is changed
     shader->setUniform("projectionMatrix", *projMatrix);
 
     // binding textures
@@ -406,7 +409,7 @@ void Renderer2D::end()
  * Sets the projection matrix to be used in shader
  * when drawing.
  */
-void Renderer2D::setProjectionMatrix(const Mat4f& mat)
+void Renderer2D::setProjectionMatrix(const Mat4f &mat)
 {
     projMatrix = &mat;
 }
