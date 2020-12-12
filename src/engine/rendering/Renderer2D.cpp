@@ -10,21 +10,13 @@
 #include "../ResourceManager.h"
 
 
-Renderer2D::Renderer2D(const Shader shader) : shader(shader)
+/*
+ * Constructor for Renderer2D.
+ * Takes in as argument a pointer to the Shader for drawing.
+ *
+ */
+Renderer2D::Renderer2D(Shader *shader) : shader((Shader *) shader)
 {
-    // configuring VAO/VBO/IBO
-    /*
-    float vertices[] = {
-            // pos      // tex
-            0.0f, 0.0f, 0.0f, 0.0f, packed, textureID, // bottom left
-            0.0f, 1.0f, 0.0f, 1.0f, packed, textureID, // top left
-            //1.0f, 0.0f, 1.0f, 0.0f, packed, textureID,
-
-            //0.0f, 1.0f, 0.0f, 1.0f, packed, textureID,
-            1.0f, 1.0f, 1.0f, 1.0f, packed, textureID, // top right
-            1.0f, 0.0f, 1.0f, 0.0f, packed, textureID // bottom right
-    };*/
-
     this->maxTextures = RenderingCapabilities::MAX_TEXTURE_IMAGE_UNITS;
     //this->maxTextures = 20;
     this->sampledTextures = new int[maxTextures];
@@ -84,7 +76,11 @@ Renderer2D::Renderer2D(const Shader shader) : shader(shader)
 
 }
 
-
+/*
+ * Destructor
+ *
+ * Deletes the VBO and heap allocated memory
+ */
 Renderer2D::~Renderer2D()
 {
     glDeleteBuffers(GL_ARRAY_BUFFER, &VBO);
@@ -97,6 +93,9 @@ Renderer2D::~Renderer2D()
 }
 
 
+/*
+ * Begins the batch.
+ */
 void Renderer2D::begin()
 {
     if (drawing)
@@ -316,111 +315,63 @@ float abs(float in)
     return in < 0 ? -in : in;
 }
 
+/*
+ * Draws text on the screen at specified position.
+ * Will use Renderer2D::draw(Region&...) for drawing the actual glyhs
+ */
 void Renderer2D::draw(BitmapFont &font, const std::string &text, const Vec2f &pos,
                       const Vec2f &scale, const Color &color, float rotation)
 {
     float advance = pos.x;
+
     for (const char &c:text)
     {
         const FontCharacter fc = font.charData.at(c);
-        float sizeX = (abs(fc.xOff) + abs(fc.xOff2)) * scale.x;
-        float sizeY = (abs(fc.yOff) + abs(fc.yOff2))*scale.y;
 
+        float sizeX = (abs(fc.xOff) + abs(fc.xOff2)) * scale.x;
+        float sizeY = (abs(fc.yOff) + abs(fc.yOff2)) * scale.y;
+
+        // drawing the character
         Renderer2D::draw(fc.region,
-                         Vec2f(advance + fc.xOff*scale.x, pos.y - fc.yOff*scale.y),
+                         Vec2f(advance + fc.xOff * scale.x, pos.y - fc.yOff * scale.y),
                          Vec2f(sizeX, -sizeY), Vec2f(0, 0), Vec2f(1.0f, 1.0f),
                          color, rotation, false, false);
 
-        advance += fc.xAdvance*scale.x;
+        // moving to the next position
+        advance += fc.xAdvance * scale.x;
     }
 
 }
 
-void Renderer2D::drawUnbatched(const Texture2D &texture2D, const Vec2f &pos, const Vec2f &size, const Vec2f &origin,
-                               const Vec2f &scale, const Color &color, float rotation, bool flipX, bool flipY)
-{
-    if (drawing)
-        throw std::runtime_error("Renderer2D::drawUnbatched: Cannot draw unbatched while batch is active");
-
-    float packedColor = color.pack();
-
-    // using Model matrix would be overkill for this since its just for 2D
-    float width = size.x * scale.x;
-    float height = size.y * scale.y;
-
-    float x1 = pos.x;
-    float y1 = pos.y;
-    float x2 = pos.x;
-    float y2 = pos.y + height;
-    float x3 = pos.x + width;
-    float y3 = pos.y + height;
-    float x4 = pos.x + width;
-    float y4 = pos.y;
-
-    // bottom left
-    vertices[0] = flipX ? x4 : x1;
-    vertices[1] = flipY ? y2 : y1;
-    vertices[2] = 0.0f;
-    vertices[3] = 0.0f;
-    vertices[4] = packedColor;
-    vertices[5] = 0; // texture
-
-    // top left
-    vertices[6] = flipX ? x3 : x2;
-    vertices[7] = flipY ? y1 : y2;
-    vertices[8] = 0.0f;
-    vertices[9] = 1.0f;
-    vertices[10] = packedColor;
-    vertices[11] = 0; // texture
-
-    // top right
-    vertices[12] = flipX ? x2 : x3;
-    vertices[13] = flipY ? y4 : y3;
-    vertices[14] = 1.0f;
-    vertices[15] = 1.0f;
-    vertices[16] = packedColor;
-    vertices[17] = 0; // texture
-
-    // bottom right
-    vertices[18] = flipX ? x1 : x4;
-    vertices[19] = flipY ? y3 : y4;
-    vertices[20] = 1.0f;
-    vertices[21] = 0.0f;
-    vertices[22] = packedColor;
-    vertices[23] = 0; // texture
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, 24 * sizeof(float), vertices);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    shader.bind();
-    shader.setUniform("projectionMatrix", projMatrix);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void *) 0);
-
-}
-
+/*
+ * Flushes the batch and resets it.
+ *
+ * First it sends the data from client to GPU. Then it
+ * binds all used textures and calls glDrawElements(...) to
+ * draw the mesh.
+ */
 void Renderer2D::flush()
 {
 
+    // sending data to CPU
     glBufferSubData(GL_ARRAY_BUFFER, 0, drawOffset * sizeof(float), vertices);
-    shader.bind();
-    shader.setUniform("projectionMatrix", projMatrix);
-    // binding textures
-    //std::cout << "Texture index: " << textureIndex << std::endl;
+    shader->bind();
+    shader->setUniform("projectionMatrix", *projMatrix);
 
+    // binding textures
     for (auto &it:boundTextures)
     {
         glActiveTexture(GL_TEXTURE0 + it.second); // texture unit
         glBindTexture(GL_TEXTURE_2D, it.first); // texture id
-        sampledTextures[it.second] = it.second;
+        sampledTextures[it.second] = it.second; // sampler2D index
         //std::cout<<"first: "<<it.first<<"\t second: "<<it.second<<std::endl;
     }
 
-    shader.setUniform("textures", maxTextures, sampledTextures);
+    // setting sampler2D[] uniform
+    shader->setUniform("textures", maxTextures, sampledTextures);
 
     // drawing elements
-    glDrawElements(GL_TRIANGLES, drawElements, GL_UNSIGNED_INT, (void *) 0);
+    glDrawElements(GL_TRIANGLES, drawElements, GL_UNSIGNED_INT, nullptr);
     drawCalls++;
 
     // unbinding textures
@@ -438,6 +389,10 @@ void Renderer2D::flush()
     textureIndex = 0;
     boundTextures.clear();
 }
+
+/*
+ * Flushes and ends the batch
+ */
 void Renderer2D::end()
 {
     if (!drawing)
@@ -447,9 +402,13 @@ void Renderer2D::end()
     drawing = false;
 }
 
-void Renderer2D::setProjectionMatrix(Mat4f mat)
+/*
+ * Sets the projection matrix to be used in shader
+ * when drawing.
+ */
+void Renderer2D::setProjectionMatrix(const Mat4f& mat)
 {
-    projMatrix = mat;
+    projMatrix = &mat;
 }
 
 uint32_t Renderer2D::getDrawCalls() const

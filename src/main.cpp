@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
         ResourceManager::loadTexture(path.c_str(), str, true);
     }
 
-    Renderer2D renderer2D(ResourceManager::getShader("default2D"));
+    Renderer2D renderer2D(&ResourceManager::getShader("default2D"));
     OrthographicCamera camera(0, 1280, 0, 720);
 
     int numberOfSprites = 10;
