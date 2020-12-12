@@ -30,10 +30,10 @@ class Shader
 private:
 
     // to minimize number of calls to opengl
-    std::unordered_map<std::string, unsigned int> uniformCache;
+    std::unordered_map<std::string, uint32_t> uniformCache;
 
     // returns uniform location for shader (will also cache invalid uniforms)
-    unsigned int getUniformLocation(const std::string &name);
+    uint32_t getUniformLocation(const std::string &name);
 
 public:
     // constructor
@@ -44,7 +44,7 @@ public:
 
     void compile(const char *vsSource, const char *fsSource, const char *gsSource = nullptr);
 
-    bool validate(unsigned int object, ShaderType type);
+    bool validate(uint32_t object, ShaderType type);
 
     void setUniform(const std::string &name, float value);
 
@@ -57,7 +57,7 @@ public:
 
     void dispose() const;
 
-    unsigned int ID;
+    uint32_t ID;
 };
 
 

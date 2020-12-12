@@ -17,10 +17,22 @@ public:
 
     float pack() const
     {
-        unsigned int packedColor = ((unsigned char) (255 * a) << 24) | ((unsigned char) (255 * b) << 16) |
-                                   ((unsigned char) (255 * g) << 8) | ((unsigned char) (255 * r));
-        return *(float *)&packedColor; // returning same bits as packedColor as a float instead of uint
+        uint32_t packedColor = ((unsigned char) (255 * a) << 24) | ((unsigned char) (255 * b) << 16) |
+                               ((unsigned char) (255 * g) << 8) | ((unsigned char) (255 * r));
+        return *(float *) &packedColor; // returning same bits as packedColor as a float instead of uint
     }
+
 };
+
+// some common colours
+namespace Colors {
+    // @formatter:off
+    static const Color WHITE    {1.0f, 1.0f, 1.0f, 1.0f};
+    static const Color BLACK    {0.0f, 0.0f, 0.0f, 1.0f};
+    static const Color RED      {1.0f, 0.0f, 0.0f, 1.0f};
+    static const Color GREEN    {1.0f, 1.0f, 1.0f, 1.0f};
+    static const Color BLUE     {1.0f, 1.0f, 1.0f, 1.0f};
+}
+
 
 #endif //TOWERDEFENSE_COLOR_H

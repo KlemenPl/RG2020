@@ -9,6 +9,8 @@
         <option value="$PROJECT_DIR$/raw_assets" />
         <option value="$PROJECT_DIR$/res" />
         <option value="$PROJECT_DIR$/cmake-build-debug" />
+        <option value="$PROJECT_DIR$/cmake-build-debug" />
+        <option value="$PROJECT_DIR$/cmake-build-release" />
       </list>
     </option>
   </component>

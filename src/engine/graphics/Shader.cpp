@@ -23,7 +23,7 @@ Shader &Shader::bind()
     return *this;
 }
 
-unsigned int Shader::getUniformLocation(const std::string &name)
+uint32_t Shader::getUniformLocation(const std::string &name)
 {
     if (uniformCache.find(name) != uniformCache.end())
         // in our cache
@@ -31,7 +31,7 @@ unsigned int Shader::getUniformLocation(const std::string &name)
     else
     {
         // not in our cache, caching and returning
-        unsigned int location = glGetUniformLocation(ID, name.c_str());
+        uint32_t location = glGetUniformLocation(ID, name.c_str());
         uniformCache[name] = location;
         return location;
     }
@@ -44,7 +44,7 @@ unsigned int Shader::getUniformLocation(const std::string &name)
 
 void Shader::compile(const char *vsSource, const char *fsSource, const char *gsSource)
 {
-    unsigned int vertexID, fragmentID, geometryID;
+    uint32_t vertexID, fragmentID, geometryID;
 
     // vertex shader
     vertexID = glCreateShader(GL_VERTEX_SHADER);
@@ -90,7 +90,7 @@ void Shader::compile(const char *vsSource, const char *fsSource, const char *gsS
         throw std::runtime_error("Shader::compile Shader program failed to validate.");
 }
 
-bool Shader::validate(unsigned int object, ShaderType type)
+bool Shader::validate(uint32_t object, ShaderType type)
 {
     int status;
     glGetShaderiv(object, type == SHADER_PROGRAM ? GL_LINK_STATUS : GL_COMPILE_STATUS, &status);

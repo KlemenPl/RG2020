@@ -16,7 +16,7 @@
 #include "engine/rendering/RenderingCapabilities.h"
 
 #include <raudio.h>
-#include <stb_truetype.h>
+#include <imstb_truetype.h>
 
 // Callback function for printing debug statements
 void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    const char *glsl_version = "#version 150";
+    const char *glsl_version = "#version 450";
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     glDebugMessageCallback(GLDebugMessageCallback, nullptr);
@@ -187,13 +187,12 @@ int main(int argc, char *argv[])
     float lastFrame = 0.0f;
 
 
-    ResourceManager::init();
     RenderingCapabilities::init();
+    ResourceManager::init();
 
     ShaderSourceArgument args[1];
     args[0] = ShaderSourceArgument{FRAGMENT, "TEXTURE_SLOTS",
                                    std::to_string(RenderingCapabilities::MAX_TEXTURE_IMAGE_UNITS)};
-
 
     ResourceManager::loadShader("res/shaders/default2D_VS.glsl", "res/shaders/default2D_FS.glsl",
                                 nullptr, "default2D",
@@ -233,8 +232,12 @@ int main(int argc, char *argv[])
             "zebra"
     };
 
-    // loading font
-    
+    ResourceManager::loadFont("res/fonts/Apocalypse.ttf","roboto");
+
+
+    Texture2D fontTexture;
+    //fontTexture.ID=ftex;
+    fontTexture.ID=ResourceManager::getFont("roboto").bitmapTexture.ID;
 
     //ResourceManager::loadTexture("res/textures/rabbit.png", "rabbit", true);
     for (auto &str:textures)
@@ -252,7 +255,11 @@ int main(int argc, char *argv[])
     {
         sprites.emplace_back(Vec2f(getRandom(0, 1280), getRandom(0, 720)),
                              Vec2f(getRandom(-100, 100), getRandom(-100, 100)),
-                             Vec2f(20, 25), ResourceManager::getTexture2D(textures[getRandom(0, 29)]));
+                             Vec2f(50, 50),
+                             //Vec2f(0,0),
+                             //Vec2f(512,512),
+                             ResourceManager::getTexture2D(textures[getRandom(0, 29)]));
+                             //fontTexture);
     }
 
 
@@ -294,13 +301,14 @@ int main(int argc, char *argv[])
         glClearColor(0.1f, 0.1f, 0.25f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
+
         renderer2D.setProjectionMatrix(camera.getCombined());
         camera.setPosition(Vec3f(0, 0, 0));
         //renderer2D.setProjectionMatrix(math::ortho(0,display_w,0,display_h));
         //renderer2D.drawUnbatched(Texture2D(), Vec2f{0, 0}, Vec2f{100.0f, 100.0f});
         renderer2D.begin();
-        uint32_t a;
         //for (auto &sprite:sprites)
+        //numberOfSprites=0;
         for (int i = 0; i < numberOfSprites; i++)
         {
             auto &sprite = sprites[i];
@@ -310,8 +318,12 @@ int main(int argc, char *argv[])
             if (sprite.position.y < 0 || sprite.position.y > 720)
                 sprite.movement.y = -sprite.movement.y;
 
-            renderer2D.draw(sprite.texture, sprite.position, sprite.size);
+            renderer2D.draw(sprite.texture, sprite.position, sprite.size,
+                            Vec2f(0,0),Vec2f(1.0f,1.0f),Colors::WHITE,0);
         }
+
+        renderer2D.draw(ResourceManager::getFont("roboto"),"the quick brown fox jumps over the lazy dog",
+                        Vec2f(200,200),Vec2f(1.0f,1.0f));
 
         renderer2D.end();
 
@@ -320,27 +332,13 @@ int main(int argc, char *argv[])
                     ImGui::GetIO().Framerate);
         ImGui::Text("OpenGL draw calls: %d.", renderer2D.getDrawCalls());
         ImGui::Text("VBO buffer size: %lu B.", renderer2D.getIndicesSize() * sizeof(float));
-        ImGui::Text("IBO buffer size: %lu B.", renderer2D.getVerticesSize() * sizeof(float));
+        ImGui::Text("IBO buffer size: %lu B.", renderer2D.getVerticesSize() * sizeof(ushort));
         ImGui::Text("Number of objects: %d", numberOfSprites);
         ImGui::SliderInt("", &numberOfSprites, 0, 100000);
         ImGui::End();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        /*
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        // Update and Render additional Platform Windows
-        // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
-        //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            GLFWwindow *backup_current_context = glfwGetCurrentContext();
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-            glfwMakeContextCurrent(backup_current_context);
-        }
-         */
 
         glfwSwapBuffers(window);
 

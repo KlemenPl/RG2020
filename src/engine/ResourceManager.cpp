@@ -32,6 +32,20 @@ ResourceManager::~ResourceManager()
         texture.second.dispose();
     ResourceManager::shaders.clear();
     ResourceManager::textures.clear();
+
+    // music cleanup
+    for (auto &music:musics)
+        UnloadMusicStream(music.second);
+    // sound cleanup
+    for (auto &sound:sounds)
+        UnloadSound(sound.second);
+    ResourceManager::musics.clear();
+    ResourceManager::sounds.clear();
+
+    // bitmap font cleanup
+    for(auto& font:fonts)
+        font.second.dispose();
+    ResourceManager::fonts.clear();
 }
 
 std::string readFile(const char *path)
@@ -43,7 +57,7 @@ std::string readFile(const char *path)
     return sstream.str();
 }
 
-// not the best way, but good enough
+// probably not the best way, but good enough
 std::string applyArgument(std::string &source, ShaderSourceArgument &arg)
 {
     std::string fullIdentifier = "{" + arg.identifier + "}";
@@ -60,7 +74,7 @@ std::string applyArgument(std::string &source, ShaderSourceArgument &arg)
 
 
 void ResourceManager::loadShader(const char *vsFile, const char *fsFile, const char *gsFile, std::string name,
-                                 ShaderSourceArgument args[], unsigned int argsLength)
+                                 ShaderSourceArgument args[], uint32_t argsLength)
 {
     std::string vertexSource = readFile(vsFile);
     std::string fragmentSource = readFile(fsFile);
@@ -125,11 +139,51 @@ void ResourceManager::loadTexture(const char *textureFile, std::string name, boo
     instance->textures[name] = texture2D;
 }
 
+void ResourceManager::loadMusic(const char *musicFile, std::string name)
+{
+    instance->musics[name] = LoadMusicStream(musicFile);
+}
+void ResourceManager::loadSound(const char *soundFile, std::string name)
+{
+    instance->sounds[name] = LoadSound(soundFile);
+}
+
+void ResourceManager::loadFont(const char *fontFile, std::string name, float fontSize, int atlasWidth, int atlasHeight,
+                               int padding, int startChar, int numChars)
+{
+    // getting file length to allocate buffer
+    FILE *f = fopen(fontFile, "rb");
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);  /* same as rewind(f); */
+
+    unsigned char *ttf_buffer = new unsigned char[fsize];
+    fread(ttf_buffer, 1, fsize, fopen(fontFile, "rb"));
+
+    BitmapFont font;
+    font.generate(fontSize, atlasWidth, atlasHeight, padding, startChar, numChars, ttf_buffer, fsize);
+    delete[] ttf_buffer;
+    instance->fonts[name] = font;
+}
+
 Shader &ResourceManager::getShader(const std::string &name)
 {
     return instance->shaders[name];
 }
-Texture2D ResourceManager::getTexture2D(const std::string &name)
+Texture2D &ResourceManager::getTexture2D(const std::string &name)
 {
     return instance->textures[name];
+}
+
+Music &ResourceManager::getMusic(const std::string &name)
+{
+    return instance->musics[name];
+}
+Sound &ResourceManager::getSound(const std::string &name)
+{
+    return instance->sounds[name];
+}
+BitmapFont &ResourceManager::getFont(const std::string &name)
+{
+    return instance->fonts[name];
 }

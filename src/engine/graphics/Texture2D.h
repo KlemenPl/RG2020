@@ -6,30 +6,39 @@
 #define TOWERDEFENSE_TEXTURE2D_H
 
 #include <glad/glad.h>
+#include "UVRegion.h"
 
-class Texture2D
+
+class Texture2D : public UVRegion
 {
 public:
-    unsigned int ID{};
-    unsigned int width, height;
+
+    uint32_t ID{};
+    uint32_t width, height;
 
     // texture format
-    unsigned int internalFormat;
-    unsigned int imageFormat;
+    uint32_t internalFormat;
+    uint32_t imageFormat;
 
     // texture configuration
-    unsigned int wrapS;
-    unsigned int wrapT;
-    unsigned int filterMin;
-    unsigned int filterMax;
+    uint32_t wrapS;
+    uint32_t wrapT;
+    uint32_t filterMin;
+    uint32_t filterMax;
 
     Texture2D();
 
-    void generate(unsigned int width, unsigned int height, unsigned char* data);
+    void generate(uint32_t width, uint32_t height, unsigned char *data);
 
     void dispose();
 
-    void bind() const;
+    void bind() const override;
+    float getU0() const override;
+    float getV0() const override;
+    float getU1() const override;
+    float getV1() const override;
+    uint32_t getID()const override;
+
 
 };
 

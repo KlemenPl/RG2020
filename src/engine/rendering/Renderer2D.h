@@ -6,17 +6,19 @@
 #define TOWERDEFENSE_RENDERER2D_H
 
 #include <glad/glad.h>
+#include <set>
 #include "../graphics/Shader.h"
 #include "../graphics/Texture2D.h"
 #include "../graphics/Color.h"
 #include "../math/Matrix.h"
 #include "../math/Vector.h"
+#include "../graphics/BitmapFont.h"
 
 struct Character {
-    unsigned int textureID;
+    uint32_t textureID;
     Vec2i size;
     Vec2i bearing;
-    unsigned int advance;
+    uint32_t advance;
 };
 
 /*
@@ -35,27 +37,26 @@ class Renderer2D
 
 private:
     Shader shader;
-    unsigned int VAO;
-    unsigned int VBO;
-    unsigned int IBO;
-    unsigned int quadsPerBatch;
+    uint32_t VAO;
+    uint32_t VBO;
+    uint32_t IBO;
+    uint32_t quadsPerBatch;
     Mat4f projMatrix{};
 
-    unsigned int verticesSize;
-    unsigned int indicesSize;
+    uint32_t verticesSize;
+    uint32_t indicesSize;
     float *vertices;
-    unsigned int *indices;
+    uint32_t *indices;
 
-    unsigned int drawCalls;
-    unsigned int drawOffset;
-    unsigned int drawElements;
-    unsigned int vertexSize;
+    uint32_t drawCalls;
+    uint32_t drawOffset;
+    uint32_t drawElements;
     bool drawing;
 
-    unsigned int maxTextures;
-    unsigned int textureIndex;
+    uint32_t maxTextures;
+    uint32_t textureIndex;
 
-    std::unordered_map<unsigned int, unsigned int> boundTextures;
+    std::unordered_map<uint32_t, uint32_t> boundTextures;
     int* sampledTextures;
 
     std::unordered_map<char, Character> characters;
@@ -65,15 +66,19 @@ public:
 
     ~Renderer2D();
 
-    void draw(const Texture2D &texture2D, const Vec2f &pos, const Vec2f &size,
+    void draw(const UVRegion &region, const Vec2f &pos, const Vec2f &size,
               const Vec2f &origin = Vec2f{0.0f, 0.0f}, const Vec2f &scale = Vec2f{1.0f, 1.0f},
-              const Color &color = Color{1.0f, 1.0f, 1.0f, 1.0f},
+              const Color &color = Colors::WHITE,
               float rotation = 0.0f, bool flipX = false, bool flipY = false);
 
     void drawUnbatched(const Texture2D &texture2D, const Vec2f &pos, const Vec2f &size,
               const Vec2f &origin = Vec2f{0.0f, 0.0f}, const Vec2f &scale = Vec2f{1.0f, 1.0f},
               const Color &color = Color{1.0f, 1.0f, 1.0f, 1.0f},
               float rotation = 0.0f, bool flipX = false, bool flipY = false);
+
+    void draw(BitmapFont& font, const std::string& text, const Vec2f& pos,
+              const Vec2f& scale = Vec2f(1.0f,1.0f),
+              const Color& color = Colors::WHITE, float rotation = 0.0f);
 
     void begin();
 
@@ -87,11 +92,10 @@ public:
     Renderer2D(const Renderer2D &) = delete;
     Renderer2D() = default;
     Renderer2D &operator=(const Renderer2D &) = delete;
-    unsigned int getDrawCalls() const;
+    uint32_t getDrawCalls() const;
     bool isDrawing() const;
-    unsigned int getVertexSize() const;
-    unsigned int getVerticesSize() const;
-    unsigned int getIndicesSize() const;
+    uint32_t getVerticesSize() const;
+    uint32_t getIndicesSize() const;
 
 
 };
