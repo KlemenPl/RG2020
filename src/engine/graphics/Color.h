@@ -5,6 +5,7 @@
 #ifndef TOWERDEFENSE_COLOR_H
 #define TOWERDEFENSE_COLOR_H
 
+// todo: consider using unions
 class Color
 {
 public:
