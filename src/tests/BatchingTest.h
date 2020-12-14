@@ -41,19 +41,19 @@ public:
     void init() override;
     void start() override;
 private:
-    Renderer2D* renderer2D;
-    OrthographicCamera* camera;
+    Renderer2D *renderer2D;
+    OrthographicCamera *camera;
 
     std::stringstream ss;
 
-    BitmapFont* font;
+    BitmapFont *font;
 
     float deltaTime{};
     float lastFrame{};
 
-    const int maxSprites = 100000;
+    const int maxSprites = 200000;
     int numberOfSprites = 10;
-    std::vector<Sprite> sprites{};
+    std::vector<Sprite*> *sprites;
 
 
 };

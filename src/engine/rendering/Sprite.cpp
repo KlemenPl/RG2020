@@ -4,7 +4,7 @@
 
 #include "Sprite.h"
 
-Sprite::Sprite(const Vec2f &position, const Vec2f &movement, const Vec2f &size, const Texture2D &texture) : position(
+Sprite::Sprite( Vec2f position,  Vec2f movement,  Vec2f size,  Texture2D texture) : position(
         position), movement(movement), size(size), texture(texture)
 {}
 

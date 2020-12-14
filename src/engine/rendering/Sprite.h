@@ -17,7 +17,7 @@ public:
     Vec2f size;
     Texture2D texture;
 
-    Sprite(const Vec2f &position,const Vec2f& movement, const Vec2f &size, const Texture2D &texture);
+    Sprite( Vec2f position, Vec2f movement,  Vec2f size,  Texture2D texture);
 
     void update(float dt);
 

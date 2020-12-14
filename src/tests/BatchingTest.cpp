@@ -70,13 +70,16 @@ void BatchingTest::init()
     this->renderer2D = new Renderer2D(&ResourceManager::getShader("default2D"));
     this->camera = new OrthographicCamera(0, 1280, 0, 720);
 
-    // probably not the best idea to store on stack memory
+
+    this->sprites=new std::vector<Sprite*>;
+
     for (int i = 0; i < maxSprites; i++)
     {
-        sprites.emplace_back(Vec2f(getRandom(0, 1280), getRandom(0, 720)),
-                             Vec2f(getRandom(-100, 100), getRandom(-100, 100)),
-                             Vec2f(20, 20),
-                             ResourceManager::getTexture2D(textures[getRandom(0, 29)]));
+        Sprite *sprite = new Sprite(Vec2f(getRandom(0, 1280), getRandom(0, 720)),
+                                          Vec2f(getRandom(-100, 100), getRandom(-100, 100)),
+                                                Vec2f(20, 20),
+                                                ResourceManager::getTexture2D(textures[getRandom(0, 29)]));
+        sprites->push_back(sprite);
     }
 
     glEnable(GL_BLEND);
@@ -115,14 +118,14 @@ void BatchingTest::start()
         renderer2D->begin();
         for (int i = 0; i < numberOfSprites; i++)
         {
-            auto &sprite = sprites[i];
-            sprite.update(deltaTime);
-            if (sprite.position.x < 0 || sprite.position.x > 1280)
-                sprite.movement.x = -sprite.movement.x;
-            if (sprite.position.y < 0 || sprite.position.y > 720)
-                sprite.movement.y = -sprite.movement.y;
+            auto &sprite = sprites->at(i);
+            sprite->update(deltaTime);
+            if (sprite->position.x < 0 || sprite->position.x > 1280)
+                sprite->movement.x = -sprite->movement.x;
+            if (sprite->position.y < 0 || sprite->position.y > 720)
+                sprite->movement.y = -sprite->movement.y;
 
-            renderer2D->draw(sprite.texture, sprite.position, sprite.size,
+            renderer2D->draw(sprite->texture, sprite->position, sprite->size,
                              Vec2f(0, 0), Vec2f(1.0f, 1.0f), Colors::WHITE, 0);
         }
 
