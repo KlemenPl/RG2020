@@ -34,6 +34,8 @@ public:
     static void loadShader(const char* vsFile, const char* fsFile, const char* gsFile, std::string name,
                            ShaderSourceArgument args [] = nullptr, uint32_t argsLength=0);
     static void loadTexture(const char* textureFile, std::string name, bool alpha);
+    static void loadWhitePixelTexture();
+
     static void loadMusic(const char* musicFile, std::string name);
     static void loadSound(const char* soundFile, std::string name);
     static void loadFont(const char* fontFile, std::string name,

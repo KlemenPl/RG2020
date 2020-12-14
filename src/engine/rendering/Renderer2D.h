@@ -6,7 +6,6 @@
 #define TOWERDEFENSE_RENDERER2D_H
 
 #include <glad/glad.h>
-#include <set>
 #include "../graphics/Shader.h"
 #include "../graphics/Texture2D.h"
 #include "../graphics/Color.h"
@@ -21,7 +20,6 @@
  * TODO 12.12.2020: use "Instancing" approach to see, if performance is better
  *
  */
-
 
 /*
  * Renderer for rendering 2D stuff (sprites, text, primitives...)
@@ -58,6 +56,7 @@ private:
     uint32_t maxTextures{};
     uint32_t textureIndex{};
 
+    //__gnu_cxx::hash_map<uint32_t, uint32_t> boundTextures; slightly faster
     std::unordered_map<uint32_t, uint32_t> boundTextures;
     int *sampledTextures{};
 

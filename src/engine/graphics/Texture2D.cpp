@@ -5,7 +5,7 @@
 #include "Texture2D.h"
 
 Texture2D::Texture2D() : width(0), height(0), internalFormat(GL_RGB), imageFormat(GL_RGB), wrapS(GL_REPEAT),
-                         wrapT(GL_REPEAT), filterMin(GL_LINEAR), filterMax(GL_LINEAR)
+                         wrapT(GL_REPEAT), filterMin(GL_LINEAR), filterMag(GL_LINEAR)
 {
 }
 
@@ -25,7 +25,7 @@ void Texture2D::generate(uint32_t _width, uint32_t _height, unsigned char *data)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, this->wrapS);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, this->wrapT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, this->filterMin);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, this->filterMax);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, this->filterMag);
     // unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);
 

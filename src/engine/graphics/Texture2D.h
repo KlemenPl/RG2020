@@ -24,7 +24,7 @@ public:
     uint32_t wrapS;
     uint32_t wrapT;
     uint32_t filterMin;
-    uint32_t filterMax;
+    uint32_t filterMag;
 
     Texture2D();
 

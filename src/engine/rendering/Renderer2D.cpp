@@ -12,8 +12,7 @@
 
 /*
  * Constructor for Renderer2D.
- * Takes in as argument a pointer to the Shader for drawing.
- *
+ * Takes in a pointer to the Shader for drawing.
  */
 Renderer2D::Renderer2D(Shader *shader) : shader((Shader *) shader)
 {
@@ -29,8 +28,8 @@ Renderer2D::Renderer2D(Shader *shader) : shader((Shader *) shader)
     this->textureIndex = 0;
 
     this->quadsPerBatch = 5000; // 5k sprites per batch seems to work the best
-    this->indicesSize = quadsPerBatch * 6;
-    this->verticesSize = quadsPerBatch * 4 * 6;
+    this->indicesSize = quadsPerBatch * 6; // 6 indices per quad
+    this->verticesSize = quadsPerBatch * 4 * 6; // 4 points per quad; each point with 6 floats
 
     this->vertices = new float[verticesSize];
     for (int i = 0; i < verticesSize; i++)
@@ -71,8 +70,13 @@ Renderer2D::Renderer2D(Shader *shader) : shader((Shader *) shader)
     glEnableVertexAttribArray(2); // colour
     glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex2D), (const void *) offsetof(Vertex2D, color));
 
+    /* Would only need 5 bits to store this 32 values, but I think it's faster,
+     * if you keep it as 4 byte float (alignment of vertices -
+     * https://stackoverflow.com/questions/12819188/how-important-is-alignment-in-opengl-vertex-data-in-ios).
+     * And this is a lot simpler and faster to implement.
+     */
     glEnableVertexAttribArray(3); // texture ID
-    glVertexAttribPointer(3, 1, GL_FLOAT, GL_TRUE, sizeof(Vertex2D), (const void *) offsetof(Vertex2D, textureID));
+    glVertexAttribPointer(3, 1, GL_FLOAT, false, sizeof(Vertex2D), (const void *) offsetof(Vertex2D, textureID));
 
 }
 
@@ -99,7 +103,7 @@ Renderer2D::~Renderer2D()
 void Renderer2D::begin()
 {
     if (drawing)
-        throw std::runtime_error("Renderer2D::begin(): Cannot begin batch while it is already drawing");
+        throw std::runtime_error("Renderer2D::begin(): Cannot begin batch while it is already drawing!");
 
     drawing = true;
     drawOffset = 0;
@@ -109,6 +113,21 @@ void Renderer2D::begin()
 
     drawCalls = 0;
 
+    // Disabling culling since it is not really needed for 2D
+    // and does not improve performance for 2D that much.
+    // It also does not render if flipX or flipY are set to true.
+    glDisable(GL_CULL_FACE);
+
+    // binding VBA, VBO, IBO
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+
+    // enable transperency
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    shader->bind();
 }
 /*
  * Renders 2D texture at the specified position.
@@ -135,8 +154,14 @@ void Renderer2D::draw(const UVRegion &region, const Vec2f &pos, const Vec2f &siz
 
     uint32_t textureID = region.getID();
 
+
+    // todo 13.12.2020: (Renderer2D optimization) find a better way, this takes around 37% of the whole draw call
+    const auto &t_texture = boundTextures.find(textureID);
+
+    float samplerIndex;
+
     // checking if texture already bound by any previous sprite
-    if (boundTextures.find(textureID) == boundTextures.end())
+    if (t_texture == boundTextures.end())
     {
         // checking if there is enough space to bind the texture (texture slots)
         if (boundTextures.size() >= maxTextures)
@@ -144,22 +169,19 @@ void Renderer2D::draw(const UVRegion &region, const Vec2f &pos, const Vec2f &siz
 
         // binding texture
         boundTextures[textureID] = textureIndex;
+        samplerIndex = textureIndex;
         textureIndex++;
+    } else
+    {
+        samplerIndex = t_texture->second;
     }
 
 
-    /* Would only need 5 bits to store this 32 values, but I think it's faster,
-     * if you keep it as 4 byte float (alignment of vertices -
-     * https://stackoverflow.com/questions/12819188/how-important-is-alignment-in-opengl-vertex-data-in-ios).
-     * And this is a lot simpler and faster to implement.
-     */
-    float samplerIndex = boundTextures[textureID];
-
-
     // takes 4 float components from Color.rgba and packs them into a float
-    float packedColor = color.pack();
+    // todo 13.12.2020: (Renderer2D optimization) only set colour when changed
+    float packedColor = color.pack(); // this takes 5% of the whole draw call
 
-    // using Model matrix would be a lot simpler, but this does the same faster
+    // using Model matrix would be a lot simpler, but this does the same thing faster in my opinion
     float spaceOriginX = pos.x + origin.x;
     float spaceOriginY = pos.y + origin.y;
 
@@ -305,7 +327,7 @@ void Renderer2D::draw(const UVRegion &region, const Vec2f &pos, const Vec2f &siz
     vertices[drawOffset + 22] = packedColor;
     vertices[drawOffset + 23] = samplerIndex; // texture
 
-    drawOffset += 24; // vertices offset
+    drawOffset += 24; // IBO offset
     drawElements += 6; // IBO offset
 }
 
@@ -353,11 +375,9 @@ void Renderer2D::draw(BitmapFont &font, const std::string &text, const Vec2f &po
 void Renderer2D::flush()
 {
 
-    // updating VBO
+    // updating VBO (sending only the verticies we assigned)
     glBufferSubData(GL_ARRAY_BUFFER, 0, drawOffset * sizeof(float), vertices);
 
-    // setting projection matrix
-    shader->bind();
     // todo: only set projMatrix when projMatrix is changed
     shader->setUniform("projectionMatrix", *projMatrix);
 
@@ -377,7 +397,7 @@ void Renderer2D::flush()
     glDrawElements(GL_TRIANGLES, drawElements, GL_UNSIGNED_INT, nullptr);
     drawCalls++;
 
-    // unbinding textures
+    // unbinding textures, reseting state
     for (int i = 0; i < textureIndex; i++)
     {
         glActiveTexture(GL_TEXTURE0 + i); // texture unit

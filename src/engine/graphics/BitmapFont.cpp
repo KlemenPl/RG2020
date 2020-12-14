@@ -75,7 +75,7 @@ void BitmapFont::generate(float fontSize, int atlasWidth, int atlasHeight, int p
 
     bitmapTexture.ID = ftex;
     bitmapTexture.width = atlasWidth;
-    bitmapTexture.width = atlasHeight;
+    bitmapTexture.height = atlasHeight;
 
 
 }

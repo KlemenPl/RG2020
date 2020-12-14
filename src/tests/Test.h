@@ -11,8 +11,6 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
-#include "BunnyMarkTest.h"
-#include "Test.h"
 #include "../engine/ResourceManager.h"
 #include "../engine/rendering/RenderingCapabilities.h"
 
@@ -39,7 +37,7 @@ public:
         #endif
         glfwWindowHint(GLFW_RESIZABLE, false);
 
-        this->window = glfwCreateWindow(1280, 720, "Test", nullptr, nullptr);
+        this->window = glfwCreateWindow(1280, 720, "Batching Test", nullptr, nullptr);
         glfwMakeContextCurrent(window);
         if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
         {
@@ -47,24 +45,21 @@ public:
             return ;
         }
 
-        // intializing Dear_ImGui
-
         // Setup Dear ImGui context
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO &io = ImGui::GetIO();
         (void) io;
-        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-        // Setup Dear ImGui style
         ImGui::StyleColorsDark();
-        //ImGui::StyleColorsClassic();
 
         // Setup Platform/Renderer backends
         ImGui_ImplGlfw_InitForOpenGL(window, true);
         const char *glsl_version = "#version 450";
         ImGui_ImplOpenGL3_Init(glsl_version);
+
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
         glViewport(0, 0, 1280, 720);
 
@@ -75,8 +70,8 @@ public:
     // called to initialize the test
     virtual void init() = 0;
 
-    // called each frame
-    virtual void render() = 0;
+    // called at the start
+    virtual void start() = 0;
 
 };
 

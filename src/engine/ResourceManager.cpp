@@ -43,7 +43,7 @@ ResourceManager::~ResourceManager()
     ResourceManager::sounds.clear();
 
     // bitmap font cleanup
-    for(auto& font:fonts)
+    for (auto &font:fonts)
         font.second.dispose();
     ResourceManager::fonts.clear();
 }
@@ -119,6 +119,25 @@ void ResourceManager::loadShader(const char *vsFile, const char *fsFile, const c
     instance->shaders[name] = shader;
 
 }
+
+void ResourceManager::loadWhitePixelTexture()
+{
+    Texture2D texture2D;
+    texture2D.internalFormat = GL_RGBA;
+    texture2D.imageFormat = GL_RGBA;
+    texture2D.filterMin=GL_LINEAR;
+    texture2D.wrapS=GL_CLAMP_TO_EDGE;
+    texture2D.wrapT=GL_CLAMP_TO_EDGE;
+
+    int width = 2;
+    int height = 2;
+    unsigned char data[]{255, 255, 255, 255, 255, 255, 255, 255,
+                         255, 255, 255, 255, 255, 255, 255, 255};
+    texture2D.generate(width, height, data);
+
+    instance->textures["sshape"] = texture2D;
+}
+
 void ResourceManager::loadTexture(const char *textureFile, std::string name, bool alpha = true)
 {
     Texture2D texture2D;
