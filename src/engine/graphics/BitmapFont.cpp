@@ -9,7 +9,11 @@ BitmapFont::BitmapFont()
 {}
 
 BitmapFont::~BitmapFont()
-{}
+{
+    // cleanup
+    charData.clear();
+    delete bitmapTexture;
+}
 
 
 float BitmapFont::getTextWidth(const std::string &text, float scaleX)
@@ -73,15 +77,10 @@ void BitmapFont::generate(float fontSize, int atlasWidth, int atlasHeight, int p
     // deleting tmp_bitmap
     delete[] tmp_bitmap;
 
-    bitmapTexture.ID = ftex;
-    bitmapTexture.width = atlasWidth;
-    bitmapTexture.height = atlasHeight;
+    bitmapTexture = new Texture2D();
+    bitmapTexture->ID = ftex;
+    bitmapTexture->width = atlasWidth;
+    bitmapTexture->height = atlasHeight;
 
 
-}
-
-void BitmapFont::dispose()
-{
-    charData.clear();
-    bitmapTexture.dispose();
 }

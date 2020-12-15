@@ -9,8 +9,9 @@ Texture2D::Texture2D() : width(0), height(0), internalFormat(GL_RGB), imageForma
 {
 }
 
-void Texture2D::dispose()
+Texture2D::~Texture2D()
 {
+    // clean up
     glDeleteTextures(1, &this->ID);
 }
 void Texture2D::generate(uint32_t _width, uint32_t _height, unsigned char *data)

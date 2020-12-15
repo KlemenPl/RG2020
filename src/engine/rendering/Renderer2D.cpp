@@ -14,7 +14,7 @@
  * Constructor for Renderer2D.
  * Takes in a pointer to the Shader for drawing.
  */
-Renderer2D::Renderer2D(Shader *shader) : shader((Shader *) shader)
+Renderer2D::Renderer2D(Ref<Shader> shader) : shader(shader)
 {
     this->maxTextures = RenderingCapabilities::MAX_TEXTURE_IMAGE_UNITS;
     //this->maxTextures = 20;
@@ -142,8 +142,8 @@ void Renderer2D::begin()
  * axis can be simulated by chaing size or scale.
  *
  */
-void Renderer2D::draw(const UVRegion &region, const Vec2f &pos, const Vec2f &size,
-                      const Vec2f &origin, const Vec2f &scale,
+void Renderer2D::draw(const UVRegion &region, const glm::vec2 &pos, const glm::vec2 &size,
+                      const glm::vec2 &origin, const glm::vec2 &scale,
                       const Color &color,
                       float rotation, bool flipX, bool flipY)
 {
@@ -222,11 +222,12 @@ void Renderer2D::draw(const UVRegion &region, const Vec2f &pos, const Vec2f &siz
     float y4 = deltaOriginY1;
 
     //rotation = math::toRad(-45.0f);
-    // calculating rotation
     if (rotation != 0)
     {
-        // based on:
-        // https://stackoverflow.com/questions/2259476/rotating-a-point-about-another-point-2d
+        // cos -sin 0
+        // sin cos  0
+        // 0   0    1
+
 
         // applying rotation
         const float sin = sinf(rotation);
@@ -341,8 +342,8 @@ float abs(float in)
  * Draws text on the screen at specified position.
  * Will use Renderer2D::draw(Region&...) for drawing the actual glyhs
  */
-void Renderer2D::draw(BitmapFont &font, const std::string &text, const Vec2f &pos,
-                      const Vec2f &scale, const Color &color, float rotation)
+void Renderer2D::draw(BitmapFont &font, const std::string &text, const glm::vec2 &pos,
+                      const glm::vec2 &scale, const Color &color, float rotation)
 {
     float advance = pos.x;
 
@@ -355,8 +356,8 @@ void Renderer2D::draw(BitmapFont &font, const std::string &text, const Vec2f &po
 
         // drawing the character
         Renderer2D::draw(fc.region,
-                         Vec2f(advance + fc.xOff * scale.x, pos.y - fc.yOff * scale.y),
-                         Vec2f(sizeX, -sizeY), Vec2f(0, 0), Vec2f(1.0f, 1.0f),
+                         glm::vec2(advance + fc.xOff * scale.x, pos.y - fc.yOff * scale.y),
+                         glm::vec2(sizeX, -sizeY), glm::vec2(0, 0), glm::vec2(1.0f, 1.0f),
                          color, rotation, false, false);
 
         // moving to the next position
@@ -429,7 +430,7 @@ void Renderer2D::end()
  * Sets the projection matrix to be used in shader
  * when drawing.
  */
-void Renderer2D::setProjectionMatrix(const Mat4f &mat)
+void Renderer2D::setProjectionMatrix(const glm::mat4 &mat)
 {
     projMatrix = &mat;
 }

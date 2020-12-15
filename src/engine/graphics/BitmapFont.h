@@ -9,6 +9,7 @@
 #include <imstb_truetype.h>
 #include <unordered_map>
 #include <utility>
+#include "../Core.h"
 #include "Texture2D.h"
 #include "Region2D.h"
 
@@ -36,7 +37,7 @@ struct FontCharacter
 class BitmapFont
 {
 public:
-    Texture2D bitmapTexture;
+    Texture2D* bitmapTexture;
     std::unordered_map<char, FontCharacter> charData;
     unsigned int charDataSize;
 
@@ -49,8 +50,6 @@ public:
 
     float getTextWidth(const std::string& text, float scaleX);
     virtual ~BitmapFont();
-
-    void dispose();
 
 };
 

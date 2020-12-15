@@ -5,10 +5,10 @@
 #ifndef TOWERDEFENSE_COLOR_H
 #define TOWERDEFENSE_COLOR_H
 
-// todo: consider using unions
 class Color
 {
 public:
+    // todo: consider using union
     float r;
     float g;
     float b;
@@ -20,7 +20,7 @@ public:
     {
         uint32_t packedColor = ((unsigned char) (255 * a) << 24) | ((unsigned char) (255 * b) << 16) |
                                ((unsigned char) (255 * g) << 8) | ((unsigned char) (255 * r));
-        return *(float *) &packedColor; // returning same bits as packedColor as a float instead of uint
+        return *(float *) &packedColor; // type punning to float
     }
 
 };
@@ -33,6 +33,7 @@ namespace Colors {
     static const Color RED      {1.0f, 0.0f, 0.0f, 1.0f};
     static const Color GREEN    {1.0f, 1.0f, 1.0f, 1.0f};
     static const Color BLUE     {1.0f, 1.0f, 1.0f, 1.0f};
+    // @formatter:on
 }
 
 

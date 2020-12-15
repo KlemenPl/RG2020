@@ -58,8 +58,8 @@ public:
         const char *glsl_version = "#version 450";
         ImGui_ImplOpenGL3_Init(glsl_version);
 
-        glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        //glEnable(GL_DEBUG_OUTPUT);
+        //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
         glViewport(0, 0, 1280, 720);
 

@@ -5,51 +5,59 @@
 #ifndef TOWERDEFENSE_ORTHOGRAPHICCAMERA_H
 #define TOWERDEFENSE_ORTHOGRAPHICCAMERA_H
 
-#include "../math/Vector.h"
-#include "../math/MatrixMath.h"
+#include <ext.hpp>
+#include "Camera.h"
 
-class OrthographicCamera
+class OrthographicCamera : public Camera
 {
 private:
-    Mat4f projectionMatrix;
-    Mat4f viewMatrix;
-    Mat4f combined; // (view * projection)
-
-    Vec3f position;
     float rotation = 0;
 
-    bool recalculate =  true;
+    float left;
+    float bottom;
+
 public:
-    OrthographicCamera(float left, float right, float bottom, float top):
-    projectionMatrix(math::ortho(left,right,bottom,top,-1.0,1.0))
-    {}
-
-    void update()
+    OrthographicCamera(float left, float right, float bottom, float top, float near = -1.0, float far = 1.0)
     {
-        Mat4f transform = math::translate(Mat4f(1.0f), position);
-        transform = math::rotateZ(transform, rotation);
-
-        //viewMatrix = math::inverse(transform);
-        viewMatrix = transform;
-        combined =  viewMatrix*projectionMatrix;
+        this->left = left;
+        this->bottom = bottom;
+        //projection = math::ortho(left, right, bottom, top, near, far);
+        //this->width = right;
+        //this->height = top;
+        //this->aspect=width/height;
+        this->position = glm::vec3(0,0,0);
+        resize(right,top);
     }
 
-    void setPosition(const Vec3f &newPosition) {
-        this->position = newPosition;
-        recalculate=true;
+    void update() override
+    {
+        if (updateMatrix)
+        {
+            //view = math::translate(Mat4f(1.0f), position);
+            //view = math::rotateZ(view, rotation);
+            view = glm::translate(glm::mat4(1.0f),position);
+            view = glm::rotate(view,glm::radians(rotation),glm::vec3(0,0,1));
+
+            combined = view * projection;
+        }
     }
-    void setRotation(float newRotation) {
+
+    void setRotation(float newRotation)
+    {
         this->rotation = newRotation;
-        recalculate=true;
+        updateMatrix = true;
     }
 
-    const Vec3f &getPosition() const { return position; }
+    void resize(float screenX, float screenY) override
+    {
+        this->width=screenX;
+        this->height=screenY;
+        this->aspect=width/height;
+        projection = glm::ortho(left, width, bottom, height, near, far);
+        updateMatrix = true;
+    }
+
     float getRotation() const { return rotation; }
-
-    const Mat4f& getProjectionMatrix() const { return projectionMatrix; };
-    const Mat4f& getViewMatrix() const { return viewMatrix; };
-    const Mat4f& getCombined() const { return combined; };
-
 
 };
 

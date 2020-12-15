@@ -12,12 +12,12 @@ class Sprite
 {
 
 public:
-    Vec2f position;
-    Vec2f movement;
-    Vec2f size;
-    Texture2D texture;
+    glm::vec2 position;
+    glm::vec2 movement;
+    glm::vec2 size;
+    Ref<Texture2D> texture;
 
-    Sprite( Vec2f position, Vec2f movement,  Vec2f size,  Texture2D texture);
+    Sprite( glm::vec2 position, glm::vec2 movement,  glm::vec2 size,  Ref<Texture2D> texture);
 
     void update(float dt);
 

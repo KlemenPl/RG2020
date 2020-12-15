@@ -30,14 +30,13 @@ public:
 
     void generate(uint32_t width, uint32_t height, unsigned char *data);
 
-    void dispose();
-
     void bind() const override;
     float getU0() const override;
     float getV0() const override;
     float getU1() const override;
     float getV1() const override;
     uint32_t getID()const override;
+    virtual ~Texture2D();
 
 
 };

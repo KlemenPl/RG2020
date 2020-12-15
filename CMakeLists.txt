@@ -34,6 +34,7 @@ include_directories(external/imgui/)
 include_directories(external/stb_image/)
 include_directories(external/stb_truetype/)
 include_directories(external/raudio/)
+include_directories(external/glm/)
 
 set(SOURCE src/main.cpp)
 set(PROJECT_NAME TowerDefense)

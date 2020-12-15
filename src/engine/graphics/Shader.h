@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <cstring>
 #include <string>
-#include "../math/Matrix.h"
+#include <mat4x4.hpp>
 
 enum ShaderType :char{
     VERTEX,
@@ -53,9 +53,8 @@ public:
 
     void setUniform(const std::string &name, int v1, int v2);
 
-    void setUniform(const std::string &name, const Mat4f& mat4F, bool transpose = false);
-
-    void dispose() const;
+    void setUniform(const std::string &name, const glm::mat4& mat4f, bool transpose = false);
+    virtual ~Shader();
 
     uint32_t ID;
 };

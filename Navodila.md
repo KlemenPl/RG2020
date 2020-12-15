@@ -50,5 +50,6 @@ Po izvršenih ukazih bo nastala nova datoteka `TowerDefense.exe` znotraj `build`
 - Dear_ImGui (UI za razhroščevanje igre) - https://github.com/ocornut/imgui
 - stb_truetype (font) - https://github.com/nothings/stb/blob/master/stb_truetype.h
 - raudio.h (audio) - https://www.raylib.com/ (od raylib-a je samo uporabljena raudo.h knjižnica, ki je samostojna)
+- spdlog (logging) - https://github.com/gabime/spdlog
 
 Za urejanje projekta se lahko uporablja poljubni urejevalnik besedila oziroma IDE, ki podpira cmake (jaz sem uporabljal CLion od JetBrains)

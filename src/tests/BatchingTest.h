@@ -8,6 +8,7 @@
 #include "Test.h"
 #include <vector>
 #include <sstream>
+#include "../engine/Core.h"
 #include "../engine/rendering/Renderer2D.h"
 #include "../engine/camera/OrthographicCamera.h"
 #include "../engine/rendering/Sprite.h"
@@ -21,13 +22,9 @@
  * na sekundo brez problema. V testu je uporabljenih 31 različnih
  * tekstur (približno 160x160 pikslov na teksturo).
  *
- * Sem primerjal moj pristop risanja tudi z LibGDX framework in Godot
- * game enginom. Zelo presenetilo, ko sem ugotovil, da je moj pristop
- * risanja precej hitrejši :)
- *
- * Največje ozko grlo je po vsej verjetnosti CPU. Operacije z std::unordered_map
- * porabijo približno 40% časa v draw() funkciji. Uporaba grafične kartice
- * pa je zelo nizka (cca. 10%).
+ * Možno bi bilo stisniti še več zmogljivosti. Največje ozko grlo je po vsej
+ * verjetnosti CPU. Operacije z std::unordered_map porabijo približno 40%
+ * časa v draw() funkciji. Uporaba grafične kartice pa je zelo nizka (cca. 10%).
  *
  * Mogoče bi se še dalo dodatno optimizirati, da z uporabo geometrijskega
  * senčilnika pošljemo središče objekta, rotacijo in velikost in nato naj
@@ -46,12 +43,12 @@ private:
 
     std::stringstream ss;
 
-    BitmapFont *font;
+    Ref<BitmapFont> font;
 
     float deltaTime{};
     float lastFrame{};
 
-    const int maxSprites = 200000;
+    const int maxSprites = 120000;
     int numberOfSprites = 10;
     std::vector<Sprite*> *sprites;
 

@@ -6,6 +6,7 @@
 #define TOWERDEFENSE_RENDERINGCAPABILITIES_H
 
 #include <glad/glad.h>
+#include <iostream>
 
 class RenderingCapabilities
 {

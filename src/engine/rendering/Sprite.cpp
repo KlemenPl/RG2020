@@ -4,13 +4,13 @@
 
 #include "Sprite.h"
 
-Sprite::Sprite( Vec2f position,  Vec2f movement,  Vec2f size,  Texture2D texture) : position(
+Sprite::Sprite( glm::vec2 position,  glm::vec2 movement,  glm::vec2 size,  Ref<Texture2D> texture) : position(
         position), movement(movement), size(size), texture(texture)
 {}
 
 void Sprite::draw(Renderer2D &renderer2D)
 {
-    renderer2D.draw(texture, position, size);
+    renderer2D.draw(*texture, position, size);
 }
 
 void Sprite::update(float dt)

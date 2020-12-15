@@ -6,11 +6,10 @@
 #define TOWERDEFENSE_RENDERER2D_H
 
 #include <glad/glad.h>
+#include "../Core.h"
 #include "../graphics/Shader.h"
 #include "../graphics/Texture2D.h"
 #include "../graphics/Color.h"
-#include "../math/Matrix.h"
-#include "../math/Vector.h"
 #include "../graphics/BitmapFont.h"
 
 /*
@@ -35,13 +34,13 @@ class Renderer2D
 {
 
 private:
-    Shader *shader{};
+    Ref<Shader> shader;
     uint32_t VAO{};
     uint32_t VBO{};
     uint32_t IBO{};
     uint32_t quadsPerBatch{};
 
-    const Mat4f *projMatrix{};
+    const glm::mat4 *projMatrix{};
 
     uint32_t verticesSize{};
     uint32_t indicesSize{};
@@ -61,17 +60,17 @@ private:
     int *sampledTextures{};
 
 public:
-    explicit Renderer2D(Shader *shader);
+    explicit Renderer2D(Ref<Shader> shader);
 
     ~Renderer2D();
 
-    void draw(const UVRegion &region, const Vec2f &pos, const Vec2f &size,
-              const Vec2f &origin = Vec2f{0.0f, 0.0f}, const Vec2f &scale = Vec2f{1.0f, 1.0f},
+    void draw(const UVRegion &region, const glm::vec2 &pos, const glm::vec2 &size,
+              const glm::vec2 &origin = glm::vec2{0.0f, 0.0f}, const glm::vec2 &scale = glm::vec2{1.0f, 1.0f},
               const Color &color = Colors::WHITE,
               float rotation = 0.0f, bool flipX = false, bool flipY = false);
 
-    void draw(BitmapFont &font, const std::string &text, const Vec2f &pos,
-              const Vec2f &scale = Vec2f(1.0f, 1.0f),
+    void draw(BitmapFont &font, const std::string &text, const glm::vec2 &pos,
+              const glm::vec2 &scale = glm::vec2(1.0f, 1.0f),
               const Color &color = Colors::WHITE, float rotation = 0.0f);
 
     void begin();
@@ -80,7 +79,7 @@ public:
 
     void end();
 
-    void setProjectionMatrix(const Mat4f &mat);
+    void setProjectionMatrix(const glm::mat4 &mat);
 
     // should not be copied!!
     Renderer2D(const Renderer2D &) = delete;

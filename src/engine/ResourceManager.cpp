@@ -26,25 +26,25 @@ void ResourceManager::dispose()
 ResourceManager::~ResourceManager()
 {
     // freeing up memory
-    for (auto &shader:shaders)
-        shader.second.dispose();
-    for (auto &texture:textures)
-        texture.second.dispose();
+    //for (auto &shader:shaders)
+    //    shader.second->~Shader();
+    //for (auto &texture:textures)
+    //    texture.second->~Texture2D();
     ResourceManager::shaders.clear();
     ResourceManager::textures.clear();
 
     // music cleanup
     for (auto &music:musics)
-        UnloadMusicStream(music.second);
+        UnloadMusicStream(*music.second);
     // sound cleanup
     for (auto &sound:sounds)
-        UnloadSound(sound.second);
+        UnloadSound(*sound.second);
     ResourceManager::musics.clear();
     ResourceManager::sounds.clear();
 
     // bitmap font cleanup
-    for (auto &font:fonts)
-        font.second.dispose();
+    //for (auto &font:fonts)
+    //    font.second->~BitmapFont();
     ResourceManager::fonts.clear();
 }
 
@@ -57,8 +57,8 @@ std::string readFile(const char *path)
     return sstream.str();
 }
 
-// probably not the best way, but good enough
-std::string applyArgument(std::string &source, ShaderSourceArgument &arg)
+// probably not the best or most efficent way, but it's good enough
+std::string applyArgument(const std::string &source, const ShaderSourceArgument &arg)
 {
     std::string fullIdentifier = "{" + arg.identifier + "}";
     unsigned long startIndex = source.find(fullIdentifier);
@@ -68,8 +68,6 @@ std::string applyArgument(std::string &source, ShaderSourceArgument &arg)
     unsigned long endIndex = startIndex + fullIdentifier.size();
 
     return source.substr(0, startIndex) + arg.argument + source.substr(endIndex, std::string::npos);
-
-
 }
 
 
@@ -113,58 +111,57 @@ void ResourceManager::loadShader(const char *vsFile, const char *fsFile, const c
 
     }
 
-    Shader shader;
-    shader.compile(vertexSource.c_str(), fragmentSource.c_str(),
-                   geometryShaderPresent ? geometrySource.c_str() : nullptr);
-    instance->shaders[name] = shader;
-
+    Shader *shader = new Shader;
+    shader->compile(vertexSource.c_str(), fragmentSource.c_str(),
+                    geometryShaderPresent ? geometrySource.c_str() : nullptr);
+    instance->shaders[name] = Ref<Shader>(shader);
 }
 
 void ResourceManager::loadWhitePixelTexture()
 {
-    Texture2D texture2D;
-    texture2D.internalFormat = GL_RGBA;
-    texture2D.imageFormat = GL_RGBA;
-    texture2D.filterMin=GL_LINEAR;
-    texture2D.wrapS=GL_CLAMP_TO_EDGE;
-    texture2D.wrapT=GL_CLAMP_TO_EDGE;
+    Texture2D *texture2D = new Texture2D;
+    texture2D->internalFormat = GL_RGBA;
+    texture2D->imageFormat = GL_RGBA;
+    texture2D->filterMin = GL_LINEAR;
+    texture2D->wrapS = GL_CLAMP_TO_EDGE;
+    texture2D->wrapT = GL_CLAMP_TO_EDGE;
 
     int width = 2;
     int height = 2;
     unsigned char data[]{255, 255, 255, 255, 255, 255, 255, 255,
                          255, 255, 255, 255, 255, 255, 255, 255};
-    texture2D.generate(width, height, data);
+    texture2D->generate(width, height, data);
 
-    instance->textures["sshape"] = texture2D;
+    instance->textures["sshape"] = Ref<Texture2D>(texture2D);
 }
 
 void ResourceManager::loadTexture(const char *textureFile, std::string name, bool alpha = true)
 {
-    Texture2D texture2D;
+    Texture2D *texture2D = new Texture2D;
     if (alpha)
     {
-        texture2D.internalFormat = GL_RGBA;
-        texture2D.imageFormat = GL_RGBA;
+        texture2D->internalFormat = GL_RGBA;
+        texture2D->imageFormat = GL_RGBA;
     }
     // load image
     int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(true);
     unsigned char *data = stbi_load(textureFile, &width, &height, &nrChannels, 0);
     // now generate texture
-    texture2D.generate(width, height, data);
+    texture2D->generate(width, height, data);
     // and finally free image data
     stbi_image_free(data);
 
-    instance->textures[name] = texture2D;
+    instance->textures[name] = Ref<Texture2D>(texture2D);
 }
 
 void ResourceManager::loadMusic(const char *musicFile, std::string name)
 {
-    instance->musics[name] = LoadMusicStream(musicFile);
+    instance->musics[name] = std::make_shared<Music>(LoadMusicStream(musicFile));
 }
 void ResourceManager::loadSound(const char *soundFile, std::string name)
 {
-    instance->sounds[name] = LoadSound(soundFile);
+    instance->sounds[name] = std::make_shared<Sound>(LoadSound(soundFile));
 }
 
 void ResourceManager::loadFont(const char *fontFile, std::string name, float fontSize, int atlasWidth, int atlasHeight,
@@ -179,30 +176,30 @@ void ResourceManager::loadFont(const char *fontFile, std::string name, float fon
     unsigned char *ttf_buffer = new unsigned char[fsize];
     fread(ttf_buffer, 1, fsize, fopen(fontFile, "rb"));
 
-    BitmapFont font;
-    font.generate(fontSize, atlasWidth, atlasHeight, padding, startChar, numChars, ttf_buffer, fsize);
+    BitmapFont *font = new BitmapFont;
+    font->generate(fontSize, atlasWidth, atlasHeight, padding, startChar, numChars, ttf_buffer, fsize);
     delete[] ttf_buffer;
-    instance->fonts[name] = font;
+    instance->fonts[name] = Ref<BitmapFont>(font);
 }
 
-Shader &ResourceManager::getShader(const std::string &name)
+Ref<Shader> ResourceManager::getShader(const std::string &name)
 {
     return instance->shaders[name];
 }
-Texture2D &ResourceManager::getTexture2D(const std::string &name)
+Ref<Texture2D> ResourceManager::getTexture2D(const std::string &name)
 {
     return instance->textures[name];
 }
 
-Music &ResourceManager::getMusic(const std::string &name)
+Ref<Music> ResourceManager::getMusic(const std::string &name)
 {
     return instance->musics[name];
 }
-Sound &ResourceManager::getSound(const std::string &name)
+Ref<Sound> ResourceManager::getSound(const std::string &name)
 {
     return instance->sounds[name];
 }
-BitmapFont &ResourceManager::getFont(const std::string &name)
+Ref<BitmapFont> ResourceManager::getFont(const std::string &name)
 {
     return instance->fonts[name];
 }

@@ -10,11 +10,12 @@ Shader::Shader()
 {
 }
 
-void Shader::dispose() const
+Shader::~Shader()
 {
     // cleaning up
     glDeleteProgram(ID);
 }
+
 
 Shader &Shader::bind()
 {
@@ -139,7 +140,7 @@ void Shader::setUniform(const std::string &name, int v1, int v2)
 {
     glUniform2i(getUniformLocation(name), v1, v2);
 }
-void Shader::setUniform(const std::string &name, const Mat4f &mat4F, bool transpose)
+void Shader::setUniform(const std::string &name, const glm::mat4 &mat4f, bool transpose)
 {
-    glUniformMatrix4fv(getUniformLocation(name), 1, transpose, mat4F.vals);
+    glUniformMatrix4fv(getUniformLocation(name), 1, transpose, &mat4f[0][0]);
 }
