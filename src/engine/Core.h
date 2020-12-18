@@ -5,6 +5,8 @@
 #ifndef TOWERDEFENSE_CORE_H
 #define TOWERDEFENSE_CORE_H
 
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <memory>
 
 // std::unique_ptr / std::shared_ptr is a mouthful to write

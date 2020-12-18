@@ -4,7 +4,7 @@
 #include "game/Game.h"
 #include "tests/BatchingTest.h"
 
-#include "engine/camera/PerspectiveCamera.h"
+#include "engine/loader/Loader.h"
 
 #define DEBUG_MODE 1
 
@@ -22,6 +22,8 @@ void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
  */
 int main(int argc, char *argv[])
 {
+
+    Model* model = Loader::loadOBJ("res/models/turret_single.obj");
 #if RUN_BATCHING_TEST
     BatchingTest batchingTest{};
     batchingTest.initTest();
@@ -53,6 +55,11 @@ int main(int argc, char *argv[])
     return 0;
 #endif
 }
+
+/*
+ * Ena najboljših novosti v OpenGL 4.3 :)
+ * Pokaže tudi call stack, da lahko veš kateri OpenGL klic je povzročil napako.
+ */
 void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
                                      GLenum severity, GLsizei length,
                                      const GLchar *msg, const void *data)
@@ -79,7 +86,7 @@ void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
             _source = "APPLICATION";
             break;
         case GL_DEBUG_SOURCE_OTHER:
-            _source = "UNKNOWN";
+            _source = "OTHER";
             break;
         default:
             _source = "UNKNOWN";

@@ -94,30 +94,44 @@ void Shader::compile(const char *vsSource, const char *fsSource, const char *gsS
 bool Shader::validate(uint32_t object, ShaderType type)
 {
     int status;
-    glGetShaderiv(object, type == SHADER_PROGRAM ? GL_LINK_STATUS : GL_COMPILE_STATUS, &status);
-
-    if (status == 0)
+    if (type == SHADER_PROGRAM)
     {
-        // failed to validate
+        glGetProgramiv(object, GL_LINK_STATUS, &status);
 
-        int errorLength;
-        glGetShaderiv(object, GL_INFO_LOG_LENGTH, &errorLength);
+        if (!status)
+        {
+            int errorLength;
+            glGetProgramiv(object, GL_INFO_LOG_LENGTH, &errorLength);
+            char errorMessage[errorLength];
+            glGetProgramInfoLog(object, errorLength, &errorLength, errorMessage);
+            std::cout << "[ERROR::SHADER]\t[Link-time error]:\t";
+            std::cout << errorMessage << std::endl;
 
-        // message
-        char errorMessage[errorLength];
-        glGetShaderInfoLog(object, errorLength, &errorLength, errorMessage);
-        std::cout << "[ERROR::SHADER]\t";
-        if (type == SHADER_PROGRAM)
-            std::cout << "[Link-time error]:\n";
-        else if (type == VERTEX)
-            std::cout << "[Vertex Shader Compile-timer error]:\n";
-        else if (type == FRAGMENT)
-            std::cout << "[Fragment Shader Compile-timer error]:\n";
-        else if (type == GEOMETRY)
-            std::cout << "[Geometry Shader Compile-timer error]:\n";
-        std::cout << errorMessage << std::endl;
+            return false;
+        }
+    } else
+    {
+        glGetShaderiv(object, GL_COMPILE_STATUS, &status);
 
-        return false;
+        if (!status)
+        {
+            int errorLength;
+            glGetShaderiv(object, GL_INFO_LOG_LENGTH, &errorLength);
+
+            // message
+            char errorMessage[errorLength];
+            glGetShaderInfoLog(object, errorLength, &errorLength, errorMessage);
+            std::cout << "[ERROR::SHADER]\t";
+            if (type == VERTEX)
+                std::cout << "[Vertex Shader Compile-timer error]:\n";
+            else if (type == FRAGMENT)
+                std::cout << "[Fragment Shader Compile-timer error]:\n";
+            else if (type == GEOMETRY)
+                std::cout << "[Geometry Shader Compile-timer error]:\n";
+            std::cout << errorMessage << std::endl;
+
+            return false;
+        }
     }
 
     return true;

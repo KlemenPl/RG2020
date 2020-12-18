@@ -2,8 +2,7 @@
 // Created by klemen on 12/12/2020.
 //
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "../engine/Core.h"
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -92,6 +91,8 @@ bool Game::init()
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+    //ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -175,7 +176,7 @@ void Game::run()
 }
 
 /*
- * switches screen
+ * Switches screen
  */
 void Game::setScreen(ScreenType screenType)
 {

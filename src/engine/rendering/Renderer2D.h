@@ -5,7 +5,6 @@
 #ifndef TOWERDEFENSE_RENDERER2D_H
 #define TOWERDEFENSE_RENDERER2D_H
 
-#include <glad/glad.h>
 #include "../Core.h"
 #include "../graphics/Shader.h"
 #include "../graphics/Texture2D.h"
@@ -65,12 +64,13 @@ public:
     ~Renderer2D();
 
     void draw(const UVRegion &region, const glm::vec2 &pos, const glm::vec2 &size,
-              const glm::vec2 &origin = glm::vec2{0.0f, 0.0f}, const glm::vec2 &scale = glm::vec2{1.0f, 1.0f},
+              float originX = 0, float originY = 0,
+              float scaleX = 1.0f, float scaleY = 1.0f,
               const Color &color = Colors::WHITE,
               float rotation = 0.0f, bool flipX = false, bool flipY = false);
 
-    void draw(BitmapFont &font, const std::string &text, const glm::vec2 &pos,
-              const glm::vec2 &scale = glm::vec2(1.0f, 1.0f),
+    void draw(const BitmapFont &font, const std::string &text, const glm::vec2 &pos,
+              float scaleX = 1.0f, float scaleY = 1.0f,
               const Color &color = Colors::WHITE, float rotation = 0.0f);
 
     void begin();
@@ -81,14 +81,15 @@ public:
 
     void setProjectionMatrix(const glm::mat4 &mat);
 
-    // should not be copied!!
-    Renderer2D(const Renderer2D &) = delete;
-    Renderer2D() = default;
-    Renderer2D &operator=(const Renderer2D &) = delete;
     uint32_t getDrawCalls() const;
     bool isDrawing() const;
     uint32_t getVerticesSize() const;
     uint32_t getIndicesSize() const;
+
+    // should not be copied!!
+    Renderer2D(const Renderer2D &) = delete;
+    Renderer2D() = default;
+    Renderer2D &operator=(const Renderer2D &) = delete;
 
 
 };

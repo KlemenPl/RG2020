@@ -126,7 +126,7 @@ void BatchingTest::start()
                 sprite->movement.y = -sprite->movement.y;
 
             renderer2D->draw(*sprite->texture, sprite->position, sprite->size,
-                             glm::vec2(0, 0), glm::vec2(1.0f, 1.0f), Colors::WHITE, 0);
+                             0, 0, 1, 1, Colors::WHITE, 0);
         }
 
         ss << "Num Sprites: ";
@@ -135,11 +135,11 @@ void BatchingTest::start()
         renderer2D->draw(*ResourceManager::getTexture2D("sshape"), glm::vec2(0, 720 - 35),
                          glm::vec2(ResourceManager::getFont("roboto")->
                                  getTextWidth(ss.str(), 0.5f) + 10, 40),
-                         glm::vec2(0, 0), glm::vec2(1, 1),
+                         0, 0, 1, 1,
                          Color(0, 0, 0, 0.6f));
 
         renderer2D->draw(*ResourceManager::getFont("roboto"), ss.str(),
-                         glm::vec2(0, 720 - 25), glm::vec2(0.5f, 0.5f), Colors::RED);
+                         glm::vec2(0, 720 - 25), 0.5f, 0.5f, Colors::RED);
 
         startTime = glfwGetTime() - startTime;
         startTime *= 1000;

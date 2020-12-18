@@ -5,7 +5,7 @@
 #ifndef TOWERDEFENSE_TEXTURE2D_H
 #define TOWERDEFENSE_TEXTURE2D_H
 
-#include <glad/glad.h>
+#include "../Core.h"
 #include "UVRegion.h"
 
 

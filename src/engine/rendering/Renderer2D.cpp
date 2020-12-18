@@ -143,7 +143,8 @@ void Renderer2D::begin()
  *
  */
 void Renderer2D::draw(const UVRegion &region, const glm::vec2 &pos, const glm::vec2 &size,
-                      const glm::vec2 &origin, const glm::vec2 &scale,
+                      float originX, float originY,
+                      float scaleX, float scaleY,
                       const Color &color,
                       float rotation, bool flipX, bool flipY)
 {
@@ -182,26 +183,26 @@ void Renderer2D::draw(const UVRegion &region, const glm::vec2 &pos, const glm::v
     float packedColor = color.pack(); // this takes 5% of the whole draw call
 
     // using Model matrix would be a lot simpler, but this does the same thing faster in my opinion
-    float spaceOriginX = pos.x + origin.x;
-    float spaceOriginY = pos.y + origin.y;
+    float spaceOriginX = pos.x + originX;
+    float spaceOriginY = pos.y + originY;
 
     // to avoid calculating again when assigning to corners
-    float deltaOriginX1 = -origin.x;
+    float deltaOriginX1 = -originX;
     float deltaOriginX2 = size.x;
 
-    float deltaOriginY1 = -origin.x;
-    float deltaOriginY2 = size.y - origin.x;
+    float deltaOriginY1 = -originX;
+    float deltaOriginY2 = size.y - originX;
 
     // applying scale if needed
-    if (scale.x != 1.0f)
+    if (scaleX != 1.0f)
     {
-        deltaOriginX1 *= scale.x;
-        deltaOriginX2 *= scale.x;
+        deltaOriginX1 *= scaleX;
+        deltaOriginX2 *= scaleX;
     }
-    if (scale.y != 1.0f)
+    if (scaleY != 1.0f)
     {
-        deltaOriginY1 *= scale.y;
-        deltaOriginY2 *= scale.y;
+        deltaOriginY1 *= scaleY;
+        deltaOriginY2 *= scaleY;
     }
 
 
@@ -342,26 +343,28 @@ float abs(float in)
  * Draws text on the screen at specified position.
  * Will use Renderer2D::draw(Region&...) for drawing the actual glyhs
  */
-void Renderer2D::draw(BitmapFont &font, const std::string &text, const glm::vec2 &pos,
-                      const glm::vec2 &scale, const Color &color, float rotation)
+void Renderer2D::draw(const BitmapFont &font, const std::string &text, const glm::vec2 &pos,
+                      float scaleX, float scaleY,
+                      const Color &color, float rotation)
 {
     float advance = pos.x;
 
     for (const char &c:text)
     {
         const FontCharacter fc = font.charData.at(c);
-
-        float sizeX = (abs(fc.xOff) + abs(fc.xOff2)) * scale.x;
-        float sizeY = (abs(fc.yOff) + abs(fc.yOff2)) * scale.y;
+        float sizeX = (abs(fc.xOff) + abs(fc.xOff2)) * scaleX;
+        float sizeY = (abs(fc.yOff) + abs(fc.yOff2)) * scaleY;
 
         // drawing the character
         Renderer2D::draw(fc.region,
-                         glm::vec2(advance + fc.xOff * scale.x, pos.y - fc.yOff * scale.y),
-                         glm::vec2(sizeX, -sizeY), glm::vec2(0, 0), glm::vec2(1.0f, 1.0f),
+                         glm::vec2(advance + fc.xOff * scaleX, pos.y - fc.yOff * scaleY),
+                         glm::vec2(sizeX, -sizeY),
+                         0.0f, 0.0f, // origin
+                         1.0f, 1.0f, // scale
                          color, rotation, false, false);
 
         // moving to the next position
-        advance += fc.xAdvance * scale.x;
+        advance += fc.xAdvance * scaleX;
     }
 
 }

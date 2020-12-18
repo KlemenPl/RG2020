@@ -11,7 +11,7 @@
 class RenderingCapabilities
 {
 private:
-    inline static bool initiated = false;
+    inline static bool initialized = false;
 public:
     inline static int MAX_VERTEX_ATTRIBS;
     inline static int MAX_COMBINED_TEXTURE_IMAGE_UNITS;
@@ -23,13 +23,13 @@ public:
 
     static void init()
     {
-        if (initiated)
+        if (initialized)
         {
-            std::cout << "[Warning] RenderingCapabilities::init(): Already initiated." << std::endl;
+            std::cout << "[Warning] RenderingCapabilities::init(): Already initialized." << std::endl;
             return;
         }
 
-        initiated = true;
+        initialized = true;
         glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &MAX_VERTEX_ATTRIBS);
         glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &MAX_COMBINED_TEXTURE_IMAGE_UNITS);
         glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &MAX_TEXTURE_IMAGE_UNITS);
