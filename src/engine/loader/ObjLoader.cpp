@@ -272,7 +272,7 @@ static void processGroup(std::ifstream &objFile, Group *group,
                          std::unordered_map<std::string, Material *> &materials)
 {
 
-    std::vector<Mesh *> meshes;
+    std::vector<Mesh> meshes;
 
     std::vector<glm::vec3> vertexCoords;
     std::vector<glm::vec3> vertexNormals;
@@ -318,9 +318,9 @@ static void processGroup(std::ifstream &objFile, Group *group,
             // start of faces (process mesh)
             objFile.seekg(place);
 
-            Mesh *mesh = new Mesh;
-            mesh->material = Material(*currentMaterial);
-            processMesh(objFile, mesh, vertexCoords, vertexNormals, textureCoords);
+            Mesh mesh;
+            mesh.material = Material(*currentMaterial);
+            processMesh(objFile, &mesh, vertexCoords, vertexNormals, textureCoords);
             meshes.push_back(mesh);
         }
 
@@ -330,8 +330,8 @@ static void processGroup(std::ifstream &objFile, Group *group,
     group->numMeshes = meshes.size();
     Mesh *meshesArray = new Mesh[meshes.size()];
     for (auto &it:meshes)
-        group->meshes = it;
-    group->meshes = meshesArray;
+        group->meshes.push_back(std::move(it));
+    //group->meshes = meshesArray;
 }
 
 

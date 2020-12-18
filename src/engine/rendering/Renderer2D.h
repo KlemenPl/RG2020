@@ -61,7 +61,7 @@ private:
 public:
     explicit Renderer2D(Ref<Shader> shader);
 
-    ~Renderer2D();
+    virtual ~Renderer2D();
 
     void draw(const UVRegion &region, const glm::vec2 &pos, const glm::vec2 &size,
               float originX = 0, float originY = 0,

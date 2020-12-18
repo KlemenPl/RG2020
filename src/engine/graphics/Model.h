@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include "../Core.h"
+#include "../graphics/Shader.h"
 
 struct Material
 {
@@ -25,14 +26,12 @@ struct Material
     ) : Ka(ka), Kd(kd), Ks(ks), Ns(ns)
     {}
 
-    Material(const Material& material)
-    :Ka(material.Ka),
-    Kd(material.Kd),
-    Ks(material.Ks),
-    Ns(material.Ns)
+    Material(const Material &material)
+            : Ka(material.Ka),
+              Kd(material.Kd),
+              Ks(material.Ks),
+              Ns(material.Ns)
     {}
-
-
 
 
 };
@@ -57,7 +56,7 @@ struct Group
     std::string groupName;
 
     uint32_t numMeshes;
-    Mesh* meshes;
+    std::vector<Mesh> meshes;
 };
 
 class Model
@@ -67,6 +66,7 @@ private:
 public:
     uint32_t modelID;
     std::vector<Group> groups;
+    Ref<Shader> modelShader;
 
     Model()
     {
@@ -77,8 +77,10 @@ public:
     {
         for (auto &it:groups)
         {
-            for(int i=0;i<it.numMeshes;i++)
+            for (int i = 0; i < it.numMeshes; i++)
             {
+                if (it.meshes[i].VBO == 0)
+                    continue;
 
                 glDeleteBuffers(GL_ARRAY_BUFFER, &it.meshes[i].VBO);
                 glDeleteBuffers(GL_ELEMENT_ARRAY_BUFFER, &it.meshes[i].IBO);
@@ -87,7 +89,7 @@ public:
                 delete it.meshes[i].vertices;
                 delete it.meshes[i].indices;
             }
-            delete it.meshes;
+            //delete it.meshes;
         }
     }
 
