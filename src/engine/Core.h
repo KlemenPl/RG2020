@@ -9,9 +9,39 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 
+#define DEBUG_MODE 1 // todo set to 0
+
+/*
+ * Similar to std::shared_pointer. It can be copied without copying the refrence,
+ * needs manual cleenup
+ */
+template<typename T>
+class Ref
+{
+private:
+    T *refrence;
+public:
+    Ref() : refrence(nullptr)
+    {}
+    Ref(T *refrence) : refrence(refrence)
+    {}
+
+    T *operator->()
+    {
+        return refrence;
+    }
+
+    T &operator*()
+    {
+        return *refrence;
+    }
+
+
+};
+
 // std::unique_ptr / std::shared_ptr is a mouthful to write
 template<typename T>
-using Ref = std::shared_ptr<T>; // refrence to be used anywhere
+using SmartRef = std::shared_ptr<T>; // refrence to be used anywhere
 
 template<typename T>
 using Scope = std::unique_ptr<T>; // only available in the scope

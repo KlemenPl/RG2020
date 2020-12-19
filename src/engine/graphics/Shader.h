@@ -9,15 +9,18 @@
 #include <cstring>
 #include <string>
 #include <mat4x4.hpp>
+#include "Material.h"
 
-enum ShaderType :char{
+enum ShaderType : char
+{
     VERTEX,
     FRAGMENT,
     GEOMETRY,
     SHADER_PROGRAM
 };
 
-struct ShaderSourceArgument {
+struct ShaderSourceArgument
+{
     ShaderType shaderType;
     std::string identifier;
     std::string argument;
@@ -40,20 +43,33 @@ public:
     Shader();
 
     // binds shader, and returns refrence for chaining
-    Shader& bind();
+    Shader &bind();
 
     void compile(const char *vsSource, const char *fsSource, const char *gsSource = nullptr);
 
     bool validate(uint32_t object, ShaderType type);
 
-    void setUniform(const std::string &name, float value);
+    // @formatter:off
 
+    void setUniform(const std::string &name, float value);
     void setUniform(const std::string &name, int amount, float *values);
     void setUniform(const std::string &name, int amount, int *values);
-
     void setUniform(const std::string &name, int v1, int v2);
 
+    void setUniform(const std::string &name, const glm::mat2& mat2f, bool transpose = false);
+    void setUniform(const std::string &name, const glm::mat3& mat3f, bool transpose = false);
     void setUniform(const std::string &name, const glm::mat4& mat4f, bool transpose = false);
+
+    void setUniform(const std::string &name, glm::vec1& v);
+    void setUniform(const std::string &name, glm::vec2& v);
+    void setUniform(const std::string &name, glm::vec3& v);
+    void setUniform(const std::string &name, glm::vec4& v);
+
+    void setUniformMaterial( const std::string& name, const Material& material);
+    void setUniformMaterial2(const std::string& name, const Material& material);
+
+    // @formatter:on
+
     virtual ~Shader();
 
     uint32_t ID;

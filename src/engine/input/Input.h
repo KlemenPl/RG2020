@@ -90,6 +90,31 @@ public:
         instance->resizeEvents.clear();
     }
 
+    static void addKeyDownEvent(KeyDownEvent event){
+        instance->keydownEvents.push_back(event);
+    }
+    static void addKeyUpEvent(KeyUpEvent event){
+
+    }
+
+    static void addMouseDownEvent(MouseDownEvent event){
+
+    }
+    static void addMouseUpEvent(MouseUpEvent event){
+
+    }
+
+    static void addMouseMoveEvent(MouseMoveEvent event){
+
+    }
+    static void addMouseScrollEvent(MouseScrollEvent event){
+
+    }
+
+    static void addResizeEvent(ResizeEvent event){
+
+    }
+
     // is key is continiously pressed down
     static bool isKeyDown(int key)
     {

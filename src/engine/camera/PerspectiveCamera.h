@@ -5,7 +5,10 @@
 #ifndef TOWERDEFENSE_PERSPECTIVECAMERA_H
 #define TOWERDEFENSE_PERSPECTIVECAMERA_H
 
+#include <ext.hpp>
 #include "Camera.h"
+
+// todo: start using quaternions, because of gimbal lock
 
 class PerspectiveCamera : public Camera
 {
@@ -35,33 +38,44 @@ public:
         this->width = width;
         this->height = height;
         this->aspect = width / height;
+        this->yaw = -90.0f;
+        this->near = 0.1f;
+        this->far = 100.0f;
+
+        this->combined = glm::mat4(1.0f);
+        this->projection = glm::mat4(1.0f);
+        this->view = glm::mat4(1.0f);
+
         updateMatrix = true;
+        updateProjection = true;
     }
 
     void update() override
     {
         if (updateMatrix)
         {
-            front.x = cosf(glm::radians(yaw)) * cosf(glm::radians(pitch));
-            front.y = sinf(glm::radians(pitch));
-            front.z = sinf(glm::radians(yaw)) * cosf(glm::radians(pitch));
+            front.x = glm::cos(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
+            front.y = glm::sin(glm::radians(pitch));
+            front.z = glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
             front = glm::normalize(front);
 
-            updateMatrix = false;
+            right = glm::normalize(glm::cross(front, worldUp));
+            up = glm::normalize(glm::cross(right, front));
+
+            view = glm::lookAt(position, position + front, up);
         }
 
-        right = glm::normalize(glm::cross(front, worldUp));
-        up = glm::normalize(glm::cross(right, front));
-
-        view = glm::lookAt(position, position + front, up);
 
         if (updateProjection)
         {
-            projection = glm::perspective(FOV, aspect, near, far);
-            updateProjection = false;
+            projection = glm::perspective(glm::radians(FOV), aspect, near, far);
         }
 
-        combined = view * projection;
+        if (updateMatrix || updateProjection)
+            combined =  projection * view;
+
+        updateMatrix = false;
+        updateProjection = false;
     }
 
     void resize(float screenX, float screenY) override
@@ -69,7 +83,7 @@ public:
         this->width = screenX;
         this->height = screenY;
         this->aspect = width / height;
-        updateMatrix = true;
+        updateProjection = true;
     }
 
     void translateWFront(glm::vec3 &value)
@@ -110,7 +124,7 @@ public:
         this->yaw = _yaw;
         this->pitch = _pitch;
 
-        updateProjection = true;
+        updateMatrix = true;
     }
 
     float getFOV()
@@ -126,7 +140,7 @@ public:
     void setYaw(float _yaw)
     {
         this->yaw = _yaw;
-        updateProjection = true;
+        updateMatrix = true;
     }
 
     float getPitch() const
@@ -137,7 +151,7 @@ public:
     void setPitch(float _pitch)
     {
         this->pitch = _pitch;
-        updateProjection = true;
+        updateMatrix = true;
     }
 
     float getRoll() const
@@ -148,7 +162,7 @@ public:
     void setRoll(float _roll)
     {
         this->roll = _roll;
-        updateProjection = true;
+        updateMatrix = true;
     }
 
 };

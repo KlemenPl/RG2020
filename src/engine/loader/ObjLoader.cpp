@@ -4,7 +4,6 @@
 
 #include "Loader.h"
 #include <fstream>
-#include <sstream>
 #include <iostream>
 #include <vector>
 #include <glm.hpp>
@@ -64,7 +63,7 @@ static glm::vec3 getVec3(const std::string &str)
 static void loadMaterials(const char *filePath, std::unordered_map<std::string, Material *> &materials)
 {
     std::string materialName;
-    Material *material = new Material;
+    Material *material = new Material{};
     std::ifstream matFile(filePath);
     std::string line;
 
@@ -98,6 +97,9 @@ static void loadMaterials(const char *filePath, std::unordered_map<std::string, 
 
     if (!materialName.empty())
         materials.emplace(materialName, material);
+    else
+        delete material;
+
     matFile.close();
 }
 
@@ -108,9 +110,11 @@ static void processFace(const std::string &str,
                         std::vector<float> &vertices,
                         std::vector<uint32_t> &indices,
                         std::unordered_map<std::string, uint32_t> &indicesMap,
+                        uint32_t *indicesIndex,
                         bool hasTextCoords, bool hasNormals)
 {
-    if (indicesMap.find(str) == indicesMap.end())
+    auto it = indicesMap.find(str);
+    if (it == indicesMap.end())
     {
         // vertex not in vertices, adding it
         if (!hasTextCoords && !hasNormals)
@@ -123,16 +127,12 @@ static void processFace(const std::string &str,
             vertices.push_back(vertexCoords[vertexIndex].y);
             vertices.push_back(vertexCoords[vertexIndex].z);
 
-            indices.push_back(indices.size());
-            indicesMap[str] = indices.size() - 1;
-
-
-        } else if (!hasTextCoords && hasNormals)
+        } else if (!hasTextCoords)
         {
             // vertices and normals, no texcoords
             uint32_t index = 0;
             uint32_t vertexIndex = std::stoi(nextPart(str, '/', index)) - 1;
-            nextPart(str, '/', index); // can ignore textures part
+            //nextPart(str, '/', index); // can ignore textures part
             uint32_t normalsIndex = std::stoi(nextPart(str, '/', index)) - 1;
 
             // adding vertices
@@ -145,9 +145,7 @@ static void processFace(const std::string &str,
             vertices.push_back(vertexNormals[normalsIndex].y);
             vertices.push_back(vertexNormals[normalsIndex].z);
 
-            indices.push_back(indices.size());
-            indicesMap[str] = indices.size() - 1;
-        } else if (hasTextCoords && !hasNormals)
+        } else if (!hasNormals)
         {
             // vertices and texCoords, no normals
             uint32_t index = 0;
@@ -163,9 +161,7 @@ static void processFace(const std::string &str,
             vertices.push_back(textureCoords[texIndex].x);
             vertices.push_back(textureCoords[texIndex].y);
 
-            indices.push_back(indices.size());
-            indicesMap[str] = indices.size() - 1;
-        } else if (hasNormals && hasTextCoords)
+        } else
         {
             // vertices, normals, texCoords
             uint32_t index = 0;
@@ -187,15 +183,17 @@ static void processFace(const std::string &str,
             vertices.push_back(vertexNormals[normalsIndex].y);
             vertices.push_back(vertexNormals[normalsIndex].z);
 
-            indices.push_back(indices.size());
-            indicesMap[str] = indices.size() - 1;
         }
+
+        indices.push_back(*indicesIndex);
+        indicesMap[str] = *indicesIndex;
+        (*indicesIndex)++;
 
 
     } else
     {
         // vertex already written
-        indices.push_back(indicesMap[str]);
+        indices.push_back(it->second);
     }
 
 }
@@ -211,6 +209,7 @@ static void processMesh(std::ifstream &objFile,
     std::vector<uint32_t> indices;
 
     std::unordered_map<std::string, uint32_t> indicesMap;
+    uint32_t indecesIndex = 0;
 
     std::string line;
     while (std::getline(objFile, line))
@@ -231,19 +230,19 @@ static void processMesh(std::ifstream &objFile,
             processFace(face1,
                         vertexCoords, vertexNormals, textureCoords,
                         vertices, indices,
-                        indicesMap,
+                        indicesMap, &indecesIndex,
                         hasTextCoords,
                         hasNormals);
             processFace(face2,
                         vertexCoords, vertexNormals, textureCoords,
                         vertices, indices,
-                        indicesMap,
+                        indicesMap, &indecesIndex,
                         hasTextCoords,
                         hasNormals);
             processFace(face3,
                         vertexCoords, vertexNormals, textureCoords,
                         vertices, indices,
-                        indicesMap,
+                        indicesMap, &indecesIndex,
                         hasTextCoords,
                         hasNormals);
         } else
@@ -281,7 +280,7 @@ static void processGroup(std::ifstream &objFile, Group *group,
     std::string line;
     int place = 0;
 
-    Material *currentMaterial;
+    Material *currentMaterial = nullptr;
 
     while (std::getline(objFile, line))
     {
@@ -318,33 +317,42 @@ static void processGroup(std::ifstream &objFile, Group *group,
             // start of faces (process mesh)
             objFile.seekg(place);
 
+            bool hasTexCoords = !textureCoords.empty();
+            bool hasNormals = !vertexNormals.empty();
+
             Mesh mesh;
-            mesh.material = Material(*currentMaterial);
-            processMesh(objFile, &mesh, vertexCoords, vertexNormals, textureCoords);
-            meshes.push_back(mesh);
+            if (currentMaterial)
+                mesh.defaultMaterial = Material(*currentMaterial);
+            mesh.hasNormals = hasNormals;
+            mesh.hasTexCoords = hasTexCoords;
+            processMesh(objFile, &mesh, vertexCoords, vertexNormals, textureCoords, hasTexCoords, hasNormals);
+            meshes.push_back(std::move(mesh));
         }
 
         place = objFile.tellg(); // last pos
     }
 
-    group->numMeshes = meshes.size();
-    Mesh *meshesArray = new Mesh[meshes.size()];
+    //group->numMeshes = meshes.size();
+    //Mesh *meshesArray = new Mesh[meshes.size()];
     for (auto &it:meshes)
-        group->meshes.push_back(std::move(it));
+        group->meshes.push_back(it);
+    group->numMeshes = group->meshes.size();
     //group->meshes = meshesArray;
 }
 
 
 namespace Loader {
-    Model *loadOBJ(const char *filePath, bool recalculateNormals, bool ignoreVertexNormals)
+    RawModel *loadOBJ(const char *filePath)
     {
-        Model *model = new Model;
+        RawModel *model = new RawModel;
 
         std::ifstream objFile(filePath);
         std::string line;
 
         std::unordered_map<std::string, Material *> materials;
         std::vector<Group> groups;
+
+        int place = 0;
 
         while (std::getline(objFile, line))
         {
@@ -369,11 +377,15 @@ namespace Loader {
             {
                 // no group specified
                 Group group;
+                // moving back to prev line
+                objFile.seekg(place);
                 processGroup(objFile, &group, materials);
                 group.groupName = "default";
                 groups.push_back(group);
                 break;
             }
+
+            place = objFile.tellg(); // last pos
         }
 
         objFile.close();

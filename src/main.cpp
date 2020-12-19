@@ -2,15 +2,21 @@
 #include <sstream>
 
 #include "game/Game.h"
-#include "tests/BatchingTest.h"
-
 #include "engine/loader/Loader.h"
+#include "engine/Core.h"
 
-#define DEBUG_MODE 1
+#include "tests/BatchingTest.h"
+#include "tests/InstancingTest.h"
+
 
 #define RUN_BATCHING_TEST 0
-#define RUN_INSTANCING_TEST 0
+#define RUN_INSTANCING_TEST 1
+#define RUN_PARTICLE_TEST 0
 
+/*
+ * Ena najboljših novosti v OpenGL 4.3 :)
+ * Pokaže tudi call stack, da lahko veš kateri OpenGL klic je povzročil napako.
+ */
 // Callback function for printing debug statements
 void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
                                      GLenum severity, GLsizei length,
@@ -18,12 +24,13 @@ void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 
 
 /*
- * Todo: start using smart pointers, raw pointers are evil
+ * Todo: start using smart pointers more
  */
 int main(int argc, char *argv[])
 {
 
-    Model* model = Loader::loadOBJ("res/models/turret_single.obj");
+    //Model* model = Loader::loadOBJ("res/models/turret_single.obj");
+    //RawModel* model = Loader::loadOBJ("res/models/bunny.obj");
 #if RUN_BATCHING_TEST
     BatchingTest batchingTest{};
     batchingTest.initTest();
@@ -31,6 +38,13 @@ int main(int argc, char *argv[])
     batchingTest.start();
     return 0;
 #elif RUN_INSTANCING_TEST
+    InstancingTest instancingTest{};
+    instancingTest.initTest();
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(GLDebugMessageCallback, nullptr);
+    instancingTest.init();
+    instancingTest.start();
     return 0;
 #else
     // declaring game on the free store (heap memory)
@@ -56,10 +70,6 @@ int main(int argc, char *argv[])
 #endif
 }
 
-/*
- * Ena najboljših novosti v OpenGL 4.3 :)
- * Pokaže tudi call stack, da lahko veš kateri OpenGL klic je povzročil napako.
- */
 void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
                                      GLenum severity, GLsizei length,
                                      const GLchar *msg, const void *data)

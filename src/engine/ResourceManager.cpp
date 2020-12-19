@@ -157,11 +157,11 @@ void ResourceManager::loadTexture(const char *textureFile, std::string name, boo
 
 void ResourceManager::loadMusic(const char *musicFile, std::string name)
 {
-    instance->musics[name] = std::make_shared<Music>(LoadMusicStream(musicFile));
+    instance->musics[name] = Ref<Music>(new Music(LoadMusicStream(musicFile)));
 }
 void ResourceManager::loadSound(const char *soundFile, std::string name)
 {
-    instance->sounds[name] = std::make_shared<Sound>(LoadSound(soundFile));
+    instance->sounds[name] = Ref<Sound>(new Sound(LoadSound(soundFile)));
 }
 
 void ResourceManager::loadFont(const char *fontFile, std::string name, float fontSize, int atlasWidth, int atlasHeight,

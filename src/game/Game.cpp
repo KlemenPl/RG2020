@@ -140,6 +140,10 @@ void Game::run()
     double lastTime;
     double currentTime;
 
+    /* Main game loop with
+     *
+     * https://gameprogrammingpatterns.com/game-loop.html
+     */
     while (!glfwWindowShouldClose(window))
     {
 
@@ -161,6 +165,9 @@ void Game::run()
             frames = 0;
         }
 
+        /* Poll for and process events */
+        glfwPollEvents();
+
         // update
         currentScreen->update(dt);
         // render
@@ -169,8 +176,6 @@ void Game::run()
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
-        /* Poll for and process events */
-        glfwPollEvents();
 
     }
 }
@@ -192,7 +197,7 @@ void Game::setScreen(ScreenType screenType)
 
     currentScreen = newScreen;
     currentScreen->show();
- }
+}
 
 void Game::setTitle(std::string newTitle)
 {

@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <utility>
 #include "Renderer2D.h"
 #include "RenderingCapabilities.h"
 #include "../graphics/Vertex2D.h"
@@ -19,7 +20,6 @@ Renderer2D::Renderer2D(Ref<Shader> shader) : shader(shader)
     this->maxTextures = RenderingCapabilities::MAX_TEXTURE_IMAGE_UNITS;
     //this->maxTextures = 20;
     this->sampledTextures = new int[maxTextures];
-
     for (int i = 0; i < maxTextures; i++)
         sampledTextures[i] = 0;
 
@@ -65,7 +65,7 @@ Renderer2D::Renderer2D(Ref<Shader> shader) : shader(shader)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex2D), (const void *) offsetof(Vertex2D, pos));
 
     glEnableVertexAttribArray(1); // texture position
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex2D), (const void *) offsetof(Vertex2D, texCoords));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, sizeof(Vertex2D), (const void *) offsetof(Vertex2D, texCoords));
 
     glEnableVertexAttribArray(2); // colour
     glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex2D), (const void *) offsetof(Vertex2D, color));

@@ -154,7 +154,51 @@ void Shader::setUniform(const std::string &name, int v1, int v2)
 {
     glUniform2i(getUniformLocation(name), v1, v2);
 }
+
+void Shader::setUniform(const std::string &name, const glm::mat2 &mat2f, bool transpose)
+{
+    glUniformMatrix2fv(getUniformLocation(name), 1, transpose, &mat2f[0][0]);
+}
+void Shader::setUniform(const std::string &name, const glm::mat3 &mat3f, bool transpose)
+{
+    glUniformMatrix2fv(getUniformLocation(name), 1, transpose, &mat3f[0][0]);
+}
 void Shader::setUniform(const std::string &name, const glm::mat4 &mat4f, bool transpose)
 {
     glUniformMatrix4fv(getUniformLocation(name), 1, transpose, &mat4f[0][0]);
+}
+
+void Shader::setUniform(const std::string &name, glm::vec1 &v)
+{
+    glUniform1fv(getUniformLocation(name), 1, &v[0]);
+}
+void Shader::setUniform(const std::string &name, glm::vec2 &v)
+{
+    glUniform2fv(getUniformLocation(name), 1, &v[0]);
+}
+void Shader::setUniform(const std::string &name, glm::vec3 &v)
+{
+    glUniform3fv(getUniformLocation(name), 1, &v[0]);
+}
+void Shader::setUniform(const std::string &name, glm::vec4 &v)
+{
+    glUniform4fv(getUniformLocation(name), 1, &v[0]);
+}
+
+void Shader::setUniformMaterial(const std::string &name, const Material &material)
+{
+    glUniform3fv(getUniformLocation(name + ".Ka"), 1, &material.Ka.x);
+    glUniform3fv(getUniformLocation(name + ".Kd"), 1, &material.Kd.x);
+    glUniform3fv(getUniformLocation(name + ".Ks"), 1, &material.Ks.x);
+
+    glUniform1f(getUniformLocation(name + ".Ns"), material.Ns);
+}
+
+void Shader::setUniformMaterial2(const std::string &name, const Material &material)
+{
+    glUniform3fv(getUniformLocation(name + ".Ka"), 1, &material.Ka.x);
+    glUniform3fv(getUniformLocation(name + ".Kd"), 1, &material.Kd.x);
+    glUniform3fv(getUniformLocation(name + ".Ks"), 1, &material.Ks.x);
+
+    //glUniform1f(getUniformLocation(name + ".Ns"), material.Ns);
 }
