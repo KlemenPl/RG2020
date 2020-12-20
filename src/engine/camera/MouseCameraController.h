@@ -12,12 +12,12 @@ class Input;
 class MouseCameraController
 {
 private:
-    PerspectiveCamera &camera;
+    PerspectiveCamera *camera;
 public:
-    explicit MouseCameraController(PerspectiveCamera &camera) : camera(camera)
+    explicit MouseCameraController(PerspectiveCamera *camera) : camera(camera)
     {}
 
-    void setup(Input *inputInstance);
+    void setup();
 };
 
 

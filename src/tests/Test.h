@@ -37,7 +37,7 @@ public:
         #endif
         glfwWindowHint(GLFW_RESIZABLE, false);
 
-        this->window = glfwCreateWindow(1280, 720, "Batching Test", nullptr, nullptr);
+        this->window = glfwCreateWindow(1280, 720, "Test", nullptr, nullptr);
         glfwMakeContextCurrent(window);
         if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
         {

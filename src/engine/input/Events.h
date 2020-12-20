@@ -5,6 +5,10 @@
 #ifndef TOWERDEFENSE_EVENTS_H
 #define TOWERDEFENSE_EVENTS_H
 
+#include <functional>
+#include "KeyActions.h"
+#include "KeyCodes.h"
+
 /**************
  * INTERFACES
  **************
@@ -12,62 +16,61 @@
  * Interfaces consisting of pure
  * virtual function.
  *
- * Could probably be done a lot nicer, but
- * I just started learnign c++.
+ * Could probably be done a lot better, but
+ * I am still very new to C++.
  */
 
-class KeyDownEvent
+class KeyEvent
 {
 public:
-    virtual bool keyDown(int key) = 0;
+    const int keyCode;
+    const int action;
+    const std::function<bool()> callback;
+    KeyEvent(const int keyCode, const int action, const std::function<bool()> &callback) :
+            keyCode(keyCode), action(action),
+            callback(callback)
+    {}
 };
 
-class KeyIsDownEvent
+class ButtonEvent
 {
 public:
-    virtual bool keyIsDown(int key) = 0;
-};
-
-class KeyUpEvent
-{
-public:
-    virtual bool keyUp(int key) = 0;
-};
-
-class MouseDownEvent
-{
-public:
-    virtual bool mouseDown(int button) = 0;
-};
-
-class MouseIsDownEvent
-{
-public:
-    virtual bool mouseIsDown(int button) = 0;
-};
-
-class MouseUpEvent
-{
-public:
-    virtual bool mouseUp(int button) = 0;
+    const int buttonCode;
+    const int action;
+    const std::function<bool()> callback;
+    ButtonEvent(const int buttonCode, const int action, const std::function<bool()> &callback) :
+            buttonCode(buttonCode), action(action),
+            callback(callback)
+    {}
 };
 
 class MouseMoveEvent
 {
 public:
-    virtual bool mouseMove(float posX, float posY) = 0;
+    const std::function<bool(float mouseX, float mouseY, float deltaX, float deltaY)> callback;
+
+    MouseMoveEvent(const std::function<bool(float, float, float, float)> &callback) :
+            callback(callback)
+    {}
 };
+
 
 class MouseScrollEvent
 {
 public:
-    virtual bool mouseScroll(float amountX, float amountY) = 0;
+    const std::function<bool(float amountX, float amountY)> callback;
+
+    MouseScrollEvent(const std::function<bool(float, float)> &callback) :
+            callback(callback)
+    {}
 };
 
 class ResizeEvent
 {
 public:
-    virtual bool resized(int newWidth, int newHeight) = 0;
+    const std::function<bool(int newWidth, int newHeight)> callback;
+    ResizeEvent(const std::function<bool(int, int)> &callback) : callback(callback)
+    {}
 };
 
 #endif //TOWERDEFENSE_EVENTS_H

@@ -96,6 +96,8 @@ public:
         position += front * z;
         position += right * x;
         position += up * y;
+
+        updateMatrix = true;
     }
 
     void setFOV(float fov)

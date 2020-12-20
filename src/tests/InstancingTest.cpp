@@ -2,8 +2,10 @@
 // Created by klemen on 18/12/2020.
 //
 
+#include <functional>
 #include "InstancingTest.h"
 #include "../engine/loader/Loader.h"
+#include "../engine/input/Input.h"
 
 void InstancingTest::init()
 {
@@ -41,6 +43,25 @@ void InstancingTest::init()
     this->material.Ks = glm::vec3(0.508273f, 0.508273f, 0.508273f);
     this->material.Ns = 0.4f * 128.0f;
 
+    Input::init();
+    // setting up input callbacks
+    glfwSetKeyCallback(window, Input::KeyCallback);
+    glfwSetCursorPosCallback(window, Input::CursorPositionCallback);
+    glfwSetMouseButtonCallback(window, Input::MouseButtonCallback);
+    glfwSetScrollCallback(window, Input::ScrollCallback);
+    glfwSetWindowSizeCallback(window, Input::WindowSizeCallback);
+
+    this->cameraController = new MouseCameraController(this->camera);
+    this->cameraController->setup();
+
+    std::function<bool()> f = [this]() -> bool {
+        std::cout << "F key pressed " << this->material.Ns << std::endl;
+        return true;
+    };
+    Input::addKeyEvent(KeyEvent(KEY_F, PRESS, f));
+    //auto f1 = []() -> bool { return true; };
+    //void (*)(bool) f = []() -> bool { return true; };
+
 
     glEnable(GL_DEPTH_TEST);
 
@@ -55,6 +76,7 @@ void InstancingTest::start()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         glfwPollEvents();
+        Input::handleEvents();
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();

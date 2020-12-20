@@ -8,6 +8,7 @@
 #include "Test.h"
 #include "../engine/Core.h"
 #include "../engine/camera/PerspectiveCamera.h"
+#include "../engine/camera/MouseCameraController.h"
 #include "../engine/graphics/RawModel.h"
 
 class InstancingTest : public Test
@@ -17,6 +18,8 @@ public:
     void start() override;
 private:
     PerspectiveCamera *camera;
+    MouseCameraController* cameraController;
+
 
     glm::vec3 lightPos;
     Material lightMaterial;
