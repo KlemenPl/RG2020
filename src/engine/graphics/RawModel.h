@@ -20,8 +20,7 @@ struct Group
     std::string groupName;
     const RawModel *parent;
 
-    uint32_t numMeshes;
-    std::vector<Mesh> meshes;
+    Mesh mesh;
 };
 
 class RawModel
@@ -45,8 +44,6 @@ public:
         for (auto &it:groups)
         {
             it.parent = this;
-            for (int i = 0; i < it.numMeshes; i++)
-            {
                 if (it.meshes[i].VBO == 0)
                     continue;
 
@@ -56,7 +53,6 @@ public:
 
                 delete it.meshes[i].vertices;
                 delete it.meshes[i].indices;
-            }
             //delete it.meshes;
         }
     }

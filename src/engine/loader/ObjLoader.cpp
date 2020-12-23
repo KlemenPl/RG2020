@@ -63,7 +63,7 @@ static glm::vec3 getVec3(const std::string &str)
 static void loadMaterials(const char *filePath, std::unordered_map<std::string, Material *> &materials)
 {
     std::string materialName;
-    Material *material = new Material{};
+    auto *material = new Material{};
     std::ifstream matFile(filePath);
     std::string line;
 
@@ -80,16 +80,20 @@ static void loadMaterials(const char *filePath, std::unordered_map<std::string, 
                 material = new Material;
             }
             materialName = line.substr(7);
-        } else if (startsWith(line, "Ka "))
+        }
+        else if (startsWith(line, "Ka "))
         {
             material->Ka = getVec3(line.substr(3));
-        } else if (startsWith(line, "Kd "))
+        }
+        else if (startsWith(line, "Kd "))
         {
             material->Kd = getVec3(line.substr(3));
-        } else if (startsWith(line, "Ks "))
+        }
+        else if (startsWith(line, "Ks "))
         {
             material->Ks = getVec3(line.substr(3));
-        } else if (startsWith(line, "Ns "))
+        }
+        else if (startsWith(line, "Ns "))
         {
             material->Ns = std::stof(line.substr(3));
         }
@@ -127,7 +131,8 @@ static void processFace(const std::string &str,
             vertices.push_back(vertexCoords[vertexIndex].y);
             vertices.push_back(vertexCoords[vertexIndex].z);
 
-        } else if (!hasTextCoords)
+        }
+        else if (!hasTextCoords)
         {
             // vertices and normals, no texcoords
             uint32_t index = 0;
@@ -145,7 +150,8 @@ static void processFace(const std::string &str,
             vertices.push_back(vertexNormals[normalsIndex].y);
             vertices.push_back(vertexNormals[normalsIndex].z);
 
-        } else if (!hasNormals)
+        }
+        else if (!hasNormals)
         {
             // vertices and texCoords, no normals
             uint32_t index = 0;
@@ -161,7 +167,8 @@ static void processFace(const std::string &str,
             vertices.push_back(textureCoords[texIndex].x);
             vertices.push_back(textureCoords[texIndex].y);
 
-        } else
+        }
+        else
         {
             // vertices, normals, texCoords
             uint32_t index = 0;
@@ -190,7 +197,8 @@ static void processFace(const std::string &str,
         (*indicesIndex)++;
 
 
-    } else
+    }
+    else
     {
         // vertex already written
         indices.push_back(it->second);
@@ -212,6 +220,8 @@ static void processMesh(std::ifstream &objFile,
     uint32_t indecesIndex = 0;
 
     std::string line;
+    int place = objFile.tellg();
+
     while (std::getline(objFile, line))
     {
         if (!line.empty() && line[line.size() - 1] == '\r')
@@ -231,23 +241,25 @@ static void processMesh(std::ifstream &objFile,
                         vertexCoords, vertexNormals, textureCoords,
                         vertices, indices,
                         indicesMap, &indecesIndex,
-                        hasTextCoords,
-                        hasNormals);
+                        hasTextCoords, hasNormals);
             processFace(face2,
                         vertexCoords, vertexNormals, textureCoords,
                         vertices, indices,
                         indicesMap, &indecesIndex,
-                        hasTextCoords,
-                        hasNormals);
+                        hasTextCoords, hasNormals);
             processFace(face3,
                         vertexCoords, vertexNormals, textureCoords,
                         vertices, indices,
                         indicesMap, &indecesIndex,
-                        hasTextCoords,
-                        hasNormals);
-        } else
+                        hasTextCoords, hasNormals);
+        }
+        else
+        {
+            objFile.seekg(place);
             break;
+        }
 
+        place = objFile.tellg();
     }
 
     float *verticesArray = new float[vertices.size()];
@@ -268,19 +280,24 @@ static void processMesh(std::ifstream &objFile,
 }
 
 static void processGroup(std::ifstream &objFile, Group *group,
-                         std::unordered_map<std::string, Material *> &materials)
+                         std::vector<glm::vec3> &vertexCoords,
+                         std::vector<glm::vec3> &vertexNormals,
+                         std::vector<glm::vec2> &textureCoords,
+                         std::unordered_map<std::string, Material *> &materials,
+                         Material *currentMaterial)
 {
 
     std::vector<Mesh> meshes;
 
-    std::vector<glm::vec3> vertexCoords;
-    std::vector<glm::vec3> vertexNormals;
-    std::vector<glm::vec2> textureCoords;
+    // fixme: this only works when loading only 1 model
+    //static std::vector<glm::vec3> vertexCoords;
+    //static std::vector<glm::vec3> vertexNormals;
+    //static std::vector<glm::vec2> textureCoords;
+    //static Material *currentMaterial = nullptr;
 
     std::string line;
     int place = 0;
 
-    Material *currentMaterial = nullptr;
 
     while (std::getline(objFile, line))
     {
@@ -289,30 +306,36 @@ static void processGroup(std::ifstream &objFile, Group *group,
 
         if (startsWith(line, "g "))
         {
-            // new group, exiting
+            // new group, exiting todo
             objFile.seekg(place);
             break;
-        } else if (startsWith(line, "v "))
+        }
+        else if (startsWith(line, "v "))
         {
             // vertex position
             vertexCoords.push_back(getVec3(line.substr(2)));
 
-        } else if (startsWith(line, "vt "))
+        }
+        else if (startsWith(line, "vt "))
         {
             // texture coords
             textureCoords.push_back(getVec2(line.substr(3)));
 
-        } else if (startsWith(line, "vn "))
+        }
+        else if (startsWith(line, "vn "))
         {
             // vertex normal
             vertexNormals.push_back(getVec3(line.substr(3)));
 
-        } else if (startsWith(line, "usemtl "))
+        }
+        else if (startsWith(line, "usemtl "))
         {
             // change material
+            std::string a = line.substr(7);
             currentMaterial = materials[line.substr(7)];
 
-        } else if (startsWith(line, "f "))
+        }
+        else if (startsWith(line, "f "))
         {
             // start of faces (process mesh)
             objFile.seekg(place);
@@ -327,6 +350,7 @@ static void processGroup(std::ifstream &objFile, Group *group,
             mesh.hasTexCoords = hasTexCoords;
             processMesh(objFile, &mesh, vertexCoords, vertexNormals, textureCoords, hasTexCoords, hasNormals);
             meshes.push_back(std::move(mesh));
+
         }
 
         place = objFile.tellg(); // last pos
@@ -335,7 +359,7 @@ static void processGroup(std::ifstream &objFile, Group *group,
     //group->numMeshes = meshes.size();
     //Mesh *meshesArray = new Mesh[meshes.size()];
     for (auto &it:meshes)
-        group->meshes.push_back(it);
+        group->meshes.push_back(std::move(it));
     group->numMeshes = group->meshes.size();
     //group->meshes = meshesArray;
 }
@@ -344,7 +368,12 @@ static void processGroup(std::ifstream &objFile, Group *group,
 namespace Loader {
     RawModel *loadOBJ(const char *filePath)
     {
-        RawModel *model = new RawModel;
+        auto *model = new RawModel{};
+
+        std::vector<glm::vec3> vertexCoords;
+        std::vector<glm::vec3> vertexNormals;
+        std::vector<glm::vec2> textureCoords;
+        Material *currentMaterial = nullptr;
 
         std::ifstream objFile(filePath);
         std::string line;
@@ -365,23 +394,27 @@ namespace Loader {
                 int index = tmp.find_last_of('/');
                 tmp = tmp.substr(0, index) + '/' + line.substr(7);
                 loadMaterials(tmp.c_str(), materials);
-            } else if (startsWith(line, "g "))
+            }
+            else if (startsWith(line, "g "))
             {
                 // new group
                 Group group;
                 group.groupName = line.substr(2);
-                processGroup(objFile, &group, materials);
-                groups.push_back(group);
+                processGroup(objFile, &group, vertexCoords, vertexNormals,
+                             textureCoords, materials, currentMaterial);
+                groups.push_back(std::move(group));
 
-            } else if (startsWith(line, "v "))
+            }
+            else if (startsWith(line, "v "))
             {
                 // no group specified
                 Group group;
                 // moving back to prev line
                 objFile.seekg(place);
-                processGroup(objFile, &group, materials);
+                processGroup(objFile, &group, vertexCoords, vertexNormals,
+                             textureCoords, materials, currentMaterial);
                 group.groupName = "default";
-                groups.push_back(group);
+                groups.push_back(std::move(group));
                 break;
             }
 

@@ -15,9 +15,7 @@ enum ScreenType : char
 {
     TEST,
     MAIN_MENU_SCREEN,
-    SETTINGS_SCREEN,
     GAME_SCREEN,
-    EDITOR_SCREEN,
     PARTICLE_EDITOR_SCREEN,
 };
 
@@ -25,6 +23,7 @@ class Game
 {
 private:
     GLFWwindow *window;
+    bool isRunning = true;
 
     inline static Screen *currentScreen = nullptr;
     std::unordered_map<ScreenType, Screen *> screenMap;
@@ -47,6 +46,7 @@ public:
     void run();
     void setScreen(ScreenType type);
     void setTitle(std::string newTitle);
+    void setIsRunning(bool isRunning);
 };
 
 

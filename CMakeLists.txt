@@ -14,7 +14,6 @@ file(GLOB_RECURSE libs
         "external/imgui/*.cpp"
         "external/stb_image/*.cpp"
         "external/stb_truetype/*.cpp"
-        "external/raudio/*.c"
         )
 
 file(GLOB_RECURSE src
@@ -34,8 +33,9 @@ include_directories(external/glad/include/)
 include_directories(external/imgui/)
 include_directories(external/stb_image/)
 include_directories(external/stb_truetype/)
-include_directories(external/raudio/)
+include_directories(external/stb_vorbis/)
 include_directories(external/glm/)
+include_directories(external/openal-soft/include)
 
 set(SOURCE src/main.cpp)
 set(PROJECT_NAME TowerDefense)

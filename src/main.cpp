@@ -13,6 +13,8 @@
 #define RUN_INSTANCING_TEST 1
 #define RUN_PARTICLE_TEST 0
 
+#define LOG_OPENGL_NOTIFICATIONS 0
+
 /*
  * Ena najboljših novosti v OpenGL 4.3 :)
  * Pokaže tudi call stack, da lahko veš kateri OpenGL klic je povzročil napako.
@@ -29,8 +31,6 @@ void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 int main(int argc, char *argv[])
 {
 
-    //Model* model = Loader::loadOBJ("res/models/turret_single.obj");
-    //RawModel* model = Loader::loadOBJ("res/models/bunny.obj");
 #if RUN_BATCHING_TEST
     BatchingTest batchingTest{};
     batchingTest.initTest();
@@ -143,8 +143,12 @@ void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
             _severity = "LOW";
             break;
         case GL_DEBUG_SEVERITY_NOTIFICATION:
+#if not LOG_OPENGL_NOTIFICATIONS
+            return;
+#else
             _severity = "NOTIFICATION";
             break;
+#endif
         default:
             _severity = "UNKNOWN";
             break;

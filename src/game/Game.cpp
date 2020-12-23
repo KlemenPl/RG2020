@@ -6,7 +6,6 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
-#include <raudio.h>
 #include <iostream>
 #include <sstream>
 #include <utility>
@@ -41,7 +40,6 @@ Game::~Game()
     Input::dispose();
 
     glfwTerminate();
-    CloseAudioDevice();
 }
 
 /*
@@ -80,8 +78,6 @@ bool Game::init()
 
     glViewport(0, 0, width, height);
     std::cout << glGetString(GL_VERSION) << std::endl;
-
-    InitAudioDevice();
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -144,7 +140,7 @@ void Game::run()
      *
      * https://gameprogrammingpatterns.com/game-loop.html
      */
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(window)&&isRunning)
     {
 
         // update
@@ -203,4 +199,9 @@ void Game::setTitle(std::string newTitle)
 {
     gameTitle = std::move(newTitle);
     glfwSetWindowTitle(window, ss.str().c_str());
+}
+
+void Game::setIsRunning(bool isRunning)
+{
+    Game::isRunning = isRunning;
 }

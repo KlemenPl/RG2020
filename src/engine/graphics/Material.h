@@ -15,10 +15,10 @@ public:
     glm::vec3 Ks;
     float Ns;
 
-    explicit Material(const glm::vec3 &ka = {1.0f, 1.0f, 1.0f}, // ambient colour
-                      const glm::vec3 &kd = {1.0f, 1.0f, 1.0f}, // diffuse colour
+    explicit Material(const glm::vec3 &ka = {0.0f, 0.0f, 0.0f}, // ambient colour
+                      const glm::vec3 &kd = {0.0f, 0.0f, 0.0f}, // diffuse colour
                       const glm::vec3 &ks = {0.0f, 0.0f, 0.0f}, // specular colour
-                      float ns = 100.0f // specular exponent 0 - 1000
+                      float ns = 32.0f // specular exponent 0 - 1000
     ) : Ka(ka), Kd(kd), Ks(ks), Ns(ns)
     {}
 

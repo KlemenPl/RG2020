@@ -57,11 +57,9 @@ private:
 
 public:
     static bool init();
-
-    static void handleEvents();
-
     static void dispose();
 
+    static void handleEvents();
     static void clearEventListiners();
 
     static void addKeyEvent(const KeyEvent &event);
@@ -85,7 +83,7 @@ public:
     static bool isMouseButtonUp(int button);
     // pair of mouse position
     static std::pair<float, float> getMousePos();
-    // pair of mouse position changed
+    // pair of cnages mouse position
     static std::pair<float, float> getMouseDelta();
 
 

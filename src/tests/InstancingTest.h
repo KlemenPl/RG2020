@@ -20,23 +20,26 @@ private:
     PerspectiveCamera *camera;
     MouseCameraController* cameraController;
 
-
     glm::vec3 lightPos;
     Material lightMaterial;
-    Ref<RawModel> cube;
-
     Material material;
 
 
     Ref<RawModel> bunny;
+    Ref<RawModel> cube;
+
     Ref<BitmapFont> font;
     Ref<Shader> shader;
+    Ref<Shader> lightShader;
 
     float deltaTime{};
     float lastFrame{};
 
-    const int maxBunnies = 200000;
-    int numberOfBunnies;
+    const int maxBunnies = 1000;
+    int numberOfBunnies = 80;
+
+    glm::mat4* modelMatrices;
+    uint32_t instanceBuffer;
 
 };
 

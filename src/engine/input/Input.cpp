@@ -14,6 +14,11 @@ bool Input::init()
     return true;
 }
 
+void Input::dispose()
+{
+    delete instance;
+}
+
 void Input::handleEvents()
 {
     ImGuiIO &io = ImGui::GetIO();
@@ -23,7 +28,7 @@ void Input::handleEvents()
         // handling key events
         for (auto &it:instance->keyEvents)
         {
-            if (instance->keys[it.keyCode] == it.action)
+            if (instance->keys[it.keyCode] & it.action)
                 if (it.callback())
                     break;
         }
@@ -31,8 +36,8 @@ void Input::handleEvents()
         // handling button events
         for (auto &it:instance->buttonEvents)
         {
-            if (instance->buttons[it.buttonCode] == it.action)
-                if (it.callback())
+            if (instance->buttons[it.buttonCode] & it.action)
+                if (it.callback(instance->mouseX, instance->mouseY))
                     break;
         }
     }
@@ -51,11 +56,6 @@ void Input::handleEvents()
 
     instance->deltaMouseX = 0;
     instance->deltaMouseY = 0;
-}
-
-void Input::dispose()
-{
-    delete instance;
 }
 
 void Input::clearEventListiners()

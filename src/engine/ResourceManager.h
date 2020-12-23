@@ -7,7 +7,6 @@
 
 #include <unordered_map>
 #include <string>
-#include <raudio.h>
 #include "Core.h"
 #include "graphics/Shader.h"
 #include "graphics/Texture2D.h"
@@ -21,8 +20,8 @@ private:
 
     std::unordered_map<std::string, Ref<Shader>> shaders;
     std::unordered_map<std::string, Ref<Texture2D>> textures;
-    std::unordered_map<std::string, Ref<Music>> musics;
-    std::unordered_map<std::string, Ref<Sound>> sounds;
+    //std::unordered_map<std::string, Ref<Music>> musics;
+    //std::unordered_map<std::string, Ref<Sound>> sounds;
     std::unordered_map<std::string, Ref<BitmapFont>> fonts;
     //std::unordered_map<std::string, Ref<Model>> models;
 
@@ -36,9 +35,6 @@ public:
                            ShaderSourceArgument args [] = nullptr, uint32_t argsLength=0);
     static void loadTexture(const char* textureFile, std::string name, bool alpha);
     static void loadWhitePixelTexture();
-
-    static void loadMusic(const char* musicFile, std::string name);
-    static void loadSound(const char* soundFile, std::string name);
     static void loadFont(const char* fontFile, std::string name,
                          float fontSize = 64.0, int atlasWidth = 1024, int atlasHeight = 1024,
                          int padding = 2, int startChar = 32, int numChars = 95 );
@@ -46,8 +42,8 @@ public:
     // accessing
     static Ref<Shader> getShader(const std::string &name);
     static Ref<Texture2D> getTexture2D(const std::string &name);
-    static Ref<Music> getMusic(const std::string&name);
-    static Ref<Sound> getSound(const std::string&name);
+    //static Ref<Music> getMusic(const std::string&name);
+    //static Ref<Sound> getSound(const std::string&name);
     static Ref<BitmapFont> getFont(const std::string&name);
 
     // clear

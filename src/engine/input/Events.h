@@ -37,8 +37,8 @@ class ButtonEvent
 public:
     const int buttonCode;
     const int action;
-    const std::function<bool()> callback;
-    ButtonEvent(const int buttonCode, const int action, const std::function<bool()> &callback) :
+    const std::function<bool(float, float)> callback;
+    ButtonEvent(const int buttonCode, const int action, const std::function<bool(float, float)> &callback) :
             buttonCode(buttonCode), action(action),
             callback(callback)
     {}

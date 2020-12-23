@@ -33,15 +33,6 @@ ResourceManager::~ResourceManager()
     ResourceManager::shaders.clear();
     ResourceManager::textures.clear();
 
-    // music cleanup
-    for (auto &music:musics)
-        UnloadMusicStream(*music.second);
-    // sound cleanup
-    for (auto &sound:sounds)
-        UnloadSound(*sound.second);
-    ResourceManager::musics.clear();
-    ResourceManager::sounds.clear();
-
     // bitmap font cleanup
     //for (auto &font:fonts)
     //    font.second->~BitmapFont();
@@ -155,15 +146,6 @@ void ResourceManager::loadTexture(const char *textureFile, std::string name, boo
     instance->textures[name] = Ref<Texture2D>(texture2D);
 }
 
-void ResourceManager::loadMusic(const char *musicFile, std::string name)
-{
-    instance->musics[name] = Ref<Music>(new Music(LoadMusicStream(musicFile)));
-}
-void ResourceManager::loadSound(const char *soundFile, std::string name)
-{
-    instance->sounds[name] = Ref<Sound>(new Sound(LoadSound(soundFile)));
-}
-
 void ResourceManager::loadFont(const char *fontFile, std::string name, float fontSize, int atlasWidth, int atlasHeight,
                                int padding, int startChar, int numChars)
 {
@@ -191,14 +173,6 @@ Ref<Texture2D> ResourceManager::getTexture2D(const std::string &name)
     return instance->textures[name];
 }
 
-Ref<Music> ResourceManager::getMusic(const std::string &name)
-{
-    return instance->musics[name];
-}
-Ref<Sound> ResourceManager::getSound(const std::string &name)
-{
-    return instance->sounds[name];
-}
 Ref<BitmapFont> ResourceManager::getFont(const std::string &name)
 {
     return instance->fonts[name];
