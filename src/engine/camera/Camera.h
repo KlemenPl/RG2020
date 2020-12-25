@@ -13,8 +13,8 @@ class Camera
 protected:
     glm::vec3 position;
 
-    glm::mat4 view;
     glm::mat4 projection;
+    glm::mat4 view;
     glm::mat4 combined; // view * proj
 
     float width;

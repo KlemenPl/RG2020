@@ -167,6 +167,36 @@ public:
         updateMatrix = true;
     }
 
+    const glm::vec3 &getFront() const
+    {
+        return front;
+    }
+    const glm::vec3 &getRight() const
+    {
+        return right;
+    }
+    const glm::vec3 &getUp() const
+    {
+        return up;
+    }
+
+    const glm::vec3 &getWorldUp() const
+    {
+        return worldUp;
+    }
+    void setWorldUp(const glm::vec3 &worldUp)
+    {
+        PerspectiveCamera::worldUp = worldUp;
+    }
+
+    void setFront(const glm::vec3 &front)
+    {
+        PerspectiveCamera::front = front;
+        updateMatrix = true;
+
+    }
+
+
 };
 
 #endif //TOWERDEFENSE_PERSPECTIVECAMERA_H

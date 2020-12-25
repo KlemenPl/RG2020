@@ -7,46 +7,84 @@
 
 #include <unordered_map>
 #include <vector>
+#include <set>
 #include "../graphics/Model.h"
+#include "../graphics/Light.h"
 #include "../camera/Camera.h"
 
 class Renderer3D
 {
 private:
-    std::unordered_map<uint32_t, std::vector<Model>> instancedQueue;
-    std::unordered_map<uint32_t, std::vector<Model>> shadowQueue;
-    std::vector<int> lights;
-    Camera *camera;
+    const uint32_t INSTANCE_LIMIT = 2000;
+    const uint32_t MATERIAL_LIMIT = 20;
+    const uint32_t DIR_LIGHT_LIMIT = 1;
+    const uint32_t POINT_LIGHT_LIMIT = 5;
 
-    std::vector<glm::mat4> instanedModels;
-    uint32_t instanceBuffer;
-    uint32_t instanceBufferLength;
+    std::unordered_map<uint32_t, std::vector<Model*>> instancedQueue;
+    std::unordered_map<uint32_t, std::vector<Model*>> shadowQueue;
 
-    const uint32_t lightLimit = 4;
+    std::vector<DirLight> dirLights;
+    std::vector<PointLight> pointLights;
 
+    Camera *camera = nullptr;
+    bool drawing = false;
+    bool drawingShadows = false;
 
-    Ref<Shader> materialShader;
-    Ref<Shader> texturedShader;
+    uint32_t drawCalls = 0;
+    uint32_t currentCullStrategy = GL_NONE;
+
+    std::set<uint32_t> preparedModels;
+
+    std::vector<glm::mat4> modelMatrices;
+    uint32_t modelMatricesSSBO{};
+    uint32_t modelMatricesSSBOLength{};
+
+    uint32_t vpMatricesUBO{};
+
+    uint32_t lightsUBO{};
+    uint32_t lightsBufferSize{};
+    float* lightsBufferUBO{};
+
+    float *materialBuffer;
+
+    //std::vector<Material> materials;
+    uint32_t materialsSSBO{};
+    uint32_t materialsSSBOLength{};
+
+    Ref<Shader> shader;
     Ref<Shader> shadowShader;
+    Ref<Shader> normalDebugShader;
     Ref<Shader> lightShader;
+
+    void prepareRawModel(const RawModel &model);
+
 public:
     Renderer3D();
     virtual ~Renderer3D();
 
     void begin();
-    void draw(const Model& model);
+    void draw(Model *model);
     void end();
-
     void flush();
 
-    void beginShadows(int* light);
-    void drawShadow(const Model& model);
-    void endShadows();
+    void drawNormals(Model* model);
 
-    void setCamera(Camera* camera);
-    void addLight(int* light);
-    void removeLight(int* light);
-    void clearLights();
+    void beginShadows(DirLight *dirLight);
+    void drawShadow(Model* model);
+    void endShadows();
+    void flushShadows();
+
+    void setCamera(Camera *_camera);
+
+    void addPointLight(PointLight light);
+    void removePointLight(const PointLight &light);
+    void removePointLight(uint32_t lightIndex);
+    void clearPointLights();
+
+    void addDirLight(DirLight light);
+    void removeDirLight(const DirLight &light);
+    void removeDirLight(uint32_t lightIndex);
+    void clearDirLights();
 
     // should not be copied!!
     Renderer3D(const Renderer3D &) = delete;

@@ -36,6 +36,7 @@ public:
                 glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
         #endif
         glfwWindowHint(GLFW_RESIZABLE, false);
+        glfwWindowHint(GLFW_SAMPLES, 4);
 
         this->window = glfwCreateWindow(1280, 720, "Test", nullptr, nullptr);
         glfwMakeContextCurrent(window);
@@ -65,6 +66,7 @@ public:
 
         RenderingCapabilities::init();
         ResourceManager::init();
+        glEnable(GL_MULTISAMPLE);
     }
 
     // called to initialize the test

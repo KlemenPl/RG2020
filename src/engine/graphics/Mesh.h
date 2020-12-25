@@ -10,7 +10,6 @@
 class Mesh
 {
 public:
-    Material defaultMaterial;
     uint32_t VAO = 0;
     uint32_t VBO = 0;
     uint32_t IBO = 0;
@@ -23,6 +22,7 @@ public:
 
     bool hasNormals = false;
     bool hasTexCoords = false;
+    bool hasMaterial = false;
 
     Mesh() = default;
 

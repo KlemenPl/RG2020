@@ -48,7 +48,8 @@ void main()
     vec3  halfwayDir   = normalize(lightDir + viewDir);
     float spec         = pow(max(dot(norm, halfwayDir), 0.0), 32.0);
 #else
-    vec3  reflectedDir = reflect(lightDir, norm);
+    vec3  reflectedDir = reflect(-lightDir, norm);
+    //vec3  reflectedDir = reflect(lightDir, norm);
     float spec         = pow(max(dot(viewDir, reflectedDir), 0.0), material.Ns);
 #endif
 

@@ -42,6 +42,10 @@ ResourceManager::~ResourceManager()
 std::string readFile(const char *path)
 {
     std::ifstream file(path);
+    if (!file.good())
+        throw std::runtime_error("ResourceManager::loadShader() unable to find file to shader!");
+    if (!file.is_open())
+        throw std::runtime_error("ResourceManager::loadShader() unable to open file to shader!");
     std::stringstream sstream;
     sstream << file.rdbuf();
     file.close();
@@ -54,7 +58,10 @@ std::string applyArgument(const std::string &source, const ShaderSourceArgument 
     std::string fullIdentifier = "{" + arg.identifier + "}";
     unsigned long startIndex = source.find(fullIdentifier);
     if (startIndex == std::string::npos)
-        throw std::runtime_error("ResourceManager::applyArgument(): Invalid shader argument");
+    {
+        std::cout << "ResourceManager::applyArgument(): Invalid shader argument" << std::endl;
+        return source;
+    }
 
     unsigned long endIndex = startIndex + fullIdentifier.size();
 

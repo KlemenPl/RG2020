@@ -10,6 +10,7 @@
 #include <string>
 #include <mat4x4.hpp>
 #include "Material.h"
+#include "Light.h"
 
 enum ShaderType : char
 {
@@ -51,22 +52,26 @@ public:
 
     // @formatter:off
 
-    void setUniform(const std::string &name, float value);
-    void setUniform(const std::string &name, int amount, float *values);
-    void setUniform(const std::string &name, int amount, int *values);
-    void setUniform(const std::string &name, int v1, int v2);
+    void setUniform(const std::string &name, float value);                  // 1f
+    void setUniform(const std::string &name, int amount, float *values);    // 1fv
+    void setUniform(const std::string &name, int amount, int *values);      // 1iv
+    void setUniform(const std::string &name, int v1,     int v2);           // 2i
+    void setUniform(const std::string &name, int v1);                       // 1i
 
     void setUniform(const std::string &name, const glm::mat2& mat2f, bool transpose = false);
     void setUniform(const std::string &name, const glm::mat3& mat3f, bool transpose = false);
     void setUniform(const std::string &name, const glm::mat4& mat4f, bool transpose = false);
 
-    void setUniform(const std::string &name, glm::vec1& v);
-    void setUniform(const std::string &name, glm::vec2& v);
-    void setUniform(const std::string &name, glm::vec3& v);
-    void setUniform(const std::string &name, glm::vec4& v);
+    void setUniform(const std::string &name, const glm::vec1& v);
+    void setUniform(const std::string &name, const glm::vec2& v);
+    void setUniform(const std::string &name, const glm::vec3& v);
+    void setUniform(const std::string &name, const glm::vec4& v);
 
     void setUniformMaterial( const std::string& name, const Material& material);
     void setUniformMaterial2(const std::string& name, const Material& material);
+
+    void setUniformPointLight(const std::string& name, const PointLight& light);
+    void setUniformDirLight(  const std::string& name, const DirLight& light);
 
     // @formatter:on
 

@@ -18,8 +18,8 @@ class RawModel;
 struct Group
 {
     std::string groupName;
-    const RawModel *parent;
 
+    std::vector<Material> meshMaterials;
     Mesh mesh;
 };
 
@@ -43,16 +43,15 @@ public:
     {
         for (auto &it:groups)
         {
-            it.parent = this;
-                if (it.meshes[i].VBO == 0)
-                    continue;
+            if (it.mesh.VBO == 0)
+                continue;
 
-                glDeleteBuffers(GL_ARRAY_BUFFER, &it.meshes[i].VBO);
-                glDeleteBuffers(GL_ELEMENT_ARRAY_BUFFER, &it.meshes[i].IBO);
-                glDeleteVertexArrays(1, &it.meshes[i].VAO);
+            glDeleteBuffers(GL_ARRAY_BUFFER, &it.mesh.VBO);
+            glDeleteBuffers(GL_ELEMENT_ARRAY_BUFFER, &it.mesh.IBO);
+            glDeleteVertexArrays(1, &it.mesh.VAO);
 
-                delete it.meshes[i].vertices;
-                delete it.meshes[i].indices;
+            delete it.mesh.vertices;
+            delete it.mesh.indices;
             //delete it.meshes;
         }
     }
@@ -61,69 +60,73 @@ public:
     {
         for (auto &it:groups)
         {
-            for (int i = 0; i < it.numMeshes; i++)
+            Mesh &mesh = it.mesh;
+
+            // VAO
+            glGenVertexArrays(1, &mesh.VAO);
+            glBindVertexArray(mesh.VAO);
+
+            // VBO
+            glGenBuffers(1, &mesh.VBO);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.VBO);
+            glBufferData(GL_ARRAY_BUFFER, mesh.verticesLength * sizeof(float), mesh.vertices, GL_STATIC_DRAW);
+
+            // configuring pointers
+            if (!mesh.hasTexCoords && !mesh.hasNormals)
             {
-                Mesh &mesh = it.meshes[i];
-
-                // VAO
-                glGenVertexArrays(1, &mesh.VAO);
-                glBindVertexArray(mesh.VAO);
-
-                // VBO
-                glGenBuffers(1, &mesh.VBO);
-                glBindBuffer(GL_ARRAY_BUFFER, mesh.VBO);
-                glBufferData(GL_ARRAY_BUFFER, mesh.verticesLength * sizeof(float), mesh.vertices, GL_STATIC_DRAW);
-
-                // configuring pointers
-                if (!mesh.hasTexCoords && !mesh.hasNormals)
-                {
-                    // only pos
-                    glEnableVertexAttribArray(0); // position
-                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const void *) 0);
-
-                } else if (mesh.hasTexCoords && !mesh.hasNormals)
-                {
-                    // pos, texCoords
-                    glEnableVertexAttribArray(0); // position
-                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void *) 0);
-
-                    glEnableVertexAttribArray(1); // texCoords
-                    glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, 5 * sizeof(float),
-                                          (const void *) (sizeof(float) * 3));
-
-                } else if (!mesh.hasTexCoords && mesh.hasNormals)
-                {
-                    // pos, normals
-                    glEnableVertexAttribArray(0); // position
-                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (const void *) 0);
-
-                    glEnableVertexAttribArray(1); // normals
-                    glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(float),
-                                          (const void *) (sizeof(float) * 3));
-
-                } else
-                {
-                    // pos, texCoords, normals
-                    glEnableVertexAttribArray(0); // position
-                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (const void *) 0);
-
-                    glEnableVertexAttribArray(1); // texCoords
-                    glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, 8 * sizeof(float),
-                                          (const void *) (sizeof(float) * 3));
-
-                    glEnableVertexAttribArray(2); // normals
-                    glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, 8 * sizeof(float),
-                                          (const void *) (sizeof(float) * 5));
-                }
-
-                // IBO
-                glGenBuffers(1, &mesh.IBO);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.IBO);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indicesLength * sizeof(uint32_t),
-                             mesh.indices, GL_STATIC_DRAW);
-
+                // only pos
+                glEnableVertexAttribArray(0); // position
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const void *) 0);
 
             }
+            else if (mesh.hasTexCoords && !mesh.hasNormals)
+            {
+                // pos, texCoords
+                glEnableVertexAttribArray(0); // position
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void *) 0);
+
+                glEnableVertexAttribArray(1); // texCoords
+                glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, 5 * sizeof(float),
+                                      (const void *) (sizeof(float) * 3));
+
+            }
+            else if (!mesh.hasTexCoords && mesh.hasNormals)
+            {
+                // pos, normals
+                glEnableVertexAttribArray(0); // position
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (const void *) 0);
+
+                glEnableVertexAttribArray(1); // normals
+                glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 7 * sizeof(float),
+                                      (const void *) (sizeof(float) * 3));
+
+                glEnableVertexAttribArray(2); // material index
+                glVertexAttribPointer(2, 1, GL_FLOAT, GL_TRUE, 7 * sizeof(float),
+                                      (const void *) (sizeof(float) * 6));
+
+            }
+            else
+            {
+                // pos, texCoords, normals
+                glEnableVertexAttribArray(0); // position
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (const void *) 0);
+
+                glEnableVertexAttribArray(1); // texCoords
+                glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, 8 * sizeof(float),
+                                      (const void *) (sizeof(float) * 3));
+
+                glEnableVertexAttribArray(2); // normals
+                glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, 8 * sizeof(float),
+                                      (const void *) (sizeof(float) * 5));
+            }
+
+            // IBO
+            glGenBuffers(1, &mesh.IBO);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.IBO);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indicesLength * sizeof(uint32_t),
+                         mesh.indices, GL_STATIC_DRAW);
+
+
         }
     }
 

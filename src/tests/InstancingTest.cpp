@@ -108,19 +108,19 @@ void InstancingTest::init()
     glBufferData(GL_ARRAY_BUFFER, maxBunnies * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
 
     // set attribute pointers for matrix (4 times vec4)
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) 0);
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (sizeof(glm::vec4)));
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (2 * sizeof(glm::vec4)));
-    glEnableVertexAttribArray(5);
-    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (3 * sizeof(glm::vec4)));
+    glEnableVertexAttribArray(6);
+    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) 0);
+    glEnableVertexAttribArray(7);
+    glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (sizeof(glm::vec4)));
+    glEnableVertexAttribArray(8);
+    glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (2 * sizeof(glm::vec4)));
+    glEnableVertexAttribArray(9);
+    glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (3 * sizeof(glm::vec4)));
 
-    glVertexAttribDivisor(2, 1);
-    glVertexAttribDivisor(3, 1);
-    glVertexAttribDivisor(4, 1);
-    glVertexAttribDivisor(5, 1);
+    glVertexAttribDivisor(6, 1);
+    glVertexAttribDivisor(7, 1);
+    glVertexAttribDivisor(8, 1);
+    glVertexAttribDivisor(9, 1);
 
 
     glEnable(GL_DEPTH_TEST);
@@ -154,7 +154,7 @@ void InstancingTest::start()
         glClearColor(0.1f, 0.1f, 0.25f, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        float startTime=glfwGetTime();
+        float startTime = glfwGetTime();
 
         shader->bind();
         const Mesh &mesh = bunny->groups.front().mesh;
@@ -167,6 +167,7 @@ void InstancingTest::start()
 
         shader->setUniform("light.pos", lightPos);
         shader->setUniformMaterial2("light", lightMaterial);
+        shader->setUniform("viewPos", camera->getPosition());
 
 
         // drawing bunnies
@@ -183,14 +184,14 @@ void InstancingTest::start()
         model = glm::translate(model, lightPos);
         model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
         lightShader->setUniform("model", model, false);
-        lightShader->setUniform("combined", camera->getCombined(),false);
+        lightShader->setUniform("combined", camera->getCombined(), false);
         const Mesh &cubeMesh = cube->groups.front().mesh;
 
         cubeMesh.bind();
         glDrawElements(GL_TRIANGLES, cubeMesh.indicesLength, GL_UNSIGNED_INT, nullptr);
 
         startTime = glfwGetTime() - startTime;
-        startTime*=1000;
+        startTime *= 1000;
 
 
         ImGui::Begin("Render info");
@@ -201,9 +202,9 @@ void InstancingTest::start()
         ImGui::Text("Only render loop: %.3f ms.", startTime);
 
         ImGui::Text("OpenGL draw calls: %d.", 1);
-        ImGui::Text("VBO buffer size: %.2f kB.", (mesh.verticesLength * sizeof(float)+
-                                               numberOfBunnies*16*sizeof (float ))/1000.0f);
-        ImGui::Text("IBO buffer size: %.2f kB.", (mesh.indicesLength * sizeof(uint32_t))/1000.0f);
+        ImGui::Text("VBO buffer size: %.2f kB.", (mesh.verticesLength * sizeof(float) +
+                                                  numberOfBunnies * 16 * sizeof(float)) / 1000.0f);
+        ImGui::Text("IBO buffer size: %.2f kB.", (mesh.indicesLength * sizeof(uint32_t)) / 1000.0f);
         ImGui::Text("Number of objects: %d", numberOfBunnies);
         ImGui::SliderInt("", &numberOfBunnies, 0, maxBunnies);
         ImGui::SliderFloat3("Light position", &lightPos[0], -20, 20);

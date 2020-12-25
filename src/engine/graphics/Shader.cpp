@@ -109,7 +109,8 @@ bool Shader::validate(uint32_t object, ShaderType type)
 
             return false;
         }
-    } else
+    }
+    else
     {
         glGetShaderiv(object, GL_COMPILE_STATUS, &status);
 
@@ -150,6 +151,11 @@ void Shader::setUniform(const std::string &name, int amount, int *values)
     glUniform1iv(getUniformLocation(name), amount, values);
 }
 
+void Shader::setUniform(const std::string &name, int v1)
+{
+    glUniform1i(getUniformLocation(name), v1);
+}
+
 void Shader::setUniform(const std::string &name, int v1, int v2)
 {
     glUniform2i(getUniformLocation(name), v1, v2);
@@ -168,19 +174,19 @@ void Shader::setUniform(const std::string &name, const glm::mat4 &mat4f, bool tr
     glUniformMatrix4fv(getUniformLocation(name), 1, transpose, &mat4f[0][0]);
 }
 
-void Shader::setUniform(const std::string &name, glm::vec1 &v)
+void Shader::setUniform(const std::string &name, const glm::vec1 &v)
 {
     glUniform1fv(getUniformLocation(name), 1, &v[0]);
 }
-void Shader::setUniform(const std::string &name, glm::vec2 &v)
+void Shader::setUniform(const std::string &name, const glm::vec2 &v)
 {
     glUniform2fv(getUniformLocation(name), 1, &v[0]);
 }
-void Shader::setUniform(const std::string &name, glm::vec3 &v)
+void Shader::setUniform(const std::string &name, const glm::vec3 &v)
 {
     glUniform3fv(getUniformLocation(name), 1, &v[0]);
 }
-void Shader::setUniform(const std::string &name, glm::vec4 &v)
+void Shader::setUniform(const std::string &name, const glm::vec4 &v)
 {
     glUniform4fv(getUniformLocation(name), 1, &v[0]);
 }
@@ -201,4 +207,25 @@ void Shader::setUniformMaterial2(const std::string &name, const Material &materi
     glUniform3fv(getUniformLocation(name + ".Ks"), 1, &material.Ks.x);
 
     //glUniform1f(getUniformLocation(name + ".Ns"), material.Ns);
+}
+
+void Shader::setUniformPointLight(const std::string &name, const PointLight &light)
+{
+    glUniform3fv(getUniformLocation(name + ".position"), 1, &light.position.x);
+
+    glUniform3fv(getUniformLocation(name + ".Ka"), 1, &light.Ka.x);
+    glUniform3fv(getUniformLocation(name + ".Kd"), 1, &light.Kd.x);
+    glUniform3fv(getUniformLocation(name + ".Ks"), 1, &light.Ks.x);
+
+    glUniform1f(getUniformLocation(name + ".constant"), light.constant);
+    glUniform1f(getUniformLocation(name + ".linear"), light.linear);
+    glUniform1f(getUniformLocation(name + ".quadratic"), light.quadratic);
+}
+void Shader::setUniformDirLight(const std::string &name, const DirLight &light)
+{
+    glUniform3fv(getUniformLocation(name + ".direction"), 1, &light.direction.x);
+
+    glUniform3fv(getUniformLocation(name + ".Ka"), 1, &light.Ka.x);
+    glUniform3fv(getUniformLocation(name + ".Kd"), 1, &light.Kd.x);
+    glUniform3fv(getUniformLocation(name + ".Ks"), 1, &light.Ks.x);
 }
