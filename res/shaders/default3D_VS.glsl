@@ -6,12 +6,11 @@ layout (location = 2) in float materialIndex;
 layout (location = 6) in mat4 instanceMatrix;
 
 struct Material {
-    vec3 Ka;    // 0
-    vec3 Kd;    // 4
-    vec3 Ks;    // 8
-    float Ns;   // 12
-    float Ni;   // 13
-    // total: 14
+    vec4 Ka;    // 0
+    vec4 Kd;    // 4
+    vec4 Ks;    // 8
+    vec4 NsNi;  // 12
+    // total: 16
 };
 
 layout(std140, binding = 0) uniform vpMatrices

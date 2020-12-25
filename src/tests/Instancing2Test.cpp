@@ -22,14 +22,14 @@ void Instancing2Test::init()
     this->font = ResourceManager::getFont("roboto");
     this->renderer3D = new Renderer3D;
 
-    tree = Ref<RawModel>(Loader::loadOBJ("res/models/tree_01.obj"));
-    //tree = Ref<RawModel>(Loader::loadOBJ("res/models/turret_single.obj"));
+    //tree = Ref<RawModel>(Loader::loadOBJ("res/models/tree_01.obj"));
+    tree = Ref<RawModel>(Loader::loadOBJ("res/models/turret_single.obj"));
     tree->generateMeshes();
 
     treeModel = new Model(*tree);
 
-    this->renderer3D->addDirLight(DirLight(glm::vec3(1,0,0)));
-    this->renderer3D->addPointLight(PointLight(glm::vec3(2,2,2)));
+    this->renderer3D->addDirLight(DirLight(glm::vec3(1,-0.21f,-0.2)));
+    //this->renderer3D->addPointLight(PointLight(glm::vec3(2,2,2)));
 
     this->camera = new PerspectiveCamera(1280, 720);
 
@@ -80,7 +80,7 @@ void Instancing2Test::start()
         renderer3D->draw(treeModel);
         renderer3D->end();
 
-        renderer3D->drawNormals(treeModel);
+        //renderer3D->drawNormals(treeModel);
 
         //treeModel->rawModel.groups.front().mesh.bind();
         //glDrawElements(GL_TRIANGLES, treeModel->rawModel.groups.front().mesh.indicesLength, GL_UNSIGNED_INT, nullptr);

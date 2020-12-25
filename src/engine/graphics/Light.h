@@ -38,6 +38,7 @@ struct Light
 struct DirLight
 {
     static const uint32_t GLSL_SIZE = 16; // vec3 is padded as vec4 and must be multiple of vec4s
+    static const uint32_t GLSL_BYTE_SIZE = GLSL_SIZE * sizeof(float );
 
     glm::vec3 direction;
 
@@ -68,6 +69,7 @@ struct DirLight
 struct PointLight
 {
     static const uint32_t GLSL_SIZE = 20; // vec3 is padded as vec4 and must be multiple of vec4s
+    static const uint32_t GLSL_BYTE_SIZE = GLSL_SIZE * sizeof(float );
 
     glm::vec3 position; // 4
 

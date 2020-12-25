@@ -17,7 +17,7 @@ class Renderer3D
 private:
     const uint32_t INSTANCE_LIMIT = 2000;
     const uint32_t MATERIAL_LIMIT = 20;
-    const uint32_t DIR_LIGHT_LIMIT = 1;
+    const uint32_t DIR_LIGHT_LIMIT = 2;
     const uint32_t POINT_LIGHT_LIMIT = 5;
 
     std::unordered_map<uint32_t, std::vector<Model*>> instancedQueue;
@@ -65,7 +65,7 @@ public:
     void begin();
     void draw(Model *model);
     void end();
-    void flush();
+    void flush(Group* group);
 
     void drawNormals(Model* model);
 

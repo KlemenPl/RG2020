@@ -8,7 +8,13 @@ in VS_OUT {
 
 const float MAGNITUDE = 0.2;
 
-uniform mat4 projection;
+layout(std140, binding = 0) uniform vpMatrices
+{
+    mat4 projection;
+    mat4 view;
+    mat4 combined;
+};
+
 
 void GenerateLine(int index)
 {

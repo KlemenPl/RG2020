@@ -45,8 +45,9 @@ Renderer3D::Renderer3D()
     // generating UBO for lights
     glGenBuffers(1, &lightsUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, lightsUBO);
-    lightsBufferSize = DIR_LIGHT_LIMIT * DirLight::GLSL_SIZE + POINT_LIGHT_LIMIT * PointLight::GLSL_SIZE +
-                       2 * sizeof(int) + sizeof(glm::vec4);
+    lightsBufferSize = DIR_LIGHT_LIMIT * DirLight::GLSL_BYTE_SIZE + POINT_LIGHT_LIMIT * PointLight::GLSL_BYTE_SIZE +
+                       1 * sizeof(glm::vec4) + 4*sizeof(float );
+    lightsBufferUBO = new float[lightsBufferSize];
     glBufferData(GL_UNIFORM_BUFFER, lightsBufferSize, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0); // unbinding
 }
@@ -124,7 +125,6 @@ void Renderer3D::end()
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, vpMatricesUBO);
     // should be fine, since p,v, combined are in sequential order
     glBufferSubData(GL_UNIFORM_BUFFER, 0, 3 * sizeof(glm::mat4), &camera->getProjectionMatrix()[0][0]);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     shader->bind();
 
@@ -136,30 +136,96 @@ void Renderer3D::end()
                           < glm::distance(camera->getPosition(), right.position));
               });
 
-    // applying point lights
-    int length = pointLights.size();
-    if (length > POINT_LIGHT_LIMIT)
-        length = POINT_LIGHT_LIMIT;
-    shader->setUniform("NUM_POINT_LIGHTS", length);
-
-    for (int i = 0; i < length; i++)
-    {
-        shader->setUniformPointLight("pointLights[" + std::to_string(i) + "]", pointLights[i]);
-    }
-
     // applying dir lights
-    length = dirLights.size();
+    uint32_t length = dirLights.size();
     if (length > DIR_LIGHT_LIMIT)
         length = DIR_LIGHT_LIMIT;
-    shader->setUniform("NUM_DIR_LIGHTS", length);
+
+    float dirLightLength = *(float *) &length;
+
+    uint32_t lIdx = 0;
+    for (int i = 0; i < length; i++)
+    {
+        lightsBufferUBO[lIdx + 0] = dirLights[i].direction.x;
+        lightsBufferUBO[lIdx + 1] = dirLights[i].direction.y;
+        lightsBufferUBO[lIdx + 2] = dirLights[i].direction.z;
+        // padding
+        lightsBufferUBO[lIdx + 4] = dirLights[i].Ka.x;
+        lightsBufferUBO[lIdx + 5] = dirLights[i].Ka.y;
+        lightsBufferUBO[lIdx + 6] = dirLights[i].Ka.z;
+        // padding
+        lightsBufferUBO[lIdx + 8] = dirLights[i].Kd.x;
+        lightsBufferUBO[lIdx + 9] = dirLights[i].Kd.y;
+        lightsBufferUBO[lIdx + 10] = dirLights[i].Kd.z;
+        // padding
+        lightsBufferUBO[lIdx + 12] = dirLights[i].Ks.x;
+        lightsBufferUBO[lIdx + 13] = dirLights[i].Ks.y;
+        lightsBufferUBO[lIdx + 14] = dirLights[i].Ks.z;
+        // padding
+
+        lIdx += DirLight::GLSL_SIZE;
+    }
+    lIdx = DirLight::GLSL_SIZE * DIR_LIGHT_LIMIT;
+
+    // applying point lights
+    length = pointLights.size();
+    if (length > POINT_LIGHT_LIMIT)
+        length = POINT_LIGHT_LIMIT;
+
+    float pointLightLength = *(float *) &length;
 
     for (int i = 0; i < length; i++)
     {
-        shader->setUniformDirLight("dirLights[" + std::to_string(i) + "]", dirLights[i]);
+        lightsBufferUBO[lIdx + 0] = pointLights[i].position.x;
+        lightsBufferUBO[lIdx + 1] = pointLights[i].position.y;
+        lightsBufferUBO[lIdx + 2] = pointLights[i].position.z;
+        // padding
+        lightsBufferUBO[lIdx + 4] = pointLights[i].Ka.x;
+        lightsBufferUBO[lIdx + 5] = pointLights[i].Ka.y;
+        lightsBufferUBO[lIdx + 6] = pointLights[i].Ka.z;
+        // padding
+        lightsBufferUBO[lIdx + 8] = pointLights[i].Kd.x;
+        lightsBufferUBO[lIdx + 9] = pointLights[i].Kd.y;
+        lightsBufferUBO[lIdx + 10] = pointLights[i].Kd.z;
+        // padding
+        lightsBufferUBO[lIdx + 12] = pointLights[i].Ks.x;
+        lightsBufferUBO[lIdx + 13] = pointLights[i].Ks.y;
+        lightsBufferUBO[lIdx + 14] = pointLights[i].Ks.z;
+        // padding
+        lightsBufferUBO[lIdx + 16] = pointLights[i].constant;
+        lightsBufferUBO[lIdx + 17] = pointLights[i].linear;
+        lightsBufferUBO[lIdx + 18] = pointLights[i].quadratic;
+        // padding
+
+        lIdx += PointLight::GLSL_SIZE;
     }
 
-    shader->setUniform("combined", camera->getCombined());
-    shader->setUniform("viewPos", camera->getPosition());
+    lIdx = DirLight::GLSL_SIZE * DIR_LIGHT_LIMIT +
+           PointLight::GLSL_SIZE * POINT_LIGHT_LIMIT;
+
+    auto& viewPos = camera->getPosition();
+    lightsBufferUBO[lIdx + 0] = viewPos.x;
+    lightsBufferUBO[lIdx + 1] = viewPos.y;
+    lightsBufferUBO[lIdx + 2] = viewPos.z;
+
+    lightsBufferUBO[lIdx + 4] = dirLightLength;
+    lightsBufferUBO[lIdx + 5] = pointLightLength;
+
+    //for(int i=0;i<lightsBufferSize;i++){
+    //    lightsBufferUBO[i] = 1;
+    //}
+
+
+
+    //lightsBufferUBO[lIdx] = 1.0f;
+
+    // seting vpMatrices UBO
+    glBindBuffer(GL_UNIFORM_BUFFER, lightsUBO);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 2, lightsUBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, lightsBufferSize, lightsBufferUBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    //shader->setUniform("viewPos", camera->getPosition());
 
     // instancing meshes
     for (auto &models : instancedQueue)
@@ -184,7 +250,7 @@ void Renderer3D::end()
 
         for (int i = 0; i < groupSize; i++)
         {
-            if(i%INSTANCE_LIMIT==0)
+            if (i % INSTANCE_LIMIT == 0)
                 flush();
             uint32_t modelLength = models.second.size();
 
@@ -192,6 +258,9 @@ void Renderer3D::end()
 
             for (int j = 0; j < modelLength; j++)
             {
+                if(j>0&&j%INSTANCE_LIMIT == 0){
+                    flush();
+                }
                 // transforming
                 auto &modelGroup = modelVector[j]->modelGroups[i];
 
@@ -199,6 +268,7 @@ void Renderer3D::end()
                     modelGroup.transform();
                 modelMatrices.push_back(modelGroup.modelMatrix);
             }
+            flush();
 
             glBindVertexArray(rawModel.groups[i].mesh.VAO);
 
@@ -253,7 +323,7 @@ void Renderer3D::end()
     drawing = false;
 }
 
-void Renderer3D::flush()
+void Renderer3D::flush(Group *group)
 {
 
 }
@@ -262,14 +332,12 @@ void Renderer3D::drawNormals(Model *model)
 {
     const RawModel &rawModel = model->rawModel;
     normalDebugShader->bind();
-    normalDebugShader->setUniform("projection", camera->getProjectionMatrix());
-    normalDebugShader->setUniform("view", camera->getViewMatrix());
 
     for (int i = 0; i < rawModel.groups.size(); i++)
     {
         rawModel.groups[i].mesh.bind();
         auto &modelGroup = model->modelGroups[i];
-        if(!modelGroup.isStatic)
+        if (!modelGroup.isStatic)
             modelGroup.transform();
         normalDebugShader->setUniform("model", modelGroup.modelMatrix);
 

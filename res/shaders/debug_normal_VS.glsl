@@ -6,7 +6,13 @@ out VS_OUT {
     vec3 normal;
 } vs_out;
 
-uniform mat4 view;
+layout(std140, binding = 0) uniform vpMatrices
+{
+    mat4 projection;
+    mat4 view;
+    mat4 combined;
+};
+
 uniform mat4 model;
 
 void main()
