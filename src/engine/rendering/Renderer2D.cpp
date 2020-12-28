@@ -70,11 +70,6 @@ Renderer2D::Renderer2D(Ref<Shader> shader) : shader(shader)
     glEnableVertexAttribArray(2); // colour
     glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex2D), (const void *) offsetof(Vertex2D, color));
 
-    /* Would only need 5 bits to store this 32 values, but I think it's faster,
-     * if you keep it as 4 byte float (alignment of vertices -
-     * https://stackoverflow.com/questions/12819188/how-important-is-alignment-in-opengl-vertex-data-in-ios).
-     * And this is a lot simpler and faster to implement.
-     */
     glEnableVertexAttribArray(3); // texture ID
     glVertexAttribPointer(3, 1, GL_FLOAT, false, sizeof(Vertex2D), (const void *) offsetof(Vertex2D, textureID));
 

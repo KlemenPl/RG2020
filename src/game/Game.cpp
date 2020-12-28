@@ -16,9 +16,6 @@
 Screen *currentScreenStatic;
 std::string gameTitle;
 
-int width;
-int height;
-
 Game::Game() : window(nullptr)
 {
     gameTitle = "";
@@ -35,6 +32,9 @@ Game::~Game()
         delete itr.second;
 
     screenMap.clear();
+
+    delete renderer2D;
+    delete renderer3D;
 
     ResourceManager::dispose();
     Input::dispose();
@@ -101,15 +101,28 @@ bool Game::init()
 void Game::start()
 {
     initScreens();
-    setScreen(TEST);
-
+    //setScreen(TEST);
+    setScreen(GAME_SCREEN);
 
     RenderingCapabilities::init();
     ResourceManager::init();
 
     // todo: loading assets asynchronous
+    ResourceManager::loadWhitePixelTexture();
+
+    ShaderSourceArgument args[1];
+    args[0] = ShaderSourceArgument{FRAGMENT, "TEXTURE_SLOTS",
+                                   std::to_string(RenderingCapabilities::MAX_TEXTURE_IMAGE_UNITS)};
+    ResourceManager::loadShader("res/shaders/default2D_VS.glsl",
+                                "res/shaders/default2D_FS.glsl",
+                                nullptr, "default2D",
+                                args, 1);
+
+    ResourceManager::loadFont("res/fonts/Roboto-Black.ttf", "roboto");
 
 
+    renderer2D = new Renderer2D(ResourceManager::getShader("default2D"));
+    renderer3D = new Renderer3D();
     Input::init();
 
     // setting up input callbacks
@@ -140,9 +153,8 @@ void Game::run()
      *
      * https://gameprogrammingpatterns.com/game-loop.html
      */
-    while (!glfwWindowShouldClose(window)&&isRunning)
+    do
     {
-
         // update
         lastTime = currentTime;
         currentTime = glfwGetTime();
@@ -163,6 +175,7 @@ void Game::run()
 
         /* Poll for and process events */
         glfwPollEvents();
+        Input::handleEvents();
 
         // update
         currentScreen->update(dt);
@@ -172,8 +185,7 @@ void Game::run()
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
-
-    }
+    } while (!glfwWindowShouldClose(window) && isRunning);
 }
 
 /*
@@ -201,7 +213,7 @@ void Game::setTitle(std::string newTitle)
     glfwSetWindowTitle(window, ss.str().c_str());
 }
 
-void Game::setIsRunning(bool isRunning)
+void Game::setIsRunning(bool _isRunning)
 {
     Game::isRunning = isRunning;
 }

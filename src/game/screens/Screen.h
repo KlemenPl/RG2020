@@ -18,11 +18,11 @@ class Game;
 class Screen
 {
 protected:
-    const Game *game;
+    Game *game;
     GLFWwindow *window;
 
 public:
-    Screen(const Game *game, GLFWwindow *window) : game(game), window(window)
+    Screen(Game *game, GLFWwindow *window) : game(game), window(window)
     {};
 
     virtual ~Screen() = default;

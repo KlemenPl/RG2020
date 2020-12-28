@@ -66,8 +66,8 @@ void main() {
         result += calculateDirLight(dirLights[i], norm, viewDir);
 
     // point lights
-    //for (int i = 0; i < NUM_POINT_LIGHTS; i++)
-    //    result += calculatePointLight(pointLights[i], norm, fs_in.fragPos, viewDir);
+    for (int i = 0; i < numPointLights; i++)
+        result += calculatePointLight(pointLights[i], norm, fs_in.fragPos, viewDir);
 
     FragColor = vec4(result, 1.0);
     //FragColor = vec4(numDirLights.x,0.0,0.0, 1.0);

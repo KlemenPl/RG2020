@@ -25,6 +25,11 @@ Renderer3D::Renderer3D()
                                 "res/shaders/debug_normal_GS.glsl", "normalDebug");
     normalDebugShader = ResourceManager::getShader("normalDebug");
 
+    ResourceManager::loadShader("res/shaders/terrain_VS.glsl",
+                                "res/shaders/terrain_FS.glsl",
+                                nullptr,"terrain");
+    terrainShader = ResourceManager::getShader("terrain");
+
     // generating SSBOs
     glGenBuffers(1, &modelMatricesSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, modelMatricesSSBO);
@@ -46,7 +51,7 @@ Renderer3D::Renderer3D()
     glGenBuffers(1, &lightsUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, lightsUBO);
     lightsBufferSize = DIR_LIGHT_LIMIT * DirLight::GLSL_BYTE_SIZE + POINT_LIGHT_LIMIT * PointLight::GLSL_BYTE_SIZE +
-                       1 * sizeof(glm::vec4) + 4*sizeof(float );
+                       1 * sizeof(glm::vec4) + 4 * sizeof(float);
     lightsBufferUBO = new float[lightsBufferSize];
     glBufferData(GL_UNIFORM_BUFFER, lightsBufferSize, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0); // unbinding
@@ -94,6 +99,27 @@ void Renderer3D::prepareRawModel(const RawModel &model)
         preparedModels.insert(model.modelID);
     }
 }
+
+void Renderer3D::drawTerrain(const Terrain &terrain)
+{
+
+    glDisable(GL_CULL_FACE);
+    terrainShader->bind();
+    terrain.terrainMesh.bind();
+
+    // seting vpMatrices UBO
+    glBindBuffer(GL_UNIFORM_BUFFER, vpMatricesUBO);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, vpMatricesUBO);
+    // should be fine, since p,v, combined are in sequential order
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, 3 * sizeof(glm::mat4), &camera->getProjectionMatrix()[0][0]);
+
+
+
+    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+    glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
+
+}
+
 void Renderer3D::begin()
 {
     if (drawing)
@@ -203,7 +229,7 @@ void Renderer3D::end()
     lIdx = DirLight::GLSL_SIZE * DIR_LIGHT_LIMIT +
            PointLight::GLSL_SIZE * POINT_LIGHT_LIMIT;
 
-    auto& viewPos = camera->getPosition();
+    auto &viewPos = camera->getPosition();
     lightsBufferUBO[lIdx + 0] = viewPos.x;
     lightsBufferUBO[lIdx + 1] = viewPos.y;
     lightsBufferUBO[lIdx + 2] = viewPos.z;
@@ -250,17 +276,13 @@ void Renderer3D::end()
 
         for (int i = 0; i < groupSize; i++)
         {
-            if (i % INSTANCE_LIMIT == 0)
-                flush();
             uint32_t modelLength = models.second.size();
-
-            modelMatrices.clear();
 
             for (int j = 0; j < modelLength; j++)
             {
-                if(j>0&&j%INSTANCE_LIMIT == 0){
-                    flush();
-                }
+                if (j > 0 && j % INSTANCE_LIMIT == 0)
+                    flush(rawModel.groups[i]);
+
                 // transforming
                 auto &modelGroup = modelVector[j]->modelGroups[i];
 
@@ -268,53 +290,9 @@ void Renderer3D::end()
                     modelGroup.transform();
                 modelMatrices.push_back(modelGroup.modelMatrix);
             }
-            flush();
+            flush(rawModel.groups[i]);
 
-            glBindVertexArray(rawModel.groups[i].mesh.VAO);
 
-            // writing model matrices
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, modelMatricesSSBO);
-            glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, modelMatrices.size() * sizeof(glm::mat4),
-                            &modelMatrices[0][0][0]);
-
-            // writing materials
-            uint32_t mIdx = 0;
-
-            // https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)
-            auto &materials = rawModel.groups[i].meshMaterials;
-            for (auto &m:materials)
-            {
-                //@formatter:off
-                materialBuffer[mIdx + 0]  = m.Ka.x;
-                materialBuffer[mIdx + 1]  = m.Ka.y;
-                materialBuffer[mIdx + 2]  = m.Ka.z;
-                // 3
-                materialBuffer[mIdx + 4]  = m.Kd.x;
-                materialBuffer[mIdx + 5]  = m.Kd.y;
-                materialBuffer[mIdx + 6]  = m.Kd.z;
-                // 7
-                materialBuffer[mIdx + 8]  = m.Ks.x;
-                materialBuffer[mIdx + 9]  = m.Ks.y;
-                materialBuffer[mIdx + 10] = m.Ks.z;
-                // 11
-                materialBuffer[mIdx + 12] = m.Ns;
-                materialBuffer[mIdx + 14] = m.Ni;
-                //@formatter:on
-                mIdx += Material::GLSL_SIZE;
-            }
-
-            if (mIdx > 0)
-            {
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, materialsSSBO);
-                glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, mIdx * sizeof(float), materialBuffer);
-                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, materialsSSBO);
-            }
-
-            // drawing
-            //rawModel.groups[i].mesh.bind();
-            //glDrawElements(GL_TRIANGLES,rawModel.groups[i].mesh.indicesLength,GL_UNSIGNED_INT, nullptr);
-            glDrawElementsInstanced(GL_TRIANGLES, rawModel.groups[i].mesh.indicesLength, GL_UNSIGNED_INT, nullptr,
-                                    groupSize);
         }
     }
 
@@ -323,9 +301,55 @@ void Renderer3D::end()
     drawing = false;
 }
 
-void Renderer3D::flush(Group *group)
+void Renderer3D::flush(const Group &group)
 {
+    glBindVertexArray(group.mesh.VAO);
 
+    // writing model matrices
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, modelMatricesSSBO);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, modelMatrices.size() * sizeof(glm::mat4),
+                    &modelMatrices[0][0][0]);
+
+    // writing materials
+    uint32_t mIdx = 0;
+
+    // https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)
+    auto &materials = group.meshMaterials;
+    for (auto &m:materials)
+    {
+        //@formatter:off
+        materialBuffer[mIdx + 0]  = m.Ka.x;
+        materialBuffer[mIdx + 1]  = m.Ka.y;
+        materialBuffer[mIdx + 2]  = m.Ka.z;
+        // 3
+        materialBuffer[mIdx + 4]  = m.Kd.x;
+        materialBuffer[mIdx + 5]  = m.Kd.y;
+        materialBuffer[mIdx + 6]  = m.Kd.z;
+        // 7
+        materialBuffer[mIdx + 8]  = m.Ks.x;
+        materialBuffer[mIdx + 9]  = m.Ks.y;
+        materialBuffer[mIdx + 10] = m.Ks.z;
+        // 11
+        materialBuffer[mIdx + 12] = m.Ns;
+        materialBuffer[mIdx + 14] = m.Ni;
+        //@formatter:on
+        mIdx += Material::GLSL_SIZE;
+    }
+
+    if (mIdx > 0)
+    {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, materialsSSBO);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, mIdx * sizeof(float), materialBuffer);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, materialsSSBO);
+    }
+
+    // drawing
+    //rawModel.groups[i].mesh.bind();
+    //glDrawElements(GL_TRIANGLES,rawModel.groups[i].mesh.indicesLength,GL_UNSIGNED_INT, nullptr);
+    glDrawElementsInstanced(GL_TRIANGLES, group.mesh.indicesLength, GL_UNSIGNED_INT, nullptr,
+                            modelMatrices.size());
+
+    modelMatrices.clear();
 }
 
 void Renderer3D::drawNormals(Model *model)

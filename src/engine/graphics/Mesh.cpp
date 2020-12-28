@@ -17,3 +17,23 @@ void Mesh::unbind() const
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
+
+void Mesh::dispose()
+{
+    bind();
+    if (VBO)
+        glDeleteBuffers(1, &VBO);
+    if (IBO)
+        glDeleteBuffers(1, &IBO);
+    if (VAO)
+        glDeleteVertexArrays(1, &VAO);
+
+    unbind();
+
+    if (indices)
+        delete[] this->indices;
+    if (vertices)
+        delete[] this->vertices;
+
+
+}

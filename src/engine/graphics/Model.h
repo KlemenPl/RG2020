@@ -6,6 +6,8 @@
 #define TOWERDEFENSE_MODEL_H
 
 #include "RawModel.h"
+#include <glm.hpp>
+#include <ext/matrix_transform.hpp>
 
 class ModelGroup
 {
@@ -57,15 +59,19 @@ public:
 class Model
 {
 public:
+    const RawModel &rawModel;
     std::vector<ModelGroup> modelGroups;
 
     explicit Model(const RawModel &rawModel) : rawModel(rawModel)
     {
         for (auto &group:rawModel.groups)
             modelGroups.push_back(ModelGroup(&group.mesh));
-
     }
-    const RawModel &rawModel;
+
+    Model clone()
+    {
+        return *this;
+    }
 };
 
 #endif //TOWERDEFENSE_MODEL_H

@@ -40,7 +40,7 @@ public:
         this->aspect = width / height;
         this->yaw = -90.0f;
         this->near = 0.1f;
-        this->far = 100.0f;
+        this->far = 1000.0f;
 
         this->combined = glm::mat4(1.0f);
         this->projection = glm::mat4(1.0f);

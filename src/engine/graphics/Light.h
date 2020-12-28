@@ -50,7 +50,7 @@ struct DirLight
              const glm::vec3 &ka = {1.0f, 1.0f, 1.0f}, // ambiance
              const glm::vec3 &kd = {1.0f, 1.0f, 1.0f}, // diffuse
              const glm::vec3 &ks = {1.0f, 1.0f, 1.0f}) // specular
-            : direction(direction), Ka(ka), Kd(kd), Ks(ks)
+            : direction(glm::normalize(direction)), Ka(ka), Kd(kd), Ks(ks)
     {}
 
     bool operator==(const DirLight &rhs) const
@@ -69,7 +69,8 @@ struct DirLight
 struct PointLight
 {
     static const uint32_t GLSL_SIZE = 20; // vec3 is padded as vec4 and must be multiple of vec4s
-    static const uint32_t GLSL_BYTE_SIZE = GLSL_SIZE * sizeof(float );
+    static const uint32_t GLSL_BYTE_SIZE = GLSL_SIZE
+    * sizeof(float );
 
     glm::vec3 position; // 4
 

@@ -43,16 +43,19 @@ public:
     {
         for (auto &it:groups)
         {
-            if (it.mesh.VBO == 0)
+            if (!it.mesh.VBO)
                 continue;
 
+            /*
             glDeleteBuffers(GL_ARRAY_BUFFER, &it.mesh.VBO);
             glDeleteBuffers(GL_ELEMENT_ARRAY_BUFFER, &it.mesh.IBO);
             glDeleteVertexArrays(1, &it.mesh.VAO);
 
             delete it.mesh.vertices;
             delete it.mesh.indices;
+             */
             //delete it.meshes;
+            it.mesh.dispose();
         }
     }
 

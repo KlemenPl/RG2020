@@ -12,8 +12,10 @@
 #define DEBUG_MODE 1 // todo set to 0
 
 /*
- * Similar to std::shared_pointer. It can be copied without copying the refrence,
- * needs manual cleenup
+ * Similar to std::shared_pointer. It can be copied
+ * without copying the refrence.
+ *
+ * Needs manual cleanup.
  */
 template<typename T>
 class Ref
@@ -31,9 +33,24 @@ public:
         return refrence;
     }
 
+    const T *operator->() const
+    {
+        return refrence;
+    }
+
     T &operator*()
     {
         return *refrence;
+    }
+
+    T *_getRefrence()
+    {
+        return refrence;
+    }
+
+    const T *_getRefrence() const
+    {
+        return refrence;
     }
 
 

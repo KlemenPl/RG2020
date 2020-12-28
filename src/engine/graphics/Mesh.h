@@ -28,6 +28,7 @@ public:
 
     void bind() const;
     void unbind() const;
+    void dispose();
 };
 
 #endif //TOWERDEFENSE_MESH_H

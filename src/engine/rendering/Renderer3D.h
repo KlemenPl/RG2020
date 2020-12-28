@@ -11,6 +11,7 @@
 #include "../graphics/Model.h"
 #include "../graphics/Light.h"
 #include "../camera/Camera.h"
+#include "../graphics/Terrain.h"
 
 class Renderer3D
 {
@@ -20,8 +21,8 @@ private:
     const uint32_t DIR_LIGHT_LIMIT = 2;
     const uint32_t POINT_LIGHT_LIMIT = 5;
 
-    std::unordered_map<uint32_t, std::vector<Model*>> instancedQueue;
-    std::unordered_map<uint32_t, std::vector<Model*>> shadowQueue;
+    std::unordered_map<uint32_t, std::vector<Model *>> instancedQueue;
+    std::unordered_map<uint32_t, std::vector<Model *>> shadowQueue;
 
     std::vector<DirLight> dirLights;
     std::vector<PointLight> pointLights;
@@ -43,7 +44,7 @@ private:
 
     uint32_t lightsUBO{};
     uint32_t lightsBufferSize{};
-    float* lightsBufferUBO{};
+    float *lightsBufferUBO{};
 
     float *materialBuffer;
 
@@ -52,6 +53,7 @@ private:
     uint32_t materialsSSBOLength{};
 
     Ref<Shader> shader;
+    Ref<Shader> terrainShader;
     Ref<Shader> shadowShader;
     Ref<Shader> normalDebugShader;
     Ref<Shader> lightShader;
@@ -62,15 +64,17 @@ public:
     Renderer3D();
     virtual ~Renderer3D();
 
+    void drawTerrain(const Terrain& terrain);
+
     void begin();
     void draw(Model *model);
     void end();
-    void flush(Group* group);
+    void flush(const Group &group);
 
-    void drawNormals(Model* model);
+    void drawNormals(Model *model);
 
     void beginShadows(DirLight *dirLight);
-    void drawShadow(Model* model);
+    void drawShadow(Model *model);
     void endShadows();
     void flushShadows();
 

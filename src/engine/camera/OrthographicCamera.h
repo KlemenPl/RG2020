@@ -21,6 +21,8 @@ public:
     {
         this->left = left;
         this->bottom = bottom;
+        this->near = near;
+        this->far = far;
         //projection = math::ortho(left, right, bottom, top, near, far);
         //this->width = right;
         //this->height = top;

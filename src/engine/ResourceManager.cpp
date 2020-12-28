@@ -26,16 +26,20 @@ void ResourceManager::dispose()
 ResourceManager::~ResourceManager()
 {
     // freeing up memory
-    //for (auto &shader:shaders)
-    //    shader.second->~Shader();
-    //for (auto &texture:textures)
-    //    texture.second->~Texture2D();
+
+    // shaders
+    for (auto &shader:shaders)
+        delete shader.second._getRefrence();
     ResourceManager::shaders.clear();
+
+    // textures
+    for (auto &texture:textures)
+        delete texture.second._getRefrence();
     ResourceManager::textures.clear();
 
     // bitmap font cleanup
-    //for (auto &font:fonts)
-    //    font.second->~BitmapFont();
+    for (auto &font:fonts)
+        delete font.second._getRefrence();
     ResourceManager::fonts.clear();
 }
 

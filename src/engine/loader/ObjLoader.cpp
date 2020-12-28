@@ -116,10 +116,10 @@ static void processFace(const std::string &str,
                         std::unordered_map<std::string, uint32_t> &indicesMap,
                         uint32_t *indicesIndex,
                         bool hasTextCoords, bool hasNormals,
-                        int materialIndex)
+                        int materialIndex, bool useIBO)
 {
     auto it = indicesMap.find(str);
-    if (it == indicesMap.end())
+    if (it == indicesMap.end() || !useIBO)
     {
 
         // vertices
@@ -177,10 +177,10 @@ static void processGroup(std::ifstream &objFile, Group *group,
                          std::vector<glm::vec3> &vertexCoords,
                          std::vector<glm::vec3> &vertexNormals,
                          std::vector<glm::vec2> &textureCoords,
-                         std::unordered_map<std::string, Material *> &materials)
+                         std::unordered_map<std::string, Material *> &materials,
+                         bool useIBO)
 {
 
-    // fixme: this only works when loading only 1 model
     //static std::vector<glm::vec3> vertexCoords;
     //static std::vector<glm::vec3> vertexNormals;
     //static std::vector<glm::vec2> textureCoords;
@@ -269,19 +269,19 @@ static void processGroup(std::ifstream &objFile, Group *group,
                         vertices, indices,
                         indicesMap, &indecesIndex,
                         hasTexCoords, hasNormals,
-                        materialIndex);
+                        materialIndex, useIBO);
             processFace(face2,
                         vertexCoords, vertexNormals, textureCoords,
                         vertices, indices,
                         indicesMap, &indecesIndex,
                         hasTexCoords, hasNormals,
-                        materialIndex);
+                        materialIndex, useIBO);
             processFace(face3,
                         vertexCoords, vertexNormals, textureCoords,
                         vertices, indices,
                         indicesMap, &indecesIndex,
                         hasTexCoords, hasNormals,
-                        materialIndex);
+                        materialIndex, useIBO);
 
         }
 
@@ -308,7 +308,8 @@ static void processGroup(std::ifstream &objFile, Group *group,
 }
 
 RawModel *processObject(std::ifstream &objFile, const char *filePath,
-                        std::unordered_map<std::string, Material *> materials)
+                        std::unordered_map<std::string, Material *> materials,
+                        bool useIBO)
 {
     auto *model = new RawModel{};
 
@@ -341,7 +342,7 @@ RawModel *processObject(std::ifstream &objFile, const char *filePath,
             Group group;
             group.groupName = line.substr(2);
             processGroup(objFile, &group, vertexCoords, vertexNormals,
-                         textureCoords, materials);
+                         textureCoords, materials, useIBO);
             groups.push_back(std::move(group));
 
         }
@@ -352,7 +353,7 @@ RawModel *processObject(std::ifstream &objFile, const char *filePath,
             // moving back to prev line
             objFile.seekg(place);
             processGroup(objFile, &group, vertexCoords, vertexNormals,
-                         textureCoords, materials);
+                         textureCoords, materials, useIBO);
             group.groupName = "default";
             groups.push_back(std::move(group));
             break;
@@ -384,7 +385,7 @@ RawModel *processObject(std::ifstream &objFile, const char *filePath,
 
 
 namespace Loader {
-    RawModel *loadOBJ(const char *filePath)
+    RawModel *loadOBJ(const char *filePath, bool useIBO)
     {
         auto *model = new RawModel{};
 
@@ -418,7 +419,7 @@ namespace Loader {
                 Group group;
                 group.groupName = line.substr(2);
                 processGroup(objFile, &group, vertexCoords, vertexNormals,
-                             textureCoords, materials);
+                             textureCoords, materials, useIBO);
                 groups.push_back(std::move(group));
 
             }
@@ -429,7 +430,7 @@ namespace Loader {
                 // moving back to prev line
                 objFile.seekg(place);
                 processGroup(objFile, &group, vertexCoords, vertexNormals,
-                             textureCoords, materials);
+                             textureCoords, materials, useIBO);
                 group.groupName = "default";
                 groups.push_back(std::move(group));
                 break;
@@ -450,7 +451,7 @@ namespace Loader {
         return model;
     }
 
-    void loadOBJObjects(const char *filePath, std::vector<std::pair<std::string, RawModel *>> &output)
+    void loadOBJObjects(const char *filePath, std::vector<std::pair<std::string, RawModel *>> &output, bool useIBO)
     {
         std::ifstream objFile(filePath);
         std::string line;
@@ -470,9 +471,11 @@ namespace Loader {
             else if (startsWith(line, "o "))
             {
                 std::string name = line.substr(2);
-                output.emplace_back(name, processObject(objFile, filePath, materials));
-            } else {
-                output.emplace_back("",processObject(objFile, filePath, materials));
+                output.emplace_back(name, processObject(objFile, filePath, materials, useIBO));
+            }
+            else
+            {
+                output.emplace_back("", processObject(objFile, filePath, materials, useIBO));
             }
         }
 

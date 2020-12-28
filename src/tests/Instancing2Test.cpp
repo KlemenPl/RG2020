@@ -23,13 +23,12 @@ void Instancing2Test::init()
     this->renderer3D = new Renderer3D;
 
     //tree = Ref<RawModel>(Loader::loadOBJ("res/models/tree_01.obj"));
-    tree = Ref<RawModel>(Loader::loadOBJ("res/models/turret_single.obj"));
+    tree = Ref<RawModel>(Loader::loadOBJ("res/models/turret_single.obj", false));
     tree->generateMeshes();
-
     treeModel = new Model(*tree);
 
-    this->renderer3D->addDirLight(DirLight(glm::vec3(1,-0.21f,-0.2)));
-    //this->renderer3D->addPointLight(PointLight(glm::vec3(2,2,2)));
+    this->renderer3D->addDirLight(DirLight(glm::vec3(1, -0.21f, -0.2)));
+    this->renderer3D->addPointLight(PointLight(glm::vec3(2, 2, 2)));
 
     this->camera = new PerspectiveCamera(1280, 720);
 
@@ -47,6 +46,17 @@ void Instancing2Test::init()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
+
+    glm::perlin(glm::vec2(1,1));
+
+    for (int i = 0; i < 50; i++)
+    {
+        for (int j = 0; j < 50; j++)
+        {
+            std::cout<<glm::perlin(glm::vec2(i/20.0f,j/20.0f))<<"\t";
+        }
+        std::cout<<std::endl;
+    }
 
 }
 void Instancing2Test::start()
@@ -77,6 +87,9 @@ void Instancing2Test::start()
 
         renderer3D->setCamera(camera);
         renderer3D->begin();
+        Model m1 = treeModel->clone();
+        m1.modelGroups.front().position.x = -0.5f;
+        renderer3D->draw(&m1);
         renderer3D->draw(treeModel);
         renderer3D->end();
 

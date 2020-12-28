@@ -9,7 +9,7 @@
 
 namespace Loader {
     // https://en.wikipedia.org/wiki/Wavefront_.obj_file
-    RawModel *loadOBJ(const char *filePath);
-    void loadOBJObjects(const char *filePath, std::vector<std::pair<std::string,RawModel *>> &output);
+    RawModel *loadOBJ(const char *filePath, bool useIBO = true);
+    void loadOBJObjects(const char *filePath, std::vector<std::pair<std::string,RawModel *>> &output, bool useIBO = true);
 }
 #endif //TOWERDEFENSE_LOADER_H
