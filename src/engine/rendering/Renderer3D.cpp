@@ -103,7 +103,7 @@ void Renderer3D::prepareRawModel(const RawModel &model)
 void Renderer3D::drawTerrain(const Terrain &terrain)
 {
 
-    glDisable(GL_CULL_FACE);
+    //glDisable(GL_CULL_FACE);
     terrainShader->bind();
     terrain.terrainMesh.bind();
 
@@ -115,9 +115,15 @@ void Renderer3D::drawTerrain(const Terrain &terrain)
 
 
 
-    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    //glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
+    //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
 
+
+    //normalDebugShader->bind();
+    //normalDebugShader->setUniform("model", glm::mat4(1.0f));
+    //glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
 }
 
 void Renderer3D::begin()

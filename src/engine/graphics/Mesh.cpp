@@ -20,7 +20,7 @@ void Mesh::unbind() const
 
 void Mesh::dispose()
 {
-    bind();
+    //bind();
     if (VBO)
         glDeleteBuffers(1, &VBO);
     if (IBO)

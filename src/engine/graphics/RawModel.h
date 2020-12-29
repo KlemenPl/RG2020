@@ -129,6 +129,12 @@ public:
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indicesLength * sizeof(uint32_t),
                          mesh.indices, GL_STATIC_DRAW);
 
+            delete[] mesh.vertices;
+            delete[] mesh.indices;
+
+            mesh.vertices = nullptr;
+            mesh.indices = nullptr;
+
 
         }
     }

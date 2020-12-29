@@ -23,7 +23,9 @@ void Instancing2Test::init()
     this->renderer3D = new Renderer3D;
 
     //tree = Ref<RawModel>(Loader::loadOBJ("res/models/tree_01.obj"));
-    tree = Ref<RawModel>(Loader::loadOBJ("res/models/turret_single.obj", false));
+    Loader::useIBO = false;
+    tree = Ref<RawModel>(Loader::loadOBJ("res/models/turret_single.obj"));
+    Loader::useIBO = true;
     tree->generateMeshes();
     treeModel = new Model(*tree);
 

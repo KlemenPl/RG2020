@@ -3,47 +3,22 @@
 //
 
 #include "Loader.h"
+#include "../utils/StringUtils.h"
 #include <fstream>
 #include <iostream>
 #include <vector>
 #include <glm.hpp>
 #include <unordered_map>
 
-static bool startsWith(const std::string &str, const std::string &start)
-{
-    unsigned int length = start.length();
-
-    if (length > str.length())
-        return false;
-
-    for (int i = 0; i < length; i++)
-        if (str[i] != start[i])
-            return false;
-
-    return true;
-}
-
-static std::string nextPart(const std::string &str, const char separator, uint32_t &index)
-{
-    int i;
-    for (i = index; i < str.length(); i++)
-        if (str[i] == separator)
-            break;
-    std::string part = str.substr(index, i - index);
-    for (; i < str.length(); i++)
-        if (str[i] != separator)
-            break;
-    index = i;
-    return part;
-}
+bool Loader::useIBO;
 
 static glm::vec2 getVec2(const std::string &str)
 {
     glm::vec2 res;
     uint32_t index = 0;
 
-    res.x = std::stof(nextPart(str, ' ', index));
-    res.y = std::stof(nextPart(str, ' ', index));
+    res.x = std::stof(StringUtils::nextPart(str, ' ', index));
+    res.y = std::stof(StringUtils::nextPart(str, ' ', index));
 
     return res;
 }
@@ -53,9 +28,9 @@ static glm::vec3 getVec3(const std::string &str)
     glm::vec3 res;
     uint32_t index = 0;
 
-    res.x = std::stof(nextPart(str, ' ', index));
-    res.y = std::stof(nextPart(str, ' ', index));
-    res.z = std::stof(nextPart(str, ' ', index));
+    res.x = std::stof(StringUtils::nextPart(str, ' ', index));
+    res.y = std::stof(StringUtils::nextPart(str, ' ', index));
+    res.z = std::stof(StringUtils::nextPart(str, ' ', index));
 
     return res;
 }
@@ -72,7 +47,7 @@ static void loadMaterials(const char *filePath, std::unordered_map<std::string, 
         if (!line.empty() && line[line.size() - 1] == '\r')
             line.erase(line.size() - 1);
 
-        if (startsWith(line, "newmtl "))
+        if (StringUtils::startsWith(line, "newmtl "))
         {
             if (!materialName.empty())
             {
@@ -81,19 +56,19 @@ static void loadMaterials(const char *filePath, std::unordered_map<std::string, 
             }
             materialName = line.substr(7);
         }
-        else if (startsWith(line, "Ka "))
+        else if (StringUtils::startsWith(line, "Ka "))
         {
             material->Ka = getVec3(line.substr(3));
         }
-        else if (startsWith(line, "Kd "))
+        else if (StringUtils::startsWith(line, "Kd "))
         {
             material->Kd = getVec3(line.substr(3));
         }
-        else if (startsWith(line, "Ks "))
+        else if (StringUtils::startsWith(line, "Ks "))
         {
             material->Ks = getVec3(line.substr(3));
         }
-        else if (startsWith(line, "Ns "))
+        else if (StringUtils::startsWith(line, "Ns "))
         {
             material->Ns = std::stof(line.substr(3));
         }
@@ -116,15 +91,15 @@ static void processFace(const std::string &str,
                         std::unordered_map<std::string, uint32_t> &indicesMap,
                         uint32_t *indicesIndex,
                         bool hasTextCoords, bool hasNormals,
-                        int materialIndex, bool useIBO)
+                        int materialIndex)
 {
     auto it = indicesMap.find(str);
-    if (it == indicesMap.end() || !useIBO)
+    if (it == indicesMap.end() || !Loader::useIBO)
     {
 
         // vertices
         uint32_t index = 0;
-        uint32_t vertexIndex = std::stoi(nextPart(str, '/', index)) - 1;
+        uint32_t vertexIndex = std::stoi(StringUtils::nextPart(str, '/', index)) - 1;
 
         vertices.push_back(vertexCoords[vertexIndex].x);
         vertices.push_back(vertexCoords[vertexIndex].y);
@@ -134,7 +109,7 @@ static void processFace(const std::string &str,
         {
             // texCoords
 
-            uint32_t texIndex = std::stoi(nextPart(str, '/', index)) - 1;
+            uint32_t texIndex = std::stoi(StringUtils::nextPart(str, '/', index)) - 1;
 
             // adding texCoords
             vertices.push_back(textureCoords[texIndex].x);
@@ -144,7 +119,7 @@ static void processFace(const std::string &str,
         if (hasNormals)
         {
             // normals
-            uint32_t normalsIndex = std::stoi(nextPart(str, '/', index)) - 1;
+            uint32_t normalsIndex = std::stoi(StringUtils::nextPart(str, '/', index)) - 1;
 
             // adding normals
             vertices.push_back(vertexNormals[normalsIndex].x);
@@ -177,8 +152,7 @@ static void processGroup(std::ifstream &objFile, Group *group,
                          std::vector<glm::vec3> &vertexCoords,
                          std::vector<glm::vec3> &vertexNormals,
                          std::vector<glm::vec2> &textureCoords,
-                         std::unordered_map<std::string, Material *> &materials,
-                         bool useIBO)
+                         std::unordered_map<std::string, Material *> &materials)
 {
 
     //static std::vector<glm::vec3> vertexCoords;
@@ -210,31 +184,31 @@ static void processGroup(std::ifstream &objFile, Group *group,
         if (!line.empty() && line[line.size() - 1] == '\r')
             line.erase(line.size() - 1);
 
-        if (startsWith(line, "g "))
+        if (StringUtils::startsWith(line, "g "))
         {
             // new group, exiting
             objFile.seekg(place);
             break;
         }
-        else if (startsWith(line, "v "))
+        else if (StringUtils::startsWith(line, "v "))
         {
             // vertex position
             vertexCoords.push_back(getVec3(line.substr(2)));
 
         }
-        else if (startsWith(line, "vt "))
+        else if (StringUtils::startsWith(line, "vt "))
         {
             // texture coords
             textureCoords.push_back(getVec2(line.substr(3)));
 
         }
-        else if (startsWith(line, "vn "))
+        else if (StringUtils::startsWith(line, "vn "))
         {
             // vertex normal
             vertexNormals.push_back(getVec3(line.substr(3)));
 
         }
-        else if (startsWith(line, "usemtl "))
+        else if (StringUtils::startsWith(line, "usemtl "))
         {
             // change material
             std::string materialName = line.substr(7);
@@ -243,7 +217,7 @@ static void processGroup(std::ifstream &objFile, Group *group,
             materialIndex++;
 
         }
-        else if (startsWith(line, "f "))
+        else if (StringUtils::startsWith(line, "f "))
         {
             // start of faces (process mesh)
             if (!startedReadingFaces)
@@ -258,9 +232,9 @@ static void processGroup(std::ifstream &objFile, Group *group,
             std::string faces = line.substr(2);
             uint32_t index = 0;
 
-            std::string face1 = nextPart(faces, ' ', index);
-            std::string face2 = nextPart(faces, ' ', index);
-            std::string face3 = nextPart(faces, ' ', index);
+            std::string face1 = StringUtils::nextPart(faces, ' ', index);
+            std::string face2 = StringUtils::nextPart(faces, ' ', index);
+            std::string face3 = StringUtils::nextPart(faces, ' ', index);
 
             //materialIndex = 60;
 
@@ -269,19 +243,19 @@ static void processGroup(std::ifstream &objFile, Group *group,
                         vertices, indices,
                         indicesMap, &indecesIndex,
                         hasTexCoords, hasNormals,
-                        materialIndex, useIBO);
+                        materialIndex);
             processFace(face2,
                         vertexCoords, vertexNormals, textureCoords,
                         vertices, indices,
                         indicesMap, &indecesIndex,
                         hasTexCoords, hasNormals,
-                        materialIndex, useIBO);
+                        materialIndex);
             processFace(face3,
                         vertexCoords, vertexNormals, textureCoords,
                         vertices, indices,
                         indicesMap, &indecesIndex,
                         hasTexCoords, hasNormals,
-                        materialIndex, useIBO);
+                        materialIndex);
 
         }
 
@@ -308,8 +282,7 @@ static void processGroup(std::ifstream &objFile, Group *group,
 }
 
 RawModel *processObject(std::ifstream &objFile, const char *filePath,
-                        std::unordered_map<std::string, Material *> materials,
-                        bool useIBO)
+                        std::unordered_map<std::string, Material *> materials)
 {
     auto *model = new RawModel{};
 
@@ -328,7 +301,7 @@ RawModel *processObject(std::ifstream &objFile, const char *filePath,
     {
         if (!line.empty() && line[line.size() - 1] == '\r')
             line.erase(line.size() - 1);
-        if (startsWith(line, "mtllib "))
+        if (StringUtils::startsWith(line, "mtllib "))
         {
             // load materials
             std::string tmp(filePath);
@@ -336,29 +309,29 @@ RawModel *processObject(std::ifstream &objFile, const char *filePath,
             tmp = tmp.substr(0, index) + '/' + line.substr(7);
             loadMaterials(tmp.c_str(), materials);
         }
-        else if (startsWith(line, "g "))
+        else if (StringUtils::startsWith(line, "g "))
         {
             // new group
             Group group;
             group.groupName = line.substr(2);
             processGroup(objFile, &group, vertexCoords, vertexNormals,
-                         textureCoords, materials, useIBO);
+                         textureCoords, materials);
             groups.push_back(std::move(group));
 
         }
-        else if (startsWith(line, "v "))
+        else if (StringUtils::startsWith(line, "v "))
         {
             // no group specified
             Group group;
             // moving back to prev line
             objFile.seekg(place);
             processGroup(objFile, &group, vertexCoords, vertexNormals,
-                         textureCoords, materials, useIBO);
+                         textureCoords, materials);
             group.groupName = "default";
             groups.push_back(std::move(group));
             break;
         }
-        else if (startsWith(line, "g "))
+        else if (StringUtils::startsWith(line, "g "))
         {
             if (reading)
             {
@@ -379,13 +352,12 @@ RawModel *processObject(std::ifstream &objFile, const char *filePath,
     // cleaning up materials
     for (auto &it:materials)
         delete it.second;
-
     return model;
 }
 
 
 namespace Loader {
-    RawModel *loadOBJ(const char *filePath, bool useIBO)
+    RawModel *loadOBJ(const char *filePath)
     {
         auto *model = new RawModel{};
 
@@ -405,7 +377,7 @@ namespace Loader {
         {
             if (!line.empty() && line[line.size() - 1] == '\r')
                 line.erase(line.size() - 1);
-            if (startsWith(line, "mtllib "))
+            if (StringUtils::startsWith(line, "mtllib "))
             {
                 // load materials
                 std::string tmp(filePath);
@@ -413,24 +385,24 @@ namespace Loader {
                 tmp = tmp.substr(0, index) + '/' + line.substr(7);
                 loadMaterials(tmp.c_str(), materials);
             }
-            else if (startsWith(line, "g "))
+            else if (StringUtils::startsWith(line, "g "))
             {
                 // new group
                 Group group;
                 group.groupName = line.substr(2);
                 processGroup(objFile, &group, vertexCoords, vertexNormals,
-                             textureCoords, materials, useIBO);
+                             textureCoords, materials);
                 groups.push_back(std::move(group));
 
             }
-            else if (startsWith(line, "v "))
+            else if (StringUtils::startsWith(line, "v "))
             {
                 // no group specified
                 Group group;
                 // moving back to prev line
                 objFile.seekg(place);
                 processGroup(objFile, &group, vertexCoords, vertexNormals,
-                             textureCoords, materials, useIBO);
+                             textureCoords, materials);
                 group.groupName = "default";
                 groups.push_back(std::move(group));
                 break;
@@ -451,7 +423,7 @@ namespace Loader {
         return model;
     }
 
-    void loadOBJObjects(const char *filePath, std::vector<std::pair<std::string, RawModel *>> &output, bool useIBO)
+    void loadOBJObjects(const char *filePath, std::vector<std::pair<std::string, RawModel *>> &output)
     {
         std::ifstream objFile(filePath);
         std::string line;
@@ -460,7 +432,7 @@ namespace Loader {
 
         while (std::getline(objFile, line))
         {
-            if (startsWith(line, "matlib"))
+            if (StringUtils::startsWith(line, "matlib"))
             {
                 // load materials
                 std::string tmp(filePath);
@@ -468,14 +440,14 @@ namespace Loader {
                 tmp = tmp.substr(0, index) + '/' + line.substr(7);
                 loadMaterials(tmp.c_str(), materials);
             }
-            else if (startsWith(line, "o "))
+            else if (StringUtils::startsWith(line, "o "))
             {
                 std::string name = line.substr(2);
-                output.emplace_back(name, processObject(objFile, filePath, materials, useIBO));
+                output.emplace_back(name, processObject(objFile, filePath, materials));
             }
             else
             {
-                output.emplace_back("", processObject(objFile, filePath, materials, useIBO));
+                output.emplace_back("", processObject(objFile, filePath, materials));
             }
         }
 

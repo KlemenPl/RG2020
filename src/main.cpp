@@ -8,11 +8,13 @@
 #include "tests/BatchingTest.h"
 #include "tests/InstancingTest.h"
 #include "tests/Instancing2Test.h"
+#include "tests/TerrainTest.h"
 
 
 #define RUN_BATCHING_TEST 0
 #define RUN_INSTANCING_TEST 0
 #define RUN_INSTANCING2_TEST 0
+#define TERRAIN_TEST 1
 #define RUN_PARTICLE_TEST 0
 
 #define LOG_OPENGL_NOTIFICATIONS 0
@@ -58,6 +60,15 @@ int main(int argc, char **argv)
     instancingTest.init();
     instancingTest.start();
     return 0;
+#elif TERRAIN_TEST
+    TerrainTest terrainTest{};
+    terrainTest.initTest();
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(GLDebugMessageCallback, nullptr);
+    terrainTest.init();
+    terrainTest.start();
+    return 0;
 #else
     // declaring game on the free store (heap memory)
     Game *game = new Game;
@@ -68,13 +79,10 @@ int main(int argc, char **argv)
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(GLDebugMessageCallback, nullptr);
 #endif
-
     game->start();
-    game->setTitle("TowerDefense");
-
+    game->setTitle("IslandDefense");
     // runs the game
     game->run();
-
     // cleaning up
     delete game;
 
