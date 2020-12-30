@@ -13,17 +13,17 @@ struct Biome
 {
     uint32_t octaves = 4;
 
-    float persistance = 1.5f;
-    float lacunarity = 0.35f;
+    float persistance = 3.128f;
+    float lacunarity = 0.256f;
 
-    float startNoiseHeight = -4.0f;
+    float startNoiseHeight = 0.0f;
 
-    float startAmplitude = 2.0f;
+    float startAmplitude = 1.0f;
     float startFrequency = 1.0f;
 
+    float smoothness = 2.0f;
 
-    float heightBias = 1.0f;
-    float heightMultiplierBias = 0.5f;
+    float heightOffset = -15.0f;
 
     std::vector<Color> colours{};
 
@@ -54,7 +54,8 @@ public:
     Terrain()
     {}
 
-    void generate(uint32_t xSize, uint32_t ySize, uint32_t seed = 20, uint32_t resolution = 1.0f, const Biome& biome={});
+    void generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_t detailY,uint32_t seed = 20,
+                  uint32_t resolution = 1.0f, const Biome& biome={});
 
     float getHeight(float xPos, float yPos);
     virtual ~Terrain();

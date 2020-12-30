@@ -11,6 +11,9 @@
 Biome *activeBiome;
 Biome *tempBiome;
 
+uint32_t *activeSeed;
+uint32_t *tempSeed;
+
 void TerrainTest::init()
 {
 
@@ -19,14 +22,23 @@ void TerrainTest::init()
     this->renderer3D->setCamera(camera);
     this->renderer3D->addDirLight(DirLight(glm::vec3(0.2f, -0.5f, 0.0f)));
 
+    activeSeed = new uint32_t;
+    *activeSeed = 8462;
+    tempSeed = new uint32_t;
+    *tempSeed = *activeSeed;
+
     terrain = new Terrain();
     activeBiome = new Biome();
-    activeBiome->colours.emplace_back(Color::create(201/1.5f, 178/1.5f, 99/1.5f));
-    activeBiome->colours.emplace_back(Color::create(135/1.5f, 184/1.5f, 82/1.5f));
-    activeBiome->colours.emplace_back(Color::create(80/1.5f, 171/1.5f, 93/1.5f));
-    activeBiome->colours.emplace_back(Color::create(120/1.5f, 120/1.5f, 120/1.5f));
-    activeBiome->colours.emplace_back(Color::create(200/1.5f, 200/1.5f, 210/1.5f));
-    terrain->generate(100, 100, 123413, 2, *activeBiome);
+    float terrainDivisor = 2.0f;
+    activeBiome->colours.emplace_back(Color::create(201 / terrainDivisor, 178 / terrainDivisor, 99 / terrainDivisor));
+    activeBiome->colours.emplace_back(Color::create(201 / terrainDivisor, 178 / terrainDivisor, 99 / terrainDivisor));
+    activeBiome->colours.emplace_back(Color::create(135 / terrainDivisor, 184 / terrainDivisor, 82 / terrainDivisor));
+    activeBiome->colours.emplace_back(Color::create(135 / terrainDivisor, 184 / terrainDivisor, 82 / terrainDivisor));
+    activeBiome->colours.emplace_back(Color::create(80 / terrainDivisor, 171 / terrainDivisor, 93 / terrainDivisor));
+    activeBiome->colours.emplace_back(Color::create(120 / terrainDivisor, 120 / terrainDivisor, 120 / terrainDivisor));
+    activeBiome->colours.emplace_back(Color::create(200 / terrainDivisor, 200 / terrainDivisor, 210 / terrainDivisor));
+    activeBiome->colours.emplace_back(Color::create(200 / terrainDivisor, 200 / terrainDivisor, 210 / terrainDivisor));
+    terrain->generate(20, 20, 5, 5, *activeSeed, 1, *activeBiome);
     tempBiome = new Biome(*activeBiome);
 
     Input::init();
@@ -74,15 +86,14 @@ void TerrainTest::start()
 
         float startTime = glfwGetTime();
 
-        if (activeBiome && tempBiome)
+        if (((activeBiome && tempBiome) && *activeBiome != *tempBiome)
+            || *activeSeed != *tempSeed)
         {
-            if (*activeBiome != *tempBiome)
-            {
-                delete activeBiome;
-                activeBiome = tempBiome;
-                terrain->generate(50, 50, 20, 1.0f, *activeBiome);
-                tempBiome = new Biome(*activeBiome);
-            }
+            delete activeBiome;
+            activeBiome = tempBiome;
+            *activeSeed = *tempSeed;
+            terrain->generate(20, 20, 5, 5,  *activeSeed, 1, *activeBiome);
+            tempBiome = new Biome(*activeBiome);
         }
 
         auto start = chrono_now();
@@ -106,7 +117,7 @@ void TerrainTest::start()
         ImGui::Text("Game loop: %.3f ms.", deltaTime *= 1000);
         ImGui::Text("Drawin terrain: %.3f ms.", fDuration);
         ImGui::Text("");
-        ImGui::Text("Seed: %d.", 20);
+        ImGui::SliderInt("Seed: %d.", (int *) tempSeed, 0, 10000);
         ImGui::SliderInt("Octaves", (int *) &tempBiome->octaves, 0, 20);
         ImGui::SliderFloat("Persistance", &tempBiome->persistance, 0, 5);
         ImGui::SliderFloat("Lacunarity", &tempBiome->lacunarity, 0, 5);

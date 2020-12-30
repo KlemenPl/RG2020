@@ -60,7 +60,8 @@ void processTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::vector<Ve
 
 std::unordered_map<Vertex, uint32_t, Vertex::HashFunction> indicesMap;
 
-void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t seed, uint32_t resolution, const Biome &biome)
+void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_t detailY,
+                       uint32_t seed, uint32_t resolution, const Biome &biome)
 {
 
     terrainMesh.dispose();
@@ -95,13 +96,13 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t seed, uint32_t r
         octaveOffsets[i] = glm::vec2(xOffset, yOffset);
     }
 
-    float divisor = 1.0f;
+    float divisor = 1.0;
 
-    heightsWidth = xSize / resolution;
-    heightsHeight = ySize / resolution;
+    heightsWidth = xSize;
+    heightsHeight = ySize;
 
-    float stepX = xSize / heightsWidth;
-    float stepY = ySize / heightsHeight;
+    float stepX = (float) heightsWidth / detailX * biome.smoothness;
+    float stepY = (float) heightsHeight / detailY * biome.smoothness;
 
 
     if (heights)
@@ -131,6 +132,8 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t seed, uint32_t r
     {
         for (uint32_t j = 0; j < heightsWidth; j++)
         {
+            float offsetX = j * stepX;
+            float offsetY = i * stepY;
 
             float amplitude = biome.startAmplitude;
             float frequency = biome.startFrequency;
@@ -138,8 +141,8 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t seed, uint32_t r
 
             for (uint32_t k = 0; k < biome.octaves; k++)
             {
-                float sampleX = (j * stepX + octaveOffsets[k].x) / divisor * frequency;
-                float sampleY = (i * stepY + octaveOffsets[k].y) / divisor * frequency;
+                float sampleX = (offsetX + octaveOffsets[k].x) / divisor * frequency;
+                float sampleY = (offsetY + octaveOffsets[k].y) / divisor * frequency;
 
                 float perlinValue = (glm::perlin(glm::vec2(sampleX, sampleY)) + 1) / 2.0f;
                 noiseHeight += perlinValue * amplitude;
@@ -150,7 +153,7 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t seed, uint32_t r
             }
             //std::cout<<amplitude<<std::endl;
 
-            float value = noiseHeight;
+            float value = noiseHeight + biome.heightOffset;
 
             if (value > maxHeight)
                 maxHeight = value;
@@ -164,6 +167,9 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t seed, uint32_t r
         }
         //std::cout << std::endl;
     }
+
+    minHeight -= biome.heightOffset;
+    maxHeight -= biome.heightOffset;
 
     std::cout << "Min: " << minHeight << ", Max: " << maxHeight << std::endl;
     delete[] octaveOffsets;
@@ -255,7 +261,7 @@ T clamp(T value, T lowerBound, T higherBound)
 float getColour(float height, float minValue, float maxValue, const Biome &biome)
 {
     float value = (height - minValue) / maxValue;
-    float deltaValue = value * (biome.colours.size() - 1.0f);
+    float deltaValue = value * (biome.colours.size());
 
     uint32_t cLower = std::floor(deltaValue);
     uint32_t cHigher = std::ceil(deltaValue);
@@ -263,9 +269,9 @@ float getColour(float height, float minValue, float maxValue, const Biome &biome
     cLower = clamp<uint32_t>(cLower, 0u, biome.colours.size() - 1);
     cHigher = clamp<uint32_t>(cHigher, 0u, biome.colours.size() - 1);
 
-    float colorInterpolation = deltaValue - ((uint32_t)deltaValue);
+    float colorInterpolation = deltaValue - ((uint32_t) deltaValue);
 
-    Color interpolated = Color::interpolate(biome.colours[cLower],biome.colours[cHigher],colorInterpolation);
+    Color interpolated = Color::interpolate(biome.colours[cLower], biome.colours[cHigher], colorInterpolation);
     return interpolated.pack();
 
 }
@@ -280,7 +286,7 @@ void processTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::vector<Ve
 
     glm::vec3 normal = calculateNormal(v1, v2, v3);
 
-    float avgHeight = (v1.y + v2.y + v3.y) / 3.0f;
+    float avgHeight = (v1.y + v2.y + v3.y - biome.heightOffset * 3) / 3.0f;
     float color = getColour(avgHeight, minValue, maxValue, biome);
 
     //color = Colors::GREEN.pack();
@@ -320,8 +326,7 @@ bool Biome::operator==(const Biome &rhs) const
            startAmplitude == rhs.startAmplitude &&
            startFrequency == rhs.startFrequency &&
            startNoiseHeight == rhs.startNoiseHeight &&
-           heightBias == rhs.heightBias &&
-           heightMultiplierBias == rhs.heightMultiplierBias &&
+           heightOffset == rhs.heightOffset &&
            colours == rhs.colours &&
            waterLevel == rhs.waterLevel;
 }
