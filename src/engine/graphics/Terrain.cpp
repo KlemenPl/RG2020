@@ -10,13 +10,13 @@
 
 // https://www.redblobgames.com/maps/terrain-from-noise/
 
-struct Vertex
+struct TerrainVertex
 {
     glm::vec3 position;
     glm::vec3 normal;
     float colour;
 
-    bool operator==(const Vertex &rhs) const
+    bool operator==(const TerrainVertex &rhs) const
     {
         return position == rhs.position &&
                normal == rhs.normal &&
@@ -25,7 +25,7 @@ struct Vertex
 
     struct HashFunction
     {
-        size_t operator()(const Vertex &key) const
+        size_t operator()(const TerrainVertex &key) const
         {
             //size_t rowHash = std::hash<int>()(pos.row);
             //size_t colHash = std::hash<int>()(pos.col) << 1;
@@ -49,16 +49,63 @@ struct Vertex
     };
 };
 
+struct WaterVertex
+{
+    glm::vec3 position;
+    glm::vec3 normal;
+    float colour;
+    float offset;
+
+    bool operator==(const WaterVertex &rhs) const
+    {
+        return position == rhs.position &&
+               normal == rhs.normal &&
+               colour == rhs.colour &&
+               offset == rhs.offset;
+    }
+
+    struct HashFunction
+    {
+        size_t operator()(const WaterVertex &key) const
+        {
+            //size_t rowHash = std::hash<int>()(pos.row);
+            //size_t colHash = std::hash<int>()(pos.col) << 1;
+            //return rowHash ^ colHash;
+
+            uint32_t bitOffset = 0;
+
+            size_t hash = std::hash<float>()(key.position.x) << ++bitOffset;
+            hash ^= std::hash<float>()(key.position.y) << ++bitOffset;
+            hash ^= std::hash<float>()(key.position.z) << ++bitOffset;
+
+            hash ^= std::hash<float>()(key.normal.x) << ++bitOffset;
+            hash ^= std::hash<float>()(key.normal.y) << ++bitOffset;
+            hash ^= std::hash<float>()(key.normal.z) << ++bitOffset;
+
+            hash ^= std::hash<float>()(key.colour) << ++bitOffset;
+            hash ^= std::hash<float>()(key.offset) << ++bitOffset;
+
+
+            return hash;
+        }
+    };
+
+};
+
+using IndicesHashMap = std::unordered_map<TerrainVertex, uint32_t, TerrainVertex::HashFunction>;
+
 glm::vec3 calculateNormal(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3);
 
-void processQuad(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, glm::vec3 &v4, std::vector<Vertex> &vertices,
+void processQuad(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, glm::vec3 &v4, std::vector<TerrainVertex> &vertices,
+                 std::vector<uint32_t> &indices,
+                 IndicesHashMap &indicesMap,
                  float minValue, float maxValue,
                  const Biome &biome);
 
-void processTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::vector<Vertex> &vertices,
+void processTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::vector<TerrainVertex> &vertices,
+                     std::vector<uint32_t> &indices,
+                     IndicesHashMap &indicesMap,
                      float minValue, float maxValue, const Biome &biome);
-
-std::unordered_map<Vertex, uint32_t, Vertex::HashFunction> indicesMap;
 
 void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_t detailY,
                        uint32_t seed, uint32_t resolution, const Biome &biome)
@@ -79,12 +126,7 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
         return;
     }
 
-    uint32_t halfXSize = xSize / 2;
-    uint32_t halfYSize = ySize / 2;
-
     //halfXSize = halfYSize = 5;
-
-    indicesMap.clear();
 
     uint32_t octaves = 4;
     glm::vec2 *octaveOffsets = new glm::vec2[octaves];
@@ -98,11 +140,14 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
 
     float divisor = 1.0;
 
-    heightsWidth = xSize;
-    heightsHeight = ySize;
+    heightsWidth = xSize * detailX;
+    heightsHeight = ySize * detailY;
 
-    float stepX = (float) heightsWidth / detailX * biome.smoothness;
-    float stepY = (float) heightsHeight / detailY * biome.smoothness;
+    float halfXSize = xSize / 2.0f;
+    float halfYSize = ySize / 2.0f;
+
+    float stepX = (float) xSize / heightsWidth;
+    float stepY = (float) ySize / heightsHeight;
 
 
     if (heights)
@@ -125,8 +170,28 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
 
     std::vector<glm::vec3> vertexPositions;
 
-    this->minHeight = 100000.0f;
-    this->maxHeight = -minHeight;
+    this->minHeight = 0;
+    this->maxHeight = 0 + biome.waterLevel;
+
+    float flatMultiplier = 0.15f;
+
+    for (uint32_t k = 0; k < biome.octaves; k++)
+    {
+        this->maxHeight += persistance;
+    }
+
+    /*
+     * Applying fallout to corners to ensure
+     * we always get an island.
+     */
+    //uint32_t centerX = std::round(heightsWidth / 2u);
+    //uint32_t centerY = std::round(heightsHeight / 2u);
+    //float maxDistance = (float) (heightsWidth * heightsHeight);
+
+    uint32_t avgSize = (heightsWidth + heightsHeight) * 0.5;
+    uint32_t falloff = avgSize * 0.55;
+    uint32_t cutOff = avgSize * 0.1;
+
 
     for (uint32_t i = 0; i < heightsHeight; i++)
     {
@@ -137,7 +202,47 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
 
             float amplitude = biome.startAmplitude;
             float frequency = biome.startFrequency;
-            float noiseHeight = biome.startNoiseHeight;
+            float noiseHeight = 0.0f;
+
+            // getting closest distance to border
+            uint32_t minDst = avgSize;
+
+            if (minDst > j)
+                minDst = j;
+            if (minDst > heightsWidth - j)
+                minDst = heightsWidth - j;
+            if (minDst > i)
+                minDst = i;
+            if (minDst > heightsHeight - i)
+                minDst = heightsHeight - i;
+
+            float multiplier = 1.0f;
+            if (minDst < cutOff)
+                multiplier = flatMultiplier;
+            else if (minDst < falloff)
+                multiplier = (float) (minDst - cutOff) / (falloff) + flatMultiplier;
+
+            // calculating distance from center
+            //float deltaX = (float) j - centerX;
+            //float deltaY = (float) i - centerY;
+
+            //float distance = std::abs(deltaX)+std::abs(deltaY);
+            //float distance = std::sqrt(j * j + i * i);
+            //float heightMultiplier = (maxDistance - distance) / maxDistance;
+            //std::cout << distance << std::endl;
+            //std::cout<<((maxDistance-distance)/maxDistance)<<std::endl;
+
+            /*
+            if (j < falloffX)
+                noiseHeight = (float) -((falloffX - j) * stepX) / 2.0f;
+            else if (j > heightsWidth - falloffX)
+                noiseHeight = (float) -((-heightsWidth + j + falloffX) * stepX) / 2.0f;
+            else if (i < falloffY)
+                noiseHeight = (float) -((falloffY - i) * stepY) / 2.0f;
+            else if (i > heightsHeight - falloffY)
+                noiseHeight = (float) -((-heightsHeight + i + falloffY) * stepY) / 2.0f;
+                */
+
 
             for (uint32_t k = 0; k < biome.octaves; k++)
             {
@@ -153,28 +258,28 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
             }
             //std::cout<<amplitude<<std::endl;
 
-            float value = noiseHeight + biome.heightOffset;
+            float value = noiseHeight * multiplier;
 
             if (value > maxHeight)
                 maxHeight = value;
-            else if (value < minHeight)
-                minHeight = value;
+            //else if (value < minHeight)
+            //    minHeight = value;
 
             heights[i][j] = value;
-            vertexPositions.emplace_back(j * stepX - halfXSize, value, i * stepY - halfYSize);
+            vertexPositions.emplace_back(offsetX - halfXSize, value, offsetY - halfYSize);
             //std::cout << heights[i][j] << '\t';
 
         }
         //std::cout << std::endl;
     }
 
-    minHeight -= biome.heightOffset;
-    maxHeight -= biome.heightOffset;
-
-    std::cout << "Min: " << minHeight << ", Max: " << maxHeight << std::endl;
+    std::cout << "Terain::generate() Min: " << minHeight << ", Max: " << maxHeight << std::endl;
     delete[] octaveOffsets;
 
-    std::vector<Vertex> vertices;
+    std::vector<TerrainVertex> vertices;
+    std::vector<uint32_t> indices;
+
+    IndicesHashMap indicesMap;
 
     for (int i = 0; i < heightsHeight - 1; i++)
     {
@@ -188,7 +293,8 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
             // adding vertex data (sending in CCW)
             processQuad(vertexPositions[index2], vertexPositions[index1],
                         vertexPositions[index4], vertexPositions[index3],
-                        vertices, minHeight, maxHeight, biome);
+                        vertices, indices, indicesMap,
+                        minHeight, maxHeight, biome);
         }
     }
 
@@ -213,9 +319,7 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
 
     }
 
-    indicesMap.clear(); // 24192 vertices before using indices
-
-    // generating mesh
+    // generating terrain mesh
     glGenVertexArrays(1, &terrainMesh.VAO);
     glBindVertexArray(terrainMesh.VAO);
 
@@ -227,13 +331,26 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
     terrainMesh.vertices = nullptr;
 
     glEnableVertexAttribArray(0); // pos
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, sizeof(Vertex), (const void *) offsetof(Vertex, position));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, sizeof(TerrainVertex),
+                          (const void *) offsetof(TerrainVertex, position));
 
     glEnableVertexAttribArray(1); // normal
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void *) offsetof(Vertex, normal));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex),
+                          (const void *) offsetof(TerrainVertex, normal));
 
     glEnableVertexAttribArray(2); // colour
-    glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (const void *) offsetof(Vertex, colour));
+    glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(TerrainVertex),
+                          (const void *) offsetof(TerrainVertex, colour));
+
+    glGenBuffers(1, &terrainMesh.IBO);
+    glBindBuffer(GL_ARRAY_BUFFER, terrainMesh.IBO);
+    terrainMesh.indicesLength = indices.size();
+    terrainMesh.indices = nullptr;
+    glBufferData(GL_ARRAY_BUFFER, terrainMesh.indicesLength * sizeof(float), &indices[0], GL_STATIC_DRAW);
+
+    /*
+     * Generating water mesh
+     */
 }
 
 /*
@@ -243,12 +360,18 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
  * v3 - bottom left
  * v4 - bottom right
  */
-void processQuad(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, glm::vec3 &v4, std::vector<Vertex> &vertices,
+void processQuad(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, glm::vec3 &v4, std::vector<TerrainVertex> &vertices,
+                 std::vector<uint32_t> &indices,
+                 IndicesHashMap &indicesMap,
                  float minValue, float maxValue, const Biome &biome)
 {
 
-    processTriangle(v1, v2, v3, vertices, minValue, maxValue, biome);
-    processTriangle(v1, v3, v4, vertices, minValue, maxValue, biome);
+    processTriangle(v1, v2, v3, vertices,
+                    indices, indicesMap,
+                    minValue, maxValue, biome);
+    processTriangle(v1, v3, v4, vertices,
+                    indices, indicesMap,
+                    minValue, maxValue, biome);
 
 }
 
@@ -276,7 +399,9 @@ float getColour(float height, float minValue, float maxValue, const Biome &biome
 
 }
 
-void processTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::vector<Vertex> &vertices,
+void processTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::vector<TerrainVertex> &vertices,
+                     std::vector<uint32_t> &indices,
+                     IndicesHashMap &indicesMap,
                      float minValue, float maxValue, const Biome &biome)
 {
 
@@ -286,10 +411,12 @@ void processTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::vector<Ve
 
     glm::vec3 normal = calculateNormal(v1, v2, v3);
 
-    float avgHeight = (v1.y + v2.y + v3.y - biome.heightOffset * 3) / 3.0f;
+    float avgHeight = (v1.y + v2.y + v3.y) / 3.0f;
     float color = getColour(avgHeight, minValue, maxValue, biome);
 
     //color = Colors::GREEN.pack();
+
+
 
     vertices.push_back({v1, normal, color});
     vertices.push_back({v2, normal, color});
@@ -325,8 +452,6 @@ bool Biome::operator==(const Biome &rhs) const
            lacunarity == rhs.lacunarity &&
            startAmplitude == rhs.startAmplitude &&
            startFrequency == rhs.startFrequency &&
-           startNoiseHeight == rhs.startNoiseHeight &&
-           heightOffset == rhs.heightOffset &&
            colours == rhs.colours &&
            waterLevel == rhs.waterLevel;
 }

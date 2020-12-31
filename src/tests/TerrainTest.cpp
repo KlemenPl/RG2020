@@ -30,15 +30,13 @@ void TerrainTest::init()
     terrain = new Terrain();
     activeBiome = new Biome();
     float terrainDivisor = 2.0f;
+    //activeBiome->colours.emplace_back(Color::create(201 / terrainDivisor, 178 / terrainDivisor, 99 / terrainDivisor));
     activeBiome->colours.emplace_back(Color::create(201 / terrainDivisor, 178 / terrainDivisor, 99 / terrainDivisor));
-    activeBiome->colours.emplace_back(Color::create(201 / terrainDivisor, 178 / terrainDivisor, 99 / terrainDivisor));
-    activeBiome->colours.emplace_back(Color::create(135 / terrainDivisor, 184 / terrainDivisor, 82 / terrainDivisor));
     activeBiome->colours.emplace_back(Color::create(135 / terrainDivisor, 184 / terrainDivisor, 82 / terrainDivisor));
     activeBiome->colours.emplace_back(Color::create(80 / terrainDivisor, 171 / terrainDivisor, 93 / terrainDivisor));
     activeBiome->colours.emplace_back(Color::create(120 / terrainDivisor, 120 / terrainDivisor, 120 / terrainDivisor));
     activeBiome->colours.emplace_back(Color::create(200 / terrainDivisor, 200 / terrainDivisor, 210 / terrainDivisor));
-    activeBiome->colours.emplace_back(Color::create(200 / terrainDivisor, 200 / terrainDivisor, 210 / terrainDivisor));
-    terrain->generate(20, 20, 5, 5, *activeSeed, 1, *activeBiome);
+    terrain->generate(75, 75, 2, 2, *activeSeed, 1, *activeBiome);
     tempBiome = new Biome(*activeBiome);
 
     Input::init();
@@ -92,7 +90,7 @@ void TerrainTest::start()
             delete activeBiome;
             activeBiome = tempBiome;
             *activeSeed = *tempSeed;
-            terrain->generate(20, 20, 5, 5,  *activeSeed, 1, *activeBiome);
+            terrain->generate(75, 75, 2, 2,  *activeSeed, 1, *activeBiome);
             tempBiome = new Biome(*activeBiome);
         }
 

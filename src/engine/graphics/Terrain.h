@@ -11,23 +11,17 @@
 
 struct Biome
 {
-    uint32_t octaves = 4;
+    uint32_t octaves = 3;
 
-    float persistance = 3.128f;
-    float lacunarity = 0.256f;
-
-    float startNoiseHeight = 0.0f;
+    float persistance = 3.205f;
+    float lacunarity = 0.205f;
 
     float startAmplitude = 1.0f;
     float startFrequency = 1.0f;
 
-    float smoothness = 2.0f;
-
-    float heightOffset = -15.0f;
-
     std::vector<Color> colours{};
 
-    float waterLevel = 0.0f;
+    float waterLevel = 1.0f;
 
     bool operator==(const Biome &rhs) const;
     bool operator!=(const Biome &rhs) const;
