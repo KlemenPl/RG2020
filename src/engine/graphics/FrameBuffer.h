@@ -5,7 +5,9 @@
 #ifndef TOWERDEFENSE_FRAMEBUFFER_H
 #define TOWERDEFENSE_FRAMEBUFFER_H
 
-#include <memory>
+#include "../Core.h"
+#include "Texture2D.h"
+
 /*
  * Very simple utility class for
  * dealing with framebuffers.
@@ -13,17 +15,33 @@
 class FrameBuffer
 {
 public:
-    uint32_t fbo{};
+    const uint32_t width;
+    const uint32_t height;
 
-    FrameBuffer();
+    Texture2D *colourAttachment = nullptr;
+    Texture2D *depthAttachment = nullptr;
+    Texture2D *stencilAttachment = nullptr;
+
+    uint32_t fboID{};
+
+    FrameBuffer(uint32_t _width, uint32_t _height);
     ~FrameBuffer();
 
     void bind() const;
     void unbind() const;
+
+    void createColourAttachment(GLint format = GL_RGB,
+                                uint32_t wrapS = GL_REPEAT,
+                                uint32_t wrapT = GL_REPEAT,
+                                uint32_t filterMin = GL_LINEAR,
+                                uint32_t filterMag = GL_LINEAR);
+    void createDepthAttachment(uint32_t filterMin = GL_LINEAR,
+                               uint32_t filterMag = GL_LINEAR);
 
     // should not be copied!!
     FrameBuffer(const FrameBuffer &) = delete;
     //FrameBuffer() = default;
     FrameBuffer &operator=(const FrameBuffer &) = delete;
 };
+
 #endif //TOWERDEFENSE_FRAMEBUFFER_H

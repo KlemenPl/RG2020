@@ -8,11 +8,25 @@
 class Color
 {
 public:
-    // todo: consider using union
     float r;
     float g;
     float b;
     float a;
+
+    // todo: consider using union
+    /*
+    union {
+        struct
+        {
+            unsigned char r;
+            unsigned char g;
+            unsigned char b;
+            unsigned char a;
+        };
+
+        float packed;
+    };
+     */
     Color(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 1.0) :
             r(r), g(g), b(b), a(a)
     {}

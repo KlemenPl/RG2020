@@ -17,6 +17,30 @@
  */
 Renderer2D::Renderer2D(Ref<Shader> shader) : shader(shader)
 {
+    init();
+}
+
+Renderer2D::Renderer2D()
+{
+    // loading shader and setting argument for TEXTURE_SLOTS
+    ShaderSourceArgument args[1];
+    args[0] = ShaderSourceArgument{FRAGMENT, "TEXTURE_SLOTS",
+                                   std::to_string(RenderingCapabilities::MAX_TEXTURE_IMAGE_UNITS)};
+
+    ResourceManager::loadWhitePixelTexture();
+
+    ResourceManager::loadShader("res/shaders/default2D_VS.glsl",
+                                "res/shaders/default2D_FS.glsl",
+                                nullptr, "default2D",
+                                args, 1);
+
+    shader = ResourceManager::getShader("default2D");
+
+    init();
+}
+
+void Renderer2D::init()
+{
     this->maxTextures = RenderingCapabilities::MAX_TEXTURE_IMAGE_UNITS;
     //this->maxTextures = 20;
     this->sampledTextures = new int[maxTextures];
@@ -72,7 +96,6 @@ Renderer2D::Renderer2D(Ref<Shader> shader) : shader(shader)
 
     glEnableVertexAttribArray(3); // texture ID
     glVertexAttribPointer(3, 1, GL_FLOAT, false, sizeof(Vertex2D), (const void *) offsetof(Vertex2D, textureID));
-
 }
 
 /*

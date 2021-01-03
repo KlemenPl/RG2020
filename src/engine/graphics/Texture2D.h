@@ -27,6 +27,7 @@ public:
     uint32_t filterMag;
 
     Texture2D();
+    Texture2D(uint32_t wrapS, uint32_t wrapT, uint32_t filterMin, uint32_t filterMag);
 
     void generate(uint32_t width, uint32_t height, unsigned char *data);
 

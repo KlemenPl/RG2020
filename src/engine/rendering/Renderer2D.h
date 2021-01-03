@@ -58,8 +58,12 @@ private:
     std::unordered_map<uint32_t, uint32_t> boundTextures;
     int *sampledTextures{};
 
+    void init();
+
 public:
     explicit Renderer2D(Ref<Shader> shader);
+
+    Renderer2D();
 
     virtual ~Renderer2D();
 
@@ -88,7 +92,6 @@ public:
 
     // should not be copied!!
     Renderer2D(const Renderer2D &) = delete;
-    Renderer2D() = default;
     Renderer2D &operator=(const Renderer2D &) = delete;
 
 

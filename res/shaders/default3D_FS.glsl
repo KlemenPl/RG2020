@@ -85,8 +85,8 @@ vec3 calculateDirLight(DirLight light, vec3 normal, vec3 viewDir)
     float diff = max(dot(normal, lightDir), 0.0);
     // specular
     vec3 reflectDir = reflect(-lightDir, normal);
-    //float spec = pow(max(dot(viewDir, reflectDir), 0.0), fs_in.material.Ns);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 225);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), fs_in.material.NsNi.x);
+    //float spec = pow(max(dot(viewDir, reflectDir), 0.0), 225);
     // combined
     vec3 ambient = light.Ka.xyz * fs_in.material.Ka.xyz;
     vec3 diffuse = light.Kd.xyz * diff * fs_in.material.Kd.xyz;

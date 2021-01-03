@@ -10,7 +10,7 @@
 #include <set>
 #include "../graphics/Model.h"
 #include "../graphics/Light.h"
-#include "../camera/Camera.h"
+#include "../camera/PerspectiveCamera.h"
 #include "../graphics/Terrain.h"
 
 class Renderer3D
@@ -27,7 +27,7 @@ private:
     std::vector<DirLight> dirLights;
     std::vector<PointLight> pointLights;
 
-    Camera *camera = nullptr;
+    PerspectiveCamera *camera = nullptr;
     bool drawing = false;
     bool drawingShadows = false;
 
@@ -54,17 +54,21 @@ private:
 
     Ref<Shader> shader;
     Ref<Shader> terrainShader;
+    Ref<Shader> waterShader;
     Ref<Shader> shadowShader;
     Ref<Shader> normalDebugShader;
     Ref<Shader> lightShader;
 
     void prepareRawModel(const RawModel &model);
 
+    void setupCamera();
+
 public:
     Renderer3D();
     virtual ~Renderer3D();
 
     void drawTerrain(const Terrain& terrain);
+
 
     void begin();
     void draw(Model *model);
@@ -78,7 +82,7 @@ public:
     void endShadows();
     void flushShadows();
 
-    void setCamera(Camera *_camera);
+    void setCamera(PerspectiveCamera *_camera);
 
     void addPointLight(PointLight light);
     void removePointLight(const PointLight &light);

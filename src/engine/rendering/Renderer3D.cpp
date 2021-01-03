@@ -27,8 +27,20 @@ Renderer3D::Renderer3D()
 
     ResourceManager::loadShader("res/shaders/terrain_VS.glsl",
                                 "res/shaders/terrain_FS.glsl",
-                                nullptr,"terrain");
+                                nullptr, "terrain");
     terrainShader = ResourceManager::getShader("terrain");
+
+    ResourceManager::loadShader("res/shaders/water_VS.glsl",
+                                "res/shaders/water_FS.glsl",
+                                nullptr, "water");
+    waterShader = ResourceManager::getShader("water");
+
+    waterShader->bind();
+    waterShader->setUniform("reflectionSample",0);
+    waterShader->setUniform("refractionSample",1);
+    waterShader->setUniform("dudvSample",2);
+    waterShader->setUniform("normalSample",3);
+    waterShader->setUniform("depthSample",4);
 
     // generating SSBOs
     glGenBuffers(1, &modelMatricesSSBO);
@@ -68,6 +80,7 @@ Renderer3D::~Renderer3D()
     modelMatrices.clear();
 
 }
+
 void Renderer3D::prepareRawModel(const RawModel &model)
 {
     if (preparedModels.find(model.modelID) == preparedModels.end())
@@ -102,28 +115,77 @@ void Renderer3D::prepareRawModel(const RawModel &model)
 
 void Renderer3D::drawTerrain(const Terrain &terrain)
 {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     //glDisable(GL_CULL_FACE);
     terrainShader->bind();
     terrain.terrainMesh.bind();
 
     // seting vpMatrices UBO
-    glBindBuffer(GL_UNIFORM_BUFFER, vpMatricesUBO);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, vpMatricesUBO);
+    //glBindBuffer(GL_UNIFORM_BUFFER, vpMatricesUBO);
+    //glBindBufferBase(GL_UNIFORM_BUFFER, 0, vpMatricesUBO);
     // should be fine, since p,v, combined are in sequential order
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, 3 * sizeof(glm::mat4), &camera->getProjectionMatrix()[0][0]);
+    //glBufferSubData(GL_UNIFORM_BUFFER, 0, 3 * sizeof(glm::mat4), &camera->getProjectionMatrix()[0][0]);
 
+    glm::vec3 camPos = camera->getPosition();
+    float distance = 2 * (camera->getPosition().y - terrain.waterLevel);
+    camPos.y-=distance;
+    camera->setPosition(camPos);
+    camera->setPitch(-camera->getPitch());
+    camera->update();
+    setupCamera();
+    // reflection
+    terrain.waterFrameBuffers.bindReflectionFrameBuffer();
+    terrainShader->setUniform("plane", glm::vec4(0, 1, 0, -terrain.waterLevel));
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDrawElements(GL_TRIANGLES, terrain.terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
 
+    camPos.y+=distance;
+    camera->setPosition(camPos);
+    camera->setPitch(-camera->getPitch());
+    camera->update();
+    setupCamera();
+    // refraction
+    terrain.waterFrameBuffers.bindRefractionFrameBuffer();
+    terrainShader->setUniform("plane", glm::vec4(0, -1, 0, terrain.waterLevel));
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDrawElements(GL_TRIANGLES, terrain.terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
+
+    terrain.waterFrameBuffers.unbindCurrentFrameBuffer();
 
     //glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
     //glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
     //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
+    //glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
+    terrainShader->setUniform("plane", glm::vec4(0, -1, 0, 1000.0f));
+
+    glDrawElements(GL_TRIANGLES, terrain.terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
+
+    waterShader->bind();
+    terrain.waterMesh.bind();
+    glActiveTexture(GL_TEXTURE0 + 0);
+    glBindTexture(GL_TEXTURE_2D, terrain.waterFrameBuffers.getReflectionTexture());
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, terrain.waterFrameBuffers.getRefractionTexture());
+    glActiveTexture(GL_TEXTURE0 + 2);
+    glBindTexture(GL_TEXTURE_2D, terrain.waterDuDvMap->ID);
+    glActiveTexture(GL_TEXTURE0 + 3);
+    glBindTexture(GL_TEXTURE_2D, terrain.waterNormalMap->ID);
+    glActiveTexture(GL_TEXTURE0 + 4);
+    glBindTexture(GL_TEXTURE_2D, terrain.waterFrameBuffers.getRefractionDepthTexture());
+
+    waterShader->setUniform("moveFactor", (float)glfwGetTime()/40.0f);
+    waterShader->setUniform("camPos", camPos);
+
+    glDrawElements(GL_TRIANGLES, terrain.waterMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
 
 
     //normalDebugShader->bind();
     //normalDebugShader->setUniform("model", glm::mat4(1.0f));
     //glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
+
+    glDisable(GL_BLEND);
 }
 
 void Renderer3D::begin()
@@ -137,27 +199,31 @@ void Renderer3D::begin()
     drawCalls = 0;
 
     glEnable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_CLIP_DISTANCE0);
     //glBlendFunc(GL_SRC_ALPHA,GL_SRC_ALPHA);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 void Renderer3D::draw(Model *model)
 {
     uint32_t id = model->rawModel.modelID;
     instancedQueue[id].push_back(model);
 }
-void Renderer3D::end()
-{
-    if (!drawing)
-        throw std::runtime_error("Renderer3D::end(): Renderer must first be started");
 
+void Renderer3D::setupCamera()
+{
     // seting vpMatrices UBO
     glBindBuffer(GL_UNIFORM_BUFFER, vpMatricesUBO);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, vpMatricesUBO);
     // should be fine, since p,v, combined are in sequential order
     glBufferSubData(GL_UNIFORM_BUFFER, 0, 3 * sizeof(glm::mat4), &camera->getProjectionMatrix()[0][0]);
+}
 
+void Renderer3D::end()
+{
+    if (!drawing)
+        throw std::runtime_error("Renderer3D::end(): Renderer must first be started");
+
+    setupCamera();
     shader->bind();
 
     // sorting point lights
@@ -412,7 +478,7 @@ void Renderer3D::flushShadows()
         it.second.clear();
 }
 
-void Renderer3D::setCamera(Camera *_camera)
+void Renderer3D::setCamera(PerspectiveCamera *_camera)
 {
     this->camera = _camera;
 }

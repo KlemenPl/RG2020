@@ -33,7 +33,12 @@ public:
     // loading
     static void loadShader(const char* vsFile, const char* fsFile, const char* gsFile, std::string name,
                            ShaderSourceArgument args [] = nullptr, uint32_t argsLength=0);
-    static void loadTexture(const char* textureFile, std::string name, bool alpha);
+    static void loadTexture(const char* textureFile, std::string name, bool alpha,
+                            uint32_t wrapS = GL_REPEAT,
+                            uint32_t wrapT = GL_REPEAT,
+                            uint32_t filterMin = GL_LINEAR,
+                            uint32_t filterMag = GL_LINEAR
+                            );
     static void loadWhitePixelTexture();
     static void loadFont(const char* fontFile, std::string name,
                          float fontSize = 64.0, int atlasWidth = 1024, int atlasHeight = 1024,

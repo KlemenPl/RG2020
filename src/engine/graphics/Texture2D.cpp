@@ -9,6 +9,12 @@ Texture2D::Texture2D() : width(0), height(0), internalFormat(GL_RGB), imageForma
 {
 }
 
+Texture2D::Texture2D(uint32_t wrapS, uint32_t wrapT, uint32_t filterMin, uint32_t filterMag) :
+        width(0), height(0), internalFormat(GL_RGB), imageFormat(GL_RGB),
+        wrapS(wrapS), wrapT(wrapT),
+        filterMin(filterMin), filterMag(filterMag)
+{}
+
 Texture2D::~Texture2D()
 {
     // clean up
@@ -53,7 +59,7 @@ float Texture2D::getV1() const
     return 1.0f;
 }
 
-uint32_t Texture2D::getID()const
+uint32_t Texture2D::getID() const
 {
     return ID;
 }

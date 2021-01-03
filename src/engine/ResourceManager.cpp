@@ -137,21 +137,28 @@ void ResourceManager::loadWhitePixelTexture()
     instance->textures["sshape"] = Ref<Texture2D>(texture2D);
 }
 
-void ResourceManager::loadTexture(const char *textureFile, std::string name, bool alpha = true)
+void ResourceManager::loadTexture(const char *textureFile, std::string name, bool alpha = true,
+                                  uint32_t wrapS, uint32_t wrapT,
+                                  uint32_t filterMin, uint32_t filterMag)
 {
-    Texture2D *texture2D = new Texture2D;
+    Texture2D *texture2D = new Texture2D(wrapS, wrapT, filterMin, filterMag);
     if (alpha)
     {
         texture2D->internalFormat = GL_RGBA;
         texture2D->imageFormat = GL_RGBA;
     }
-    // load image
+    // loading image
     int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(true);
     unsigned char *data = stbi_load(textureFile, &width, &height, &nrChannels, 0);
-    // now generate texture
+    // generating texture
+    if (data == nullptr)
+    {
+        std::cout << "ResourceManager::loadTexture(): Invalid file!" << std::endl;
+        return;
+    }
     texture2D->generate(width, height, data);
-    // and finally free image data
+    // releasing allocated data
     stbi_image_free(data);
 
     instance->textures[name] = Ref<Texture2D>(texture2D);

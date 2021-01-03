@@ -43,6 +43,7 @@ private:
     std::vector<MouseScrollEvent> mousescrollEvents;
     std::vector<ResizeEvent> resizeEvents;
 
+    bool handleInput = true;
 
     // keyboard key input
     int keys[KEY_LAST]{}; // 348 * 4 bytes
@@ -92,6 +93,8 @@ public:
     static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
     static void ScrollCallback(GLFWwindow *window, double xoffset, double yoffset);
     static void WindowSizeCallback(GLFWwindow *window, int nWidth, int nHeight);
+    void setHandleInput(bool handleInput);
+    bool isHandleInput() const;
 
 };
 

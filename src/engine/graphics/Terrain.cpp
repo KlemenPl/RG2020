@@ -3,7 +3,9 @@
 //
 #include "Terrain.h"
 #include "../Core.h"
+#include "../ResourceManager.h"
 #include <gtc/noise.hpp>
+#include <gtx/hash.hpp>
 #include <random>
 #include <iostream>
 #include <unordered_map>
@@ -27,24 +29,19 @@ struct TerrainVertex
     {
         size_t operator()(const TerrainVertex &key) const
         {
-            //size_t rowHash = std::hash<int>()(pos.row);
-            //size_t colHash = std::hash<int>()(pos.col) << 1;
-            //return rowHash ^ colHash;
+            size_t seed = 0;
+            std::hash<float> hasher;
+            glm::detail::hash_combine(seed, hasher(key.position.x));
+            glm::detail::hash_combine(seed, hasher(key.position.y));
+            glm::detail::hash_combine(seed, hasher(key.position.z));
 
-            uint32_t bitOffset = 0;
+            glm::detail::hash_combine(seed, hasher(key.normal.x));
+            glm::detail::hash_combine(seed, hasher(key.normal.y));
+            glm::detail::hash_combine(seed, hasher(key.normal.z));
 
-            size_t hash = std::hash<float>()(key.position.x) << ++bitOffset;
-            hash ^= std::hash<float>()(key.position.y) << ++bitOffset;
-            hash ^= std::hash<float>()(key.position.z) << ++bitOffset;
+            glm::detail::hash_combine(seed, hasher(key.colour));
 
-            hash ^= std::hash<float>()(key.normal.x) << ++bitOffset;
-            hash ^= std::hash<float>()(key.normal.y) << ++bitOffset;
-            hash ^= std::hash<float>()(key.normal.z) << ++bitOffset;
-
-            hash ^= std::hash<float>()(key.colour) << ++bitOffset;
-
-
-            return hash;
+            return seed;
         }
     };
 };
@@ -96,28 +93,38 @@ using IndicesHashMap = std::unordered_map<TerrainVertex, uint32_t, TerrainVertex
 
 glm::vec3 calculateNormal(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3);
 
-void processQuad(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, glm::vec3 &v4, std::vector<TerrainVertex> &vertices,
-                 std::vector<uint32_t> &indices,
-                 IndicesHashMap &indicesMap,
-                 float minValue, float maxValue,
-                 const Biome &biome);
+void processTerrainQuad(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, glm::vec3 &v4,
+                        std::vector<TerrainVertex> &vertices,
+                        std::vector<uint32_t> &indices,
+                        IndicesHashMap &indicesMap, uint32_t *indicesIndex,
+                        float minValue, float maxValue,
+                        const Biome &biome);
 
-void processTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::vector<TerrainVertex> &vertices,
-                     std::vector<uint32_t> &indices,
-                     IndicesHashMap &indicesMap,
-                     float minValue, float maxValue, const Biome &biome);
+void processTerrainTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::vector<TerrainVertex> &vertices,
+                            std::vector<uint32_t> &indices,
+                            IndicesHashMap &indicesMap, uint32_t *indicesIndex,
+                            float minValue, float maxValue, const Biome &biome);
 
+Terrain::Terrain()
+{
+    ResourceManager::loadTexture("res/textures/waterDuDvMap.png","waterDuDvMap", false);
+    waterDuDvMap = ResourceManager::getTexture2D("waterDuDvMap");
+
+    ResourceManager::loadTexture("res/textures/waterMatchingNormalMap.png","waterNormalMap", false);
+    waterNormalMap = ResourceManager::getTexture2D("waterNormalMap");
+}
 void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_t detailY,
                        uint32_t seed, uint32_t resolution, const Biome &biome)
 {
 
+    // 6051
     terrainMesh.dispose();
     waterMesh.dispose();
 
     std::mt19937 generator{seed};
-    std::uniform_int_distribution<> random(-100000, 100000);
+    std::uniform_int_distribution<> random(-10000, 10000);
 
-    if (resolution < 1) // LOD
+    if (resolution < 1) // TODO: LOD
         resolution = 1;
 
     if (xSize % resolution != 0 || ySize % resolution != 0)
@@ -137,8 +144,6 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
         float yOffset = random(generator);
         octaveOffsets[i] = glm::vec2(xOffset, yOffset);
     }
-
-    float divisor = 1.0;
 
     heightsWidth = xSize * detailX;
     heightsHeight = ySize * detailY;
@@ -173,7 +178,7 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
     this->minHeight = 0;
     this->maxHeight = 0 + biome.waterLevel;
 
-    float flatMultiplier = 0.15f;
+    float flatMultiplier = 0.10f;
 
     for (uint32_t k = 0; k < biome.octaves; k++)
     {
@@ -246,10 +251,12 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
 
             for (uint32_t k = 0; k < biome.octaves; k++)
             {
-                float sampleX = (offsetX + octaveOffsets[k].x) / divisor * frequency;
-                float sampleY = (offsetY + octaveOffsets[k].y) / divisor * frequency;
+                float sampleX = (offsetX + octaveOffsets[k].x) * frequency;
+                float sampleY = (offsetY + octaveOffsets[k].y) * frequency;
 
                 float perlinValue = (glm::perlin(glm::vec2(sampleX, sampleY)) + 1) / 2.0f;
+                //float perlinValue = (glm::perlin(glm::vec2(sampleX, sampleY)) / 2.0f) + 0.5f;
+                //float perlinValue = (glm::perlin(glm::vec2(sampleX, sampleY)) / 2.0f) + 1.0f;
                 noiseHeight += perlinValue * amplitude;
 
                 amplitude *= persistance;
@@ -280,6 +287,7 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
     std::vector<uint32_t> indices;
 
     IndicesHashMap indicesMap;
+    uint32_t indicesIndex = 0;
 
     for (int i = 0; i < heightsHeight - 1; i++)
     {
@@ -291,33 +299,16 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
             uint32_t index4 = (i + 1) * heightsHeight + (j + 0); // y + 1, x + 0
 
             // adding vertex data (sending in CCW)
-            processQuad(vertexPositions[index2], vertexPositions[index1],
-                        vertexPositions[index4], vertexPositions[index3],
-                        vertices, indices, indicesMap,
-                        minHeight, maxHeight, biome);
+            processTerrainQuad(vertexPositions[index2], vertexPositions[index1],
+                               vertexPositions[index4], vertexPositions[index3],
+                               vertices, indices, indicesMap, &indicesIndex,
+                               minHeight, maxHeight, biome);
         }
     }
 
     // writing vertices into mesh
-    uint32_t floatComponents = 7;
-    terrainMesh.verticesLength = vertices.size() * floatComponents;
-    terrainMesh.vertices = new float[terrainMesh.verticesLength];
-    uint32_t idx = 0;
-    for (int i = 0; i < vertices.size(); i++)
-    {
-        terrainMesh.vertices[idx + 0] = vertices[i].position.x;
-        terrainMesh.vertices[idx + 1] = vertices[i].position.y;
-        terrainMesh.vertices[idx + 2] = vertices[i].position.z;
-
-        terrainMesh.vertices[idx + 3] = vertices[i].normal.x;
-        terrainMesh.vertices[idx + 4] = vertices[i].normal.y;
-        terrainMesh.vertices[idx + 5] = vertices[i].normal.z;
-
-        terrainMesh.vertices[idx + 6] = vertices[i].colour;
-
-        idx += floatComponents;
-
-    }
+    terrainMesh.verticesLength = vertices.size() * 7;
+    terrainMesh.vertices = nullptr;
 
     // generating terrain mesh
     glGenVertexArrays(1, &terrainMesh.VAO);
@@ -325,10 +316,7 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
 
     glGenBuffers(1, &terrainMesh.VBO);
     glBindBuffer(GL_ARRAY_BUFFER, terrainMesh.VBO);
-    glBufferData(GL_ARRAY_BUFFER, terrainMesh.verticesLength * sizeof(float), terrainMesh.vertices, GL_STATIC_DRAW);
-
-    delete[] terrainMesh.vertices;
-    terrainMesh.vertices = nullptr;
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(TerrainVertex), &vertices[0], GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0); // pos
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, sizeof(TerrainVertex),
@@ -346,11 +334,52 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
     glBindBuffer(GL_ARRAY_BUFFER, terrainMesh.IBO);
     terrainMesh.indicesLength = indices.size();
     terrainMesh.indices = nullptr;
-    glBufferData(GL_ARRAY_BUFFER, terrainMesh.indicesLength * sizeof(float), &indices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, terrainMesh.indicesLength * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
 
     /*
      * Generating water mesh
      */
+
+
+    float yLevel = 2.6f;
+    this->waterLevel = yLevel;
+    // @formatter:off
+    float waterVertices[]{
+             halfXSize, yLevel,  halfYSize,  1.0f, 1.0f, // top     right
+            -halfXSize, yLevel,  halfYSize,  0.0f, 1.0f, // top     left
+            -halfXSize, yLevel, -halfYSize,  0.0f, 0.0f, // bottom  left
+             halfXSize, yLevel, -halfYSize,  1.0f, 0.0f, // bottom  right
+    };
+
+    uint32_t waterIndices[]{
+            2, 1, 0, // top left triangle
+            0, 3, 2, // bottom right triangle
+    };
+    // @formatter:on
+
+    waterMesh.verticesLength = 4 * 5;
+    waterMesh.indicesLength = 6;
+    waterMesh.vertices = nullptr;
+    waterMesh.indices = nullptr;
+
+    glGenVertexArrays(1, &waterMesh.VAO);
+    glBindVertexArray(waterMesh.VAO);
+
+    glGenBuffers(1, &waterMesh.VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, waterMesh.VBO);
+    glBufferData(GL_ARRAY_BUFFER, waterMesh.verticesLength * sizeof(float), waterVertices, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 5 * sizeof(float), (void *) 0);
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, 5 * sizeof(float), (void *) (3 * sizeof(float)));
+
+    glGenBuffers(1, &waterMesh.IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, waterMesh.IBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, waterMesh.indicesLength * sizeof(uint32_t), waterIndices, GL_STATIC_DRAW);
+
+
 }
 
 /*
@@ -360,18 +389,18 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
  * v3 - bottom left
  * v4 - bottom right
  */
-void processQuad(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, glm::vec3 &v4, std::vector<TerrainVertex> &vertices,
-                 std::vector<uint32_t> &indices,
-                 IndicesHashMap &indicesMap,
-                 float minValue, float maxValue, const Biome &biome)
+void processTerrainQuad(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, glm::vec3 &v4,
+                        std::vector<TerrainVertex> &vertices,
+                        std::vector<uint32_t> &indices,
+                        IndicesHashMap &indicesMap, uint32_t *indicesIndex,
+                        float minValue, float maxValue, const Biome &biome)
 {
-
-    processTriangle(v1, v2, v3, vertices,
-                    indices, indicesMap,
-                    minValue, maxValue, biome);
-    processTriangle(v1, v3, v4, vertices,
-                    indices, indicesMap,
-                    minValue, maxValue, biome);
+    processTerrainTriangle(v1, v2, v3, vertices,
+                           indices, indicesMap, indicesIndex,
+                           minValue, maxValue, biome);
+    processTerrainTriangle(v1, v3, v4, vertices,
+                           indices, indicesMap, indicesIndex,
+                           minValue, maxValue, biome);
 
 }
 
@@ -384,7 +413,7 @@ T clamp(T value, T lowerBound, T higherBound)
 float getColour(float height, float minValue, float maxValue, const Biome &biome)
 {
     float value = (height - minValue) / maxValue;
-    float deltaValue = value * (biome.colours.size());
+    float deltaValue = value * (biome.colours.size() - 1);
 
     uint32_t cLower = std::floor(deltaValue);
     uint32_t cHigher = std::ceil(deltaValue);
@@ -399,10 +428,32 @@ float getColour(float height, float minValue, float maxValue, const Biome &biome
 
 }
 
-void processTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::vector<TerrainVertex> &vertices,
-                     std::vector<uint32_t> &indices,
-                     IndicesHashMap &indicesMap,
-                     float minValue, float maxValue, const Biome &biome)
+void processTerrainVertex(glm::vec3 &v, glm::vec3 &normal, float color,
+                          std::vector<TerrainVertex> &vertices,
+                          std::vector<uint32_t> &indices,
+                          IndicesHashMap &indicesMap, uint32_t *indicesIndex)
+{
+    TerrainVertex vertex{v, normal, color};
+
+    auto it = indicesMap.find(vertex);
+
+    if (it == indicesMap.end())
+    {
+        vertices.push_back(vertex);
+        indices.push_back(*indicesIndex);
+        indicesMap.insert(std::pair<TerrainVertex, uint32_t>(vertex, *indicesIndex));
+        // indicesMap[vertex] = *indicesIndex; todo: on some seeds it messes up half of the terrain
+    }
+    else
+        indices.push_back(it->second);
+
+    (*indicesIndex)++;
+}
+
+void processTerrainTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::vector<TerrainVertex> &vertices,
+                            std::vector<uint32_t> &indices,
+                            IndicesHashMap &indicesMap, uint32_t *indicesIndex,
+                            float minValue, float maxValue, const Biome &biome)
 {
 
     // normal: x, y, z
@@ -413,14 +464,15 @@ void processTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::vector<Te
 
     float avgHeight = (v1.y + v2.y + v3.y) / 3.0f;
     float color = getColour(avgHeight, minValue, maxValue, biome);
-
     //color = Colors::GREEN.pack();
 
+    processTerrainVertex(v1, normal, color, vertices, indices, indicesMap, indicesIndex);
+    processTerrainVertex(v2, normal, color, vertices, indices, indicesMap, indicesIndex);
+    processTerrainVertex(v3, normal, color, vertices, indices, indicesMap, indicesIndex);
 
-
-    vertices.push_back({v1, normal, color});
-    vertices.push_back({v2, normal, color});
-    vertices.push_back({v3, normal, color});
+    //vertices.push_back({v1, normal, color});
+    //vertices.push_back({v2, normal, color});
+    //vertices.push_back({v3, normal, color});
 }
 
 

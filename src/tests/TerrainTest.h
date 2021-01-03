@@ -11,6 +11,8 @@
 #include "../engine/camera/MouseCameraController.h"
 #include "../engine/rendering/Renderer3D.h"
 #include "../engine/graphics/Terrain.h"
+#include "../engine/rendering/Renderer2D.h"
+#include "../engine/camera/OrthographicCamera.h"
 
 class TerrainTest : public Test
 {
@@ -20,9 +22,14 @@ public:
 
 private:
     PerspectiveCamera *camera;
+    OrthographicCamera *orthoCamera;
     MouseCameraController* mcc;
+    Renderer2D *renderer2D;
     Renderer3D *renderer3D;
     Terrain *terrain;
+
+    Ref<Texture2D> reflectionTexture;
+    Ref<Texture2D> refractionTexture;
 
     float deltaTime{};
     float lastFrame{};

@@ -21,6 +21,9 @@ void Input::dispose()
 
 void Input::handleEvents()
 {
+    if(!instance->handleInput)
+        return;
+
     ImGuiIO &io = ImGui::GetIO();
 
     if (!io.WantCaptureKeyboard)
@@ -136,6 +139,15 @@ std::pair<float, float> Input::getMouseDelta()
     return std::pair(instance->deltaMouseX, instance->deltaMouseY);
 }
 
+void Input::setHandleInput(bool handleInput)
+{
+    Input::handleInput = handleInput;
+}
+
+bool Input::isHandleInput() const
+{
+    return handleInput;
+}
 
 void Input::KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {

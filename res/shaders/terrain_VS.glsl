@@ -55,6 +55,7 @@ layout(std140, binding = 2) uniform lights
 
 vec3 calculateDirLight(DirLight light, vec3 normal);
 
+uniform vec4 plane = vec4(0, -1, 0, 1000f);
 void main() {
     fs_out.fragPos  = position;
     //fs_out.normal   = normal * 2.0 - 1.0;
@@ -66,6 +67,7 @@ void main() {
     for (int i = 0; i < numDirLights; i++)
         fs_out.colour += calculateDirLight(dirLights[i], fs_out.normal);
 
+    gl_ClipDistance[0] = dot(vec4(position, 1.0f), plane);
     gl_Position = combined * vec4(position, 1.0);
 
 }
@@ -73,7 +75,9 @@ void main() {
 vec3 calculateDirLight(DirLight light, vec3 normal)
 {
     // ambient
-    vec3 lightDir = normalize(-light.direction.xyz);
+    //vec3 lightDir = normalize(-light.direction.xyz);
+    //vec3 lightDir = reflect(normalize(-light.direction.xyz), normal);
+    vec3 lightDir = reflect(normalize(light.direction.xyz), normal);
     // diffuse
     float diff = max(dot(normal, lightDir), 0.0);
 
