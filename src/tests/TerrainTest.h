@@ -27,9 +27,7 @@ private:
     Renderer2D *renderer2D;
     Renderer3D *renderer3D;
     Terrain *terrain;
-
-    Ref<Texture2D> reflectionTexture;
-    Ref<Texture2D> refractionTexture;
+    Ref<CubeMap> skybox;
 
     float deltaTime{};
     float lastFrame{};

@@ -4,6 +4,7 @@
 
 #include "TerrainTest.h"
 #include "../engine/input/Input.h"
+#include "../engine/loader/Loader.h"
 #include <chrono>
 
 #define chrono_now() std::chrono::high_resolution_clock::now()
@@ -13,6 +14,8 @@ Biome *tempBiome;
 
 uint32_t *activeSeed;
 uint32_t *tempSeed;
+
+FrameBuffer *testFrameBuffer;
 
 void TerrainTest::init()
 {
@@ -24,6 +27,39 @@ void TerrainTest::init()
 
     this->renderer3D->setCamera(camera);
     this->renderer3D->addDirLight(DirLight(glm::vec3(0.2f, -0.5f, 0.0f)));
+
+    this->skybox = Ref<CubeMap>(new CubeMap());
+    std::vector<std::string> skyboxFaces
+            {
+                    "res/textures/skybox/right.jpg",
+                    "res/textures/skybox/left.jpg",
+                    "res/textures/skybox/top.jpg",
+                    "res/textures/skybox/bottom.jpg",
+                    "res/textures/skybox/front.jpg",
+                    "res/textures/skybox/back.jpg"
+            };
+    this->skybox->loadCubeMap(skyboxFaces);
+    renderer3D->setSkybox(skybox._getRefrence());
+
+    ResourceManager::loadModel("res/models/rock_0.obj", "rock_0");
+    ResourceManager::loadModel("res/models/rock_1.obj", "rock_1");
+    ResourceManager::loadModel("res/models/rock_2.obj", "rock_2");
+
+    ResourceManager::loadModel("res/models/shrub_0.obj", "shrub_0");
+    ResourceManager::loadModel("res/models/shrub_1.obj", "shrub_1");
+    ResourceManager::loadModel("res/models/shrub_2.obj", "shrub_2");
+
+    ResourceManager::loadModel("res/models/flower_blue.obj", "flower_blue");
+    ResourceManager::loadModel("res/models/flower_red.obj", "flower_red");
+    ResourceManager::loadModel("res/models/flower_yellow.obj", "flower_yellow");
+
+    Loader::settings.seperateMaterials = true;
+    ResourceManager::loadModel("res/models/tree_0.obj", "tree_0");
+    ResourceManager::loadModel("res/models/tree_1.obj", "tree_1");
+    ResourceManager::loadModel("res/models/tree_2.obj", "tree_2");
+    Loader::settings.seperateMaterials = false;
+
+    auto model = ResourceManager::getModel("tree_0");
 
     activeSeed = new uint32_t;
     *activeSeed = 8462;
@@ -61,17 +97,14 @@ void TerrainTest::init()
     this->mcc = new MouseCameraController(this->camera);
     this->mcc->setup();
 
-    orthoCamera = new OrthographicCamera(0,1280,0,720);
-
-    reflectionTexture = Ref<Texture2D>(new Texture2D());
-    reflectionTexture->ID = terrain->waterFrameBuffers.getReflectionTexture();
-
-    refractionTexture = Ref<Texture2D>(new Texture2D());
-    refractionTexture->ID = terrain->waterFrameBuffers.getRefractionTexture();
+    orthoCamera = new OrthographicCamera(0, 1280, 0, 720);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
+
+    testFrameBuffer = new FrameBuffer(1280, 720);
+    testFrameBuffer->createColourAttachment();
 
 }
 void TerrainTest::start()
@@ -94,7 +127,7 @@ void TerrainTest::start()
         glfwGetFramebufferSize(window, &display_w, &display_h);
 
         camera->resize(display_w, display_h);
-        orthoCamera->resize(display_w,display_h);
+        orthoCamera->resize(display_w, display_h);
         //camera->setPosition(glm::vec3(0, 0, -3));
         camera->update();
         orthoCamera->update();
@@ -110,7 +143,7 @@ void TerrainTest::start()
             delete activeBiome;
             activeBiome = tempBiome;
             *activeSeed = *tempSeed;
-            terrain->generate(75, 75, 2, 2,  *activeSeed, 1, *activeBiome);
+            terrain->generate(75, 75, 2, 2, *activeSeed, 1, *activeBiome);
             tempBiome = new Biome(*activeBiome);
         }
 
@@ -124,11 +157,15 @@ void TerrainTest::start()
         float fDuration = duration.count() * 1000.0f; // to ms
 
         renderer2D->setProjectionMatrix(orthoCamera->getCombined());
+
         renderer2D->begin();
-        renderer2D->draw(*reflectionTexture,glm::vec2(0,0),glm::vec2(128,72),
-                         0,0,2,2);
-        renderer2D->draw(*refractionTexture,glm::vec2(128*2,0),glm::vec2(128,72),
-                         0,0,2,2);
+        renderer2D->end();
+
+        renderer2D->begin();
+        renderer2D->draw(*renderer3D->getReflectionFb().colourAttachment, glm::vec2(0, 0), glm::vec2(128, 72),
+                         0, 0, 2, 2);
+        renderer2D->draw(*renderer3D->getRefractionFb().colourAttachment, glm::vec2(128 * 2, 0), glm::vec2(128, 72),
+                         0, 0, 2, 2);
         renderer2D->end();
 
 
@@ -160,6 +197,7 @@ void TerrainTest::start()
     delete renderer3D;
     delete camera;
     delete terrain;
+    delete skybox._getRefrence();
     ResourceManager::dispose();
 
 }

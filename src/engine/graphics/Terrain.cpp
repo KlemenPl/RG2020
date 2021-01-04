@@ -107,10 +107,12 @@ void processTerrainTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::ve
 
 Terrain::Terrain()
 {
-    ResourceManager::loadTexture("res/textures/waterDuDvMap.png","waterDuDvMap", false);
+    ResourceManager::loadTexture("res/textures/waterDuDvMap.png","waterDuDvMap", false,
+                                 GL_REPEAT, GL_REPEAT);
     waterDuDvMap = ResourceManager::getTexture2D("waterDuDvMap");
 
-    ResourceManager::loadTexture("res/textures/waterMatchingNormalMap.png","waterNormalMap", false);
+    ResourceManager::loadTexture("res/textures/waterMatchingNormalMap.png","waterNormalMap", false,
+                                 GL_REPEAT, GL_REPEAT);
     waterNormalMap = ResourceManager::getTexture2D("waterNormalMap");
 }
 void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_t detailY,

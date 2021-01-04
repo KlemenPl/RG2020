@@ -38,7 +38,6 @@ int main(int argc, char **argv)
     //RawModel* model = Loader::loadOBJ("res/models/tree_01.obj");
     //model->generateMeshes();
 
-
 #if RUN_BATCHING_TEST
     BatchingTest batchingTest{};
     batchingTest.initTest();

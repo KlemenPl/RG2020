@@ -10,7 +10,13 @@
 namespace Loader {
     // https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
-    extern bool useIBO;
+    struct LoaderSettings
+    {
+        bool useIBO = true;
+        bool seperateMaterials = false;
+    };
+
+    static LoaderSettings settings{};
 
     RawModel *loadOBJ(const char *filePath);
     void loadOBJObjects(const char *filePath, std::vector<std::pair<std::string,RawModel *>> &output);

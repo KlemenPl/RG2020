@@ -12,6 +12,8 @@
 #include "../graphics/Light.h"
 #include "../camera/PerspectiveCamera.h"
 #include "../graphics/Terrain.h"
+#include "../graphics/FrameBuffer.h"
+#include "../graphics/CubeMap.h"
 
 class Renderer3D
 {
@@ -54,14 +56,24 @@ private:
 
     Ref<Shader> shader;
     Ref<Shader> terrainShader;
+    Ref<Shader> skyboxShader;
     Ref<Shader> waterShader;
     Ref<Shader> shadowShader;
     Ref<Shader> normalDebugShader;
     Ref<Shader> lightShader;
 
+    FrameBuffer reflectionFB;
+    FrameBuffer refractionFB;
+
+    CubeMap *skybox = nullptr;
+    Terrain *terrain = nullptr;
+
     void prepareRawModel(const RawModel &model);
 
     void setupCamera();
+
+    void drawTerrain();
+    void drawSkybox();
 
 public:
     Renderer3D();
@@ -94,9 +106,15 @@ public:
     void removeDirLight(uint32_t lightIndex);
     void clearDirLights();
 
+    void setTerrain(Terrain *_terrain);
+    void setSkybox(CubeMap *_skybox);
+
     // should not be copied!!
     Renderer3D(const Renderer3D &) = delete;
     Renderer3D &operator=(const Renderer3D &) = delete;
+
+    const FrameBuffer &getReflectionFb() const;
+    const FrameBuffer &getRefractionFb() const;
 };
 
 

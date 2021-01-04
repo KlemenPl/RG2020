@@ -7,6 +7,7 @@
 #include <sstream>
 #include <fstream>
 #include "ResourceManager.h"
+#include "loader/Loader.h"
 #include <stb_image.h>
 
 void ResourceManager::init()
@@ -176,10 +177,22 @@ void ResourceManager::loadFont(const char *fontFile, std::string name, float fon
     unsigned char *ttf_buffer = new unsigned char[fsize];
     fread(ttf_buffer, 1, fsize, fopen(fontFile, "rb"));
 
-    BitmapFont *font = new BitmapFont;
+    BitmapFont *font = new BitmapFont();
     font->generate(fontSize, atlasWidth, atlasHeight, padding, startChar, numChars, ttf_buffer, fsize);
     delete[] ttf_buffer;
     instance->fonts[name] = Ref<BitmapFont>(font);
+}
+
+void ResourceManager::loadModel(const char *modelFile, std::string name)
+{
+    RawModel *rawModel = Loader::loadOBJ(modelFile);
+    rawModel->generateMeshes();
+    instance->models[name] = Ref<RawModel>(rawModel);
+}
+
+Model ResourceManager::getModel(const std::string &name)
+{
+    return Model{instance->models[name].operator*()};
 }
 
 Ref<Shader> ResourceManager::getShader(const std::string &name)
@@ -194,4 +207,9 @@ Ref<Texture2D> ResourceManager::getTexture2D(const std::string &name)
 Ref<BitmapFont> ResourceManager::getFont(const std::string &name)
 {
     return instance->fonts[name];
+}
+
+Ref<RawModel> ResourceManager::getRawModel(const std::string &name)
+{
+    return instance->models[name];
 }

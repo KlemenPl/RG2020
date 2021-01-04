@@ -10,7 +10,6 @@
 #include <glm.hpp>
 #include <unordered_map>
 
-bool Loader::useIBO;
 
 static glm::vec2 getVec2(const std::string &str)
 {
@@ -94,7 +93,7 @@ static void processFace(const std::string &str,
                         int materialIndex)
 {
     auto it = indicesMap.find(str);
-    if (it == indicesMap.end() || !Loader::useIBO)
+    if (it == indicesMap.end() || !Loader::settings.useIBO)
     {
 
         // vertices
@@ -359,14 +358,19 @@ RawModel *processObject(std::ifstream &objFile, const char *filePath,
 namespace Loader {
     RawModel *loadOBJ(const char *filePath)
     {
+        std::ifstream objFile(filePath);
+        if (!objFile.is_open())
+        {
+            std::cout << "Loader::loadOBJ() could not open file: " << filePath << "." << std::endl;
+            return nullptr;
+        }
+        std::string line;
+
         auto *model = new RawModel{};
 
         std::vector<glm::vec3> vertexCoords;
         std::vector<glm::vec3> vertexNormals;
         std::vector<glm::vec2> textureCoords;
-
-        std::ifstream objFile(filePath);
-        std::string line;
 
         std::unordered_map<std::string, Material *> materials;
         std::vector<Group> groups;

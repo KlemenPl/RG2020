@@ -7,6 +7,7 @@
 
 #include "../Core.h"
 #include "Texture2D.h"
+#include <vector>
 
 /*
  * Very simple utility class for
@@ -14,6 +15,8 @@
  */
 class FrameBuffer
 {
+private:
+    std::vector<uint32_t> renderBuffers;
 public:
     const uint32_t width;
     const uint32_t height;

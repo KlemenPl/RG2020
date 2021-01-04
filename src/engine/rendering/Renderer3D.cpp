@@ -7,8 +7,11 @@
 #include <algorithm>
 #include "Renderer3D.h"
 #include "../ResourceManager.h"
+#include "../../game/Game.h"
 
-Renderer3D::Renderer3D()
+Renderer3D::Renderer3D() :
+        reflectionFB(FrameBuffer(Game::width / 4, Game::height / 4)),
+        refractionFB(FrameBuffer(Game::width, Game::height))
 {
     ShaderSourceArgument args[2];
     args[0] = {VERTEX, "MAX_DIR_LIGHTS", std::to_string(DIR_LIGHT_LIMIT)};
@@ -35,12 +38,23 @@ Renderer3D::Renderer3D()
                                 nullptr, "water");
     waterShader = ResourceManager::getShader("water");
 
+    ResourceManager::loadShader("res/shaders/skybox_VS.glsl",
+                                "res/shaders/skybox_FS.glsl",
+                                nullptr, "skybox"
+                                );
+    skyboxShader = ResourceManager::getShader("skybox");
+    skyboxShader->bind();
+    skyboxShader->setUniform("skybox", 0);
+
     waterShader->bind();
-    waterShader->setUniform("reflectionSample",0);
-    waterShader->setUniform("refractionSample",1);
-    waterShader->setUniform("dudvSample",2);
-    waterShader->setUniform("normalSample",3);
-    waterShader->setUniform("depthSample",4);
+    waterShader->setUniform("reflectionSample", 0);
+    waterShader->setUniform("refractionSample", 1);
+    waterShader->setUniform("dudvSample", 2);
+    waterShader->setUniform("normalSample", 3);
+    waterShader->setUniform("depthSample", 4);
+
+    reflectionFB.createColourAttachment();
+    refractionFB.createDepthAttachment();
 
     // generating SSBOs
     glGenBuffers(1, &modelMatricesSSBO);
@@ -67,6 +81,7 @@ Renderer3D::Renderer3D()
     lightsBufferUBO = new float[lightsBufferSize];
     glBufferData(GL_UNIFORM_BUFFER, lightsBufferSize, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0); // unbinding
+
 }
 Renderer3D::~Renderer3D()
 {
@@ -113,6 +128,30 @@ void Renderer3D::prepareRawModel(const RawModel &model)
     }
 }
 
+void Renderer3D::drawTerrain()
+{
+
+}
+void Renderer3D::drawSkybox()
+{
+    if (!skybox)
+        return;
+
+    glDepthFunc(GL_LEQUAL);
+    //glDepthMask(GL_FALSE);
+
+    skybox->bind();
+    skyboxShader->bind();
+    skyboxShader->setUniform("projection", camera->getProjectionMatrix());
+    skyboxShader->setUniform("view",
+                             glm::mat4(glm::mat3(camera->getViewMatrix())));
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    //glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT, nullptr);
+
+    //glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
+}
+
 void Renderer3D::drawTerrain(const Terrain &terrain)
 {
     glEnable(GL_BLEND);
@@ -130,29 +169,30 @@ void Renderer3D::drawTerrain(const Terrain &terrain)
 
     glm::vec3 camPos = camera->getPosition();
     float distance = 2 * (camera->getPosition().y - terrain.waterLevel);
-    camPos.y-=distance;
+    camPos.y -= distance;
     camera->setPosition(camPos);
     camera->setPitch(-camera->getPitch());
     camera->update();
     setupCamera();
     // reflection
-    terrain.waterFrameBuffers.bindReflectionFrameBuffer();
+    reflectionFB.bind();
     terrainShader->setUniform("plane", glm::vec4(0, 1, 0, -terrain.waterLevel));
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDrawElements(GL_TRIANGLES, terrain.terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
 
-    camPos.y+=distance;
+    camPos.y += distance;
     camera->setPosition(camPos);
     camera->setPitch(-camera->getPitch());
     camera->update();
     setupCamera();
     // refraction
-    terrain.waterFrameBuffers.bindRefractionFrameBuffer();
+    reflectionFB.unbind();
+    refractionFB.bind();
     terrainShader->setUniform("plane", glm::vec4(0, -1, 0, terrain.waterLevel));
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDrawElements(GL_TRIANGLES, terrain.terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
 
-    terrain.waterFrameBuffers.unbindCurrentFrameBuffer();
+    refractionFB.unbind();
 
     //glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
     //glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
@@ -165,17 +205,17 @@ void Renderer3D::drawTerrain(const Terrain &terrain)
     waterShader->bind();
     terrain.waterMesh.bind();
     glActiveTexture(GL_TEXTURE0 + 0);
-    glBindTexture(GL_TEXTURE_2D, terrain.waterFrameBuffers.getReflectionTexture());
+    glBindTexture(GL_TEXTURE_2D, reflectionFB.colourAttachment->ID);
     glActiveTexture(GL_TEXTURE0 + 1);
-    glBindTexture(GL_TEXTURE_2D, terrain.waterFrameBuffers.getRefractionTexture());
+    glBindTexture(GL_TEXTURE_2D, refractionFB.colourAttachment->ID);
     glActiveTexture(GL_TEXTURE0 + 2);
     glBindTexture(GL_TEXTURE_2D, terrain.waterDuDvMap->ID);
     glActiveTexture(GL_TEXTURE0 + 3);
     glBindTexture(GL_TEXTURE_2D, terrain.waterNormalMap->ID);
     glActiveTexture(GL_TEXTURE0 + 4);
-    glBindTexture(GL_TEXTURE_2D, terrain.waterFrameBuffers.getRefractionDepthTexture());
+    glBindTexture(GL_TEXTURE_2D, refractionFB.depthAttachment->ID);
 
-    waterShader->setUniform("moveFactor", (float)glfwGetTime()/40.0f);
+    waterShader->setUniform("moveFactor", (float) glfwGetTime() / 40.0f);
     waterShader->setUniform("camPos", camPos);
 
     glDrawElements(GL_TRIANGLES, terrain.waterMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
@@ -186,6 +226,8 @@ void Renderer3D::drawTerrain(const Terrain &terrain)
     //glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
 
     glDisable(GL_BLEND);
+
+    drawSkybox();
 }
 
 void Renderer3D::begin()
@@ -424,6 +466,15 @@ void Renderer3D::flush(const Group &group)
     modelMatrices.clear();
 }
 
+void Renderer3D::setTerrain(Terrain *_terrain)
+{
+    this->terrain = _terrain;
+}
+void Renderer3D::setSkybox(CubeMap *_skybox)
+{
+    this->skybox = _skybox;
+}
+
 void Renderer3D::drawNormals(Model *model)
 {
     const RawModel &rawModel = model->rawModel;
@@ -532,4 +583,12 @@ void Renderer3D::removeDirLight(uint32_t lightIndex)
 void Renderer3D::clearDirLights()
 {
     dirLights.clear();
+}
+const FrameBuffer &Renderer3D::getReflectionFb() const
+{
+    return reflectionFB;
+}
+const FrameBuffer &Renderer3D::getRefractionFb() const
+{
+    return refractionFB;
 }
