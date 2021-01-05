@@ -8,12 +8,44 @@
 #include <unordered_map>
 #include <vector>
 #include <set>
+#include <functional>
 #include "../graphics/Model.h"
 #include "../graphics/Light.h"
 #include "../camera/PerspectiveCamera.h"
 #include "../graphics/Terrain.h"
 #include "../graphics/FrameBuffer.h"
 #include "../graphics/CubeMap.h"
+
+struct ShaderSetup
+{
+    Shader *shaderProgram;
+    std::function<void(Shader *)> setup = [](Shader *) {};
+
+    bool operator==(const ShaderSetup &rhs) const
+    {
+        return shaderProgram == rhs.shaderProgram;
+    }
+    bool operator!=(const ShaderSetup &rhs) const
+    {
+        return !(rhs == *this);
+    }
+
+};
+
+namespace std {
+
+    template<>
+    struct hash<ShaderSetup>
+    {
+
+        std::size_t operator()(const ShaderSetup &k) const
+        {
+            using std::hash;
+            return hash<Shader *>()(k.shaderProgram);
+        }
+    };
+
+}
 
 class Renderer3D
 {
@@ -25,8 +57,10 @@ private:
 
     std::unordered_map<uint32_t, std::vector<Model *>> instancedQueue;
     std::unordered_map<uint32_t, std::vector<Model *>> shadowQueue;
-    std::unordered_map<Ref<Shader>,
+    std::unordered_map<ShaderSetup,
             std::unordered_map<uint32_t, std::vector<Model *>>> modelsQueue;
+    std::unordered_map<ShaderSetup,
+            std::unordered_map<uint32_t, std::vector<Model *>>> reflectionQueue;
 
     std::vector<DirLight> dirLights;
     std::vector<PointLight> pointLights;
@@ -56,7 +90,7 @@ private:
     uint32_t materialsSSBO{};
     uint32_t materialsSSBOLength{};
 
-    Ref<Shader> shader;
+    Ref<Shader> defaultShader;
     Ref<Shader> waveyShader;
     Ref<Shader> terrainShader;
     Ref<Shader> skyboxShader;
@@ -80,21 +114,18 @@ private:
 
     void clearModelsQueue();
 
-    void drawModelGroups();
+    void drawModelsGroup(const Group &group);
     void drawModels();
 
 public:
     Renderer3D();
     virtual ~Renderer3D();
 
-    void drawTerrain(const Terrain &terrain);
-
-
     void begin();
-    void draw(Model *model);
-    void draw(std::vector<Model> models);
+    void draw(Model *model, bool reflection = false, bool shadows = false);
+    void draw(Model *model, bool reflection, bool shadows,
+              Shader *useShader, std::function<void(Shader *)> shaderUniforms = [](Shader *) {});
     void end();
-    void flush(const Group &group);
 
     void drawNormals(Model *model);
 
@@ -117,6 +148,8 @@ public:
 
     void setTerrain(Terrain *_terrain);
     void setSkybox(CubeMap *_skybox);
+
+    void reset();
 
     // should not be copied!!
     Renderer3D(const Renderer3D &) = delete;

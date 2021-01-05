@@ -87,6 +87,8 @@ void TerrainTest::init()
     terrain->generate(75, 75, 2, 2, *activeSeed, 1, *activeBiome);
     tempBiome = new Biome(*activeBiome);
 
+    renderer3D->setTerrain(terrain);
+
     Input::init();
     // setting up input callbacks
     glfwSetKeyCallback(window, Input::KeyCallback);
@@ -151,7 +153,6 @@ void TerrainTest::start()
         auto start = chrono_now();
         renderer3D->begin();
         renderer3D->end();
-        renderer3D->drawTerrain(*terrain);
         auto end = chrono_now();
         //std::cout<<terrain->getHeight(0,0)<<std::endl;
 

@@ -61,8 +61,6 @@ void GameScreen::render()
     game->renderer3D->begin();
     game->renderer3D->end();
 
-    game->renderer3D->drawTerrain(*terrain);
-
 }
 void GameScreen::resize(int width, int height)
 {

@@ -60,8 +60,7 @@ public:
 
     float waterLevel = 2.6;
 
-    std::vector<Model> trees;
-    std::vector<Model> rocks;
+    std::vector<Model> solid;
     std::vector<Model> shrubs;
 
     Ref<Texture2D> waterDuDvMap;

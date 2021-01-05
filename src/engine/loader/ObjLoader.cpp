@@ -208,6 +208,11 @@ static void processGroup(std::ifstream &objFile, Group *group,
         }
         else if (StringUtils::startsWith(line, "usemtl "))
         {
+            if(LoaderSettings::seperateMaterials&&currentMaterial!= nullptr)
+            {
+                objFile.seekg(place);
+                break;
+            }
             // change material
             std::string materialName = line.substr(7);
             currentMaterial = materials[materialName];
@@ -325,9 +330,8 @@ RawModel *processObject(std::ifstream &objFile, const char *filePath,
             objFile.seekg(place);
             processGroup(objFile, &group, vertexCoords, vertexNormals,
                          textureCoords, materials);
-            group.groupName = "default";
+            group.groupName = "default_"+std::to_string(groups.size());
             groups.push_back(std::move(group));
-            break;
         }
         else if (StringUtils::startsWith(line, "g "))
         {
@@ -337,6 +341,16 @@ RawModel *processObject(std::ifstream &objFile, const char *filePath,
                 break;
             }
             reading = true;
+        }
+        else if(StringUtils::startsWith(line,"usemtl ")){
+            // no group specified
+            Group group;
+            // moving back to prev line
+            objFile.seekg(place);
+            processGroup(objFile, &group, vertexCoords, vertexNormals,
+                         textureCoords, materials);
+            group.groupName = "default_"+std::to_string(groups.size());
+            groups.push_back(std::move(group));
         }
 
         place = objFile.tellg(); // last pos
@@ -398,7 +412,8 @@ namespace Loader {
                 groups.push_back(std::move(group));
 
             }
-            else if (StringUtils::startsWith(line, "v "))
+            else if (StringUtils::startsWith(line, "v ")||
+            StringUtils::startsWith(line,"usemtl "))
             {
                 // no group specified
                 Group group;
@@ -406,9 +421,8 @@ namespace Loader {
                 objFile.seekg(place);
                 processGroup(objFile, &group, vertexCoords, vertexNormals,
                              textureCoords, materials);
-                group.groupName = "default";
+                group.groupName=std::to_string(groups.size());
                 groups.push_back(std::move(group));
-                break;
             }
 
             place = objFile.tellg(); // last pos

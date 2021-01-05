@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <ext.hpp>
 #include <algorithm>
+#include <utility>
 #include "Renderer3D.h"
 #include "../ResourceManager.h"
 #include "../../game/Game.h"
@@ -16,7 +17,7 @@ Renderer3D::Renderer3D() :
     ResourceManager::loadShader("res/shaders/default3D_VS.glsl",
                                 "res/shaders/default3D_FS.glsl",
                                 nullptr, "default3D");
-    shader = ResourceManager::getShader("default3D");
+    defaultShader = ResourceManager::getShader("default3D");
     ResourceManager::loadShader("res/shaders/wavey_VS.glsl",
                                 "res/shaders/default3D_FS.glsl",
                                 nullptr, "wavey");
@@ -98,6 +99,25 @@ Renderer3D::~Renderer3D()
 
 }
 
+void Renderer3D::reset()
+{
+    clearDirLights();
+    clearPointLights();
+    clearModelsQueue();
+
+    camera = nullptr;
+    terrain = nullptr;
+    skybox = nullptr;
+
+    drawing = false;
+    drawingShadows = false;
+    drawCalls = 0;
+    currentCullStrategy = GL_NONE;
+    preparedModels.clear();
+    modelMatrices.clear();
+
+}
+
 void Renderer3D::prepareRawModel(const RawModel &model)
 {
     if (preparedModels.find(model.modelID) == preparedModels.end())
@@ -143,7 +163,84 @@ void Renderer3D::clearModelsQueue()
 
 void Renderer3D::drawTerrain()
 {
+    if (terrain == nullptr)
+        return;
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    terrain->terrainMesh.bind();
+
+    glm::vec3 camPos = camera->getPosition();
+    float distance = 2 * (camera->getPosition().y - terrain->waterLevel);
+    camPos.y -= distance;
+    camera->setPosition(camPos);
+    camera->setPitch(-camera->getPitch());
+    camera->update();
+    setupCamera();
+    // reflection
+    reflectionFB.bind();
+    terrainShader->bind();
+    terrainShader->setUniform("plane", glm::vec4(0, 1, 0, -terrain->waterLevel));
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDrawElements(GL_TRIANGLES, terrain->terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
+
+    camPos.y += distance;
+    camera->setPosition(camPos);
+    camera->setPitch(-camera->getPitch());
+    camera->update();
+    setupCamera();
+    drawSkybox();
+    terrain->terrainMesh.bind();
+    terrainShader->bind();
+    reflectionFB.unbind();
+    // refraction
+    refractionFB.bind();
+    terrainShader->setUniform("plane", glm::vec4(0, -1, 0, terrain->waterLevel));
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDrawElements(GL_TRIANGLES, terrain->terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
+
+    refractionFB.unbind();
+
+    //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+    terrainShader->setUniform("plane", glm::vec4(0, -1, 0, 1000.0f));
+
+    glDrawElements(GL_TRIANGLES, terrain->terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
+
+    waterShader->bind();
+    terrain->waterMesh.bind();
+    glActiveTexture(GL_TEXTURE0 + 0);
+    glBindTexture(GL_TEXTURE_2D, reflectionFB.colourAttachment->ID);
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, refractionFB.colourAttachment->ID);
+    glActiveTexture(GL_TEXTURE0 + 2);
+    glBindTexture(GL_TEXTURE_2D, terrain->waterDuDvMap->ID);
+    glActiveTexture(GL_TEXTURE0 + 3);
+    glBindTexture(GL_TEXTURE_2D, terrain->waterNormalMap->ID);
+    glActiveTexture(GL_TEXTURE0 + 4);
+    glBindTexture(GL_TEXTURE_2D, refractionFB.depthAttachment->ID);
+
+    waterShader->setUniform("moveFactor", (float) glfwGetTime() / 40.0f);
+    waterShader->setUniform("camPos", camPos);
+
+    glDrawElements(GL_TRIANGLES, terrain->waterMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
+
+
+    glDisable(GL_BLEND);
+
+    for (const auto &tree : terrain->solid)
+    {
+        draw((Model *) &tree);
+    }
+    for (const auto &shrub : terrain->shrubs)
+    {
+        draw((Model *) &shrub, false, false,
+             waveyShader._getRefrence(),
+             [](Shader *s) {
+                 s->setUniform("time", (float) glfwGetTime());
+             });
+    }
+
+    drawSkybox();
 }
 void Renderer3D::drawSkybox()
 {
@@ -166,101 +263,6 @@ void Renderer3D::drawSkybox()
     glDepthFunc(GL_LESS);
 }
 
-void Renderer3D::drawTerrain(const Terrain &terrain)
-{
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    //glDisable(GL_CULL_FACE);
-    terrain.terrainMesh.bind();
-
-    // seting vpMatrices UBO
-    //glBindBuffer(GL_UNIFORM_BUFFER, vpMatricesUBO);
-    //glBindBufferBase(GL_UNIFORM_BUFFER, 0, vpMatricesUBO);
-    // should be fine, since p,v, combined are in sequential order
-    //glBufferSubData(GL_UNIFORM_BUFFER, 0, 3 * sizeof(glm::mat4), &camera->getProjectionMatrix()[0][0]);
-
-    glm::vec3 camPos = camera->getPosition();
-    float distance = 2 * (camera->getPosition().y - terrain.waterLevel);
-    camPos.y -= distance;
-    camera->setPosition(camPos);
-    camera->setPitch(-camera->getPitch());
-    camera->update();
-    setupCamera();
-    // reflection
-    reflectionFB.bind();
-    terrainShader->bind();
-    terrainShader->setUniform("plane", glm::vec4(0, 1, 0, -terrain.waterLevel));
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDrawElements(GL_TRIANGLES, terrain.terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
-
-    camPos.y += distance;
-    camera->setPosition(camPos);
-    camera->setPitch(-camera->getPitch());
-    camera->update();
-    setupCamera();
-    drawSkybox();
-    terrain.terrainMesh.bind();
-    terrainShader->bind();
-    reflectionFB.unbind();
-    // refraction
-    refractionFB.bind();
-    terrainShader->setUniform("plane", glm::vec4(0, -1, 0, terrain.waterLevel));
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDrawElements(GL_TRIANGLES, terrain.terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
-
-    refractionFB.unbind();
-
-    //glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-    //glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
-    //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    //glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
-    terrainShader->setUniform("plane", glm::vec4(0, -1, 0, 1000.0f));
-
-    glDrawElements(GL_TRIANGLES, terrain.terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
-
-    waterShader->bind();
-    terrain.waterMesh.bind();
-    glActiveTexture(GL_TEXTURE0 + 0);
-    glBindTexture(GL_TEXTURE_2D, reflectionFB.colourAttachment->ID);
-    glActiveTexture(GL_TEXTURE0 + 1);
-    glBindTexture(GL_TEXTURE_2D, refractionFB.colourAttachment->ID);
-    glActiveTexture(GL_TEXTURE0 + 2);
-    glBindTexture(GL_TEXTURE_2D, terrain.waterDuDvMap->ID);
-    glActiveTexture(GL_TEXTURE0 + 3);
-    glBindTexture(GL_TEXTURE_2D, terrain.waterNormalMap->ID);
-    glActiveTexture(GL_TEXTURE0 + 4);
-    glBindTexture(GL_TEXTURE_2D, refractionFB.depthAttachment->ID);
-
-    waterShader->setUniform("moveFactor", (float) glfwGetTime() / 40.0f);
-    waterShader->setUniform("camPos", camPos);
-
-    glDrawElements(GL_TRIANGLES, terrain.waterMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
-
-
-    //normalDebugShader->bind();
-    //normalDebugShader->setUniform("model", glm::mat4(1.0f));
-    //glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
-
-    glDisable(GL_BLEND);
-
-    begin();
-    for (const auto & tree : terrain.trees)
-    {
-        draw( (Model *) &tree);
-    }
-    for (const auto & rock : terrain.rocks)
-    {
-        draw( (Model *) &rock);
-    }
-    for (const auto & shrub : terrain.shrubs)
-    {
-        draw( (Model *) &shrub);
-    }
-    end();
-
-    drawSkybox();
-}
 
 void Renderer3D::begin()
 {
@@ -277,10 +279,123 @@ void Renderer3D::begin()
     //glBlendFunc(GL_SRC_ALPHA,GL_SRC_ALPHA);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
-void Renderer3D::draw(Model *model)
+
+void Renderer3D::draw(Model *model, bool reflection, bool shadows)
+{
+    draw(model, reflection, shadows, defaultShader._getRefrence());
+}
+
+void Renderer3D::draw(Model *model, bool reflection, bool shadows, Shader *useShader,
+                      std::function<void(Shader *)> shaderUniforms)
 {
     uint32_t id = model->rawModel.modelID;
-    instancedQueue[id].push_back(model);
+    ShaderSetup shaderSetup{useShader, std::move(shaderUniforms)};
+    modelsQueue[shaderSetup][id].push_back(model);
+    if (reflection)
+        reflectionQueue[shaderSetup][id].push_back(model);
+    if (shadows)
+        shadowQueue[id].push_back(model);
+}
+
+void Renderer3D::drawModelsGroup(const Group &group)
+{
+    glBindVertexArray(group.mesh.VAO);
+
+    // writing model matrices
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, modelMatricesSSBO);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, modelMatrices.size() * sizeof(glm::mat4),
+                    &modelMatrices[0][0][0]);
+
+    // writing materials
+    uint32_t mIdx = 0;
+
+    // https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)
+    auto &materials = group.meshMaterials;
+    for (auto &m:materials)
+    {
+        //@formatter:off
+        materialBuffer[mIdx + 0]  = m.Ka.x;
+        materialBuffer[mIdx + 1]  = m.Ka.y;
+        materialBuffer[mIdx + 2]  = m.Ka.z;
+        // 3
+        materialBuffer[mIdx + 4]  = m.Kd.x;
+        materialBuffer[mIdx + 5]  = m.Kd.y;
+        materialBuffer[mIdx + 6]  = m.Kd.z;
+        // 7
+        materialBuffer[mIdx + 8]  = m.Ks.x;
+        materialBuffer[mIdx + 9]  = m.Ks.y;
+        materialBuffer[mIdx + 10] = m.Ks.z;
+        // 11
+        materialBuffer[mIdx + 12] = m.Ns;
+        materialBuffer[mIdx + 14] = m.Ni;
+        //@formatter:on
+        mIdx += Material::GLSL_SIZE;
+    }
+
+    if (mIdx > 0)
+    {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, materialsSSBO);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, mIdx * sizeof(float), materialBuffer);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, materialsSSBO);
+    }
+
+    // drawing
+    //rawModel.groups[i].mesh.bind();
+    //glDrawElements(GL_TRIANGLES,rawModel.groups[i].mesh.indicesLength,GL_UNSIGNED_INT, nullptr);
+    glDrawElementsInstanced(GL_TRIANGLES, group.mesh.indicesLength, GL_UNSIGNED_INT, nullptr,
+                            modelMatrices.size());
+
+    modelMatrices.clear();
+}
+void Renderer3D::drawModels()
+{
+    for (auto &byShader:modelsQueue)
+    {
+        Shader *shader = byShader.first.shaderProgram;
+        shader->bind();
+        byShader.first.setup(shader);
+
+        // instancing meshes
+        for (auto &models : byShader.second)
+        {
+            if (models.second.empty())
+                continue;
+
+
+            auto &modelVector = models.second;
+            prepareRawModel(modelVector.front()->rawModel);
+
+            auto &model = modelVector.front();
+            auto &rawModel = modelVector.front()->rawModel;
+
+            if (currentCullStrategy != rawModel.cullStrategy)
+            {
+                glFrontFace(rawModel.cullStrategy);
+                currentCullStrategy = rawModel.cullStrategy;
+            }
+
+            uint32_t groupSize = modelVector.front()->modelGroups.size();
+
+            for (int i = 0; i < groupSize; i++)
+            {
+                uint32_t modelLength = models.second.size();
+
+                for (int j = 0; j < modelLength; j++)
+                {
+                    if (j > 0 && j % INSTANCE_LIMIT == 0)
+                        drawModelsGroup(rawModel.groups[i]);
+
+                    // transforming
+                    auto &modelGroup = modelVector[j]->modelGroups[i];
+
+                    if (!modelGroup.isStatic)
+                        modelGroup.transform();
+                    modelMatrices.push_back(modelGroup.modelMatrix);
+                }
+                drawModelsGroup(rawModel.groups[i]);
+            }
+        }
+    }
 }
 
 void Renderer3D::setupCamera()
@@ -298,8 +413,8 @@ void Renderer3D::end()
         throw std::runtime_error("Renderer3D::end(): Renderer must first be started");
 
     setupCamera();
-    shader->bind();
-    shader->setUniform("time",(float) glfwGetTime());
+    defaultShader->bind();
+    defaultShader->setUniform("time", (float) glfwGetTime());
 
     // sorting point lights
     //std::sort(pointLights.begin(), pointLights.end(), DistanceFromCamera::compareDistance);
@@ -384,13 +499,6 @@ void Renderer3D::end()
     lightsBufferUBO[lIdx + 4] = dirLightLength;
     lightsBufferUBO[lIdx + 5] = pointLightLength;
 
-    //for(int i=0;i<lightsBufferSize;i++){
-    //    lightsBufferUBO[i] = 1;
-    //}
-
-
-
-    //lightsBufferUBO[lIdx] = 1.0f;
 
     // seting vpMatrices UBO
     glBindBuffer(GL_UNIFORM_BUFFER, lightsUBO);
@@ -398,105 +506,11 @@ void Renderer3D::end()
     glBufferSubData(GL_UNIFORM_BUFFER, 0, lightsBufferSize, lightsBufferUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    //shader->setUniform("viewPos", camera->getPosition());
+    drawTerrain();
+    drawModels();
+    clearModelsQueue();
 
-    // instancing meshes
-    for (auto &models : instancedQueue)
-    {
-        if (models.second.empty())
-            continue;
-
-
-        auto &modelVector = models.second;
-        prepareRawModel(modelVector.front()->rawModel);
-
-        auto &model = modelVector.front();
-        auto &rawModel = modelVector.front()->rawModel;
-
-        if (currentCullStrategy != rawModel.cullStrategy)
-        {
-            glFrontFace(rawModel.cullStrategy);
-            currentCullStrategy = rawModel.cullStrategy;
-        }
-
-        uint32_t groupSize = modelVector.front()->modelGroups.size();
-
-        for (int i = 0; i < groupSize; i++)
-        {
-            uint32_t modelLength = models.second.size();
-
-            for (int j = 0; j < modelLength; j++)
-            {
-                if (j > 0 && j % INSTANCE_LIMIT == 0)
-                    flush(rawModel.groups[i]);
-
-                // transforming
-                auto &modelGroup = modelVector[j]->modelGroups[i];
-
-                if (!modelGroup.isStatic)
-                    modelGroup.transform();
-                modelMatrices.push_back(modelGroup.modelMatrix);
-            }
-            flush(rawModel.groups[i]);
-
-
-        }
-    }
-
-    for (auto &it:instancedQueue)
-        it.second.clear();
     drawing = false;
-}
-
-void Renderer3D::flush(const Group &group)
-{
-    glBindVertexArray(group.mesh.VAO);
-
-    // writing model matrices
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, modelMatricesSSBO);
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, modelMatrices.size() * sizeof(glm::mat4),
-                    &modelMatrices[0][0][0]);
-
-    // writing materials
-    uint32_t mIdx = 0;
-
-    // https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)
-    auto &materials = group.meshMaterials;
-    for (auto &m:materials)
-    {
-        //@formatter:off
-        materialBuffer[mIdx + 0]  = m.Ka.x;
-        materialBuffer[mIdx + 1]  = m.Ka.y;
-        materialBuffer[mIdx + 2]  = m.Ka.z;
-        // 3
-        materialBuffer[mIdx + 4]  = m.Kd.x;
-        materialBuffer[mIdx + 5]  = m.Kd.y;
-        materialBuffer[mIdx + 6]  = m.Kd.z;
-        // 7
-        materialBuffer[mIdx + 8]  = m.Ks.x;
-        materialBuffer[mIdx + 9]  = m.Ks.y;
-        materialBuffer[mIdx + 10] = m.Ks.z;
-        // 11
-        materialBuffer[mIdx + 12] = m.Ns;
-        materialBuffer[mIdx + 14] = m.Ni;
-        //@formatter:on
-        mIdx += Material::GLSL_SIZE;
-    }
-
-    if (mIdx > 0)
-    {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, materialsSSBO);
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, mIdx * sizeof(float), materialBuffer);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, materialsSSBO);
-    }
-
-    // drawing
-    //rawModel.groups[i].mesh.bind();
-    //glDrawElements(GL_TRIANGLES,rawModel.groups[i].mesh.indicesLength,GL_UNSIGNED_INT, nullptr);
-    glDrawElementsInstanced(GL_TRIANGLES, group.mesh.indicesLength, GL_UNSIGNED_INT, nullptr,
-                            modelMatrices.size());
-
-    modelMatrices.clear();
 }
 
 void Renderer3D::setTerrain(Terrain *_terrain)

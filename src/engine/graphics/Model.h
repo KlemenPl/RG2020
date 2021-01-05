@@ -20,6 +20,7 @@ public:
 
     glm::mat4 modelMatrix;
     bool isStatic = false;
+    bool enabled = true;
 
     ModelGroup(const Mesh *mesh = nullptr,
                const glm::vec3 &position = glm::vec3(0.0f, 0.0f, 0.0f),
@@ -67,6 +68,16 @@ public:
         for (auto &group:rawModel.groups)
             modelGroups.push_back(ModelGroup(&group.mesh));
     }
+
+    void enableGroup(uint32_t idx)
+    {
+        modelGroups[idx].enabled = true;
+    }
+    void disableGroup(uint32_t idx)
+    {
+        modelGroups[idx].enabled = false;
+    }
+
 
     Model clone()
     {

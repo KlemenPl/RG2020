@@ -390,8 +390,10 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
     std::uniform_real_distribution<float> terrainY(-halfYSize, halfYSize);
     std::uniform_int_distribution<uint32_t> object(0, 2);
 
+    solid.clear();
+    shrubs.clear();
+
     // spawning trees
-    trees.clear();
     for (uint32_t i = 0; i < biome.treeFrequency; i++)
     {
         float posX = terrainX(generator);
@@ -401,8 +403,15 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
         {
             //Model tree = ResourceManager::getModel("tree_" + std::to_string(object(generator)));
             uint32_t treeVariant = object(generator);
-            Model tree = ResourceManager::getModel("tree_" + std::to_string(treeVariant));
-            for (auto &group:tree.modelGroups)
+            treeVariant=1;
+            Ref<RawModel> rawTree = ResourceManager::getRawModel("tree_"+std::to_string(treeVariant));
+            Model trunk = Model{*rawTree};
+            trunk.disableGroup(1);
+            Model leaves = Model{*rawTree};
+            leaves.disableGroup(0);
+
+
+            for (auto &group:trunk.modelGroups)
             {
                 group.position.x = posX;
                 group.position.z = posY;
@@ -420,12 +429,31 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
 
                 group.makeStatic();
             }
-            trees.emplace_back(tree);
+            solid.emplace_back(trunk);
+
+            for (auto &group:leaves.modelGroups)
+            {
+                group.position.x = posX;
+                group.position.z = posY;
+                if(treeVariant==0)
+                {
+                    group.position.y = height + 0.5f;
+                } else if(treeVariant==1)
+                {
+                    group.position.y = height + 1.5f;
+                } else {
+                    group.position.y = height + 1.0f;
+                }
+
+                group.scale.x = group.scale.y = group.scale.z = 0.35f;
+
+                group.makeStatic();
+            }
+            shrubs.emplace_back(leaves);
         }
     }
 
     // spawning rocks
-    rocks.clear();
     for (uint32_t i = 0; i < biome.rockFrequency; i++)
     {
         float posX = terrainX(generator);
@@ -446,12 +474,11 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
 
                 group.makeStatic();
             }
-            rocks.emplace_back(rock);
+            solid.emplace_back(rock);
         }
     }
 
     // spawning shrubs
-    shrubs.clear();
     for (uint32_t i = 0; i < biome.shrubFrequency; i++)
     {
         float posX = terrainX(generator);
