@@ -30,12 +30,16 @@ CubeMap::~CubeMap()
 void CubeMap::bind() const
 {
     glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
 }
 void CubeMap::unbind() const
 {
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
@@ -75,75 +79,24 @@ void CubeMap::loadCubeMap(std::vector<std::string> &faces)
     if (!VAO)
     {
         // generating VAO, VBO
-        uint32_t verticesLength = 108;
-        float vertices[108] = {
+        uint32_t verticesLength = 24;
+        float vertices[24] = {
                 // positions
-                -1.0f, 1.0f, -1.0f,
-                -1.0f, -1.0f, -1.0f,
-                1.0f, -1.0f, -1.0f,
-                1.0f, -1.0f, -1.0f,
-                1.0f, 1.0f, -1.0f,
-                -1.0f, 1.0f, -1.0f,
-
-                -1.0f, -1.0f, 1.0f,
-                -1.0f, -1.0f, -1.0f,
-                -1.0f, 1.0f, -1.0f,
-                -1.0f, 1.0f, -1.0f,
-                -1.0f, 1.0f, 1.0f,
-                -1.0f, -1.0f, 1.0f,
-
-                1.0f, -1.0f, -1.0f,
-                1.0f, -1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, -1.0f,
-                1.0f, -1.0f, -1.0f,
-
-                -1.0f, -1.0f, 1.0f,
-                -1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f,
-                1.0f, -1.0f, 1.0f,
-                -1.0f, -1.0f, 1.0f,
-
-                -1.0f, 1.0f, -1.0f,
-                1.0f, 1.0f, -1.0f,
-                1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f,
-                -1.0f, 1.0f, 1.0f,
-                -1.0f, 1.0f, -1.0f,
-
-                -1.0f, -1.0f, -1.0f,
-                -1.0f, -1.0f, 1.0f,
-                1.0f, -1.0f, -1.0f,
-                1.0f, -1.0f, -1.0f,
-                -1.0f, -1.0f, 1.0f,
-                1.0f, -1.0f, 1.0f
+                -1, 1, -1,
+                -1, -1, -1,
+                1, -1, -1,
+                1, 1, -1,
+                -1, -1, 1,
+                -1, 1, 1,
+                1, -1, 1,
+                1, 1, 1,
         };
 
-
-        uint32_t indiceCount = 0;
-        for (int i = 0; i < verticesLength; i += 3)
-        {
-            bool flag = false;
-            for (int j = 0; j < i; j += 3)
-            {
-                if (vertices[i] == vertices[j] &&
-                    vertices[i + 1] == vertices[j + 1] &&
-                    vertices[i + 2] == vertices[j + 2])
-                {
-                    flag = true;
-                    break;
-                }
-            }
-            std::cout<<vertices[i]<<", "<<vertices[i+1]<<", "<<vertices[i+2]<<", "<<std::endl;
-            //std::cout<<indiceCount<<",";
-            if(!flag)
-                indiceCount++;
-        }
-
-        uint32_t indices[] = {0,1,2,3,3,4,4,5,5,5,5,6,6,6,7,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,};
-        uint32_t indicesLength = 38;
+        uint32_t indices[36] = {0, 1, 2, 2, 3, 0, 4, 1, 0,
+                                0, 5, 4, 2, 6, 7, 7, 3, 2,
+                                4, 5, 7, 7, 6, 4, 0, 3, 7,
+                                7, 5, 0, 1, 4, 2, 2, 4, 6};
+        uint32_t indicesLength = 36;
 
         // VAO
         glGenVertexArrays(1, &VAO);
@@ -155,9 +108,9 @@ void CubeMap::loadCubeMap(std::vector<std::string> &faces)
         glBufferData(GL_ARRAY_BUFFER, verticesLength * sizeof(float), vertices, GL_STATIC_DRAW);
 
         // IBO
-        //glGenBuffers(1, &IBO);
-        //glBindBuffer(GL_ARRAY_BUFFER, IBO);
-        //glBufferData(GL_ARRAY_BUFFER, indicesLength * sizeof(uint32_t), indices, GL_STATIC_DRAW);
+        glGenBuffers(1, &IBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesLength * sizeof(uint32_t), indices, GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);

@@ -25,6 +25,8 @@ private:
 
     std::unordered_map<uint32_t, std::vector<Model *>> instancedQueue;
     std::unordered_map<uint32_t, std::vector<Model *>> shadowQueue;
+    std::unordered_map<Ref<Shader>,
+            std::unordered_map<uint32_t, std::vector<Model *>>> modelsQueue;
 
     std::vector<DirLight> dirLights;
     std::vector<PointLight> pointLights;
@@ -55,6 +57,7 @@ private:
     uint32_t materialsSSBOLength{};
 
     Ref<Shader> shader;
+    Ref<Shader> waveyShader;
     Ref<Shader> terrainShader;
     Ref<Shader> skyboxShader;
     Ref<Shader> waterShader;
@@ -75,15 +78,21 @@ private:
     void drawTerrain();
     void drawSkybox();
 
+    void clearModelsQueue();
+
+    void drawModelGroups();
+    void drawModels();
+
 public:
     Renderer3D();
     virtual ~Renderer3D();
 
-    void drawTerrain(const Terrain& terrain);
+    void drawTerrain(const Terrain &terrain);
 
 
     void begin();
     void draw(Model *model);
+    void draw(std::vector<Model> models);
     void end();
     void flush(const Group &group);
 

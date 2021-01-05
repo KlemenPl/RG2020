@@ -93,7 +93,7 @@ static void processFace(const std::string &str,
                         int materialIndex)
 {
     auto it = indicesMap.find(str);
-    if (it == indicesMap.end() || !Loader::settings.useIBO)
+    if (it == indicesMap.end() || !LoaderSettings::useIBO)
     {
 
         // vertices
@@ -176,7 +176,6 @@ static void processGroup(std::ifstream &objFile, Group *group,
 
     std::string line;
     int place = 0;
-
 
     while (std::getline(objFile, line))
     {
@@ -267,14 +266,14 @@ static void processGroup(std::ifstream &objFile, Group *group,
 
     float *verticesArray = new float[vertices.size()];
     for (int i = 0; i < vertices.size(); i++)
-        verticesArray[i] = vertices.at(i);
+        verticesArray[i] = vertices[i];
 
     group->mesh.vertices = verticesArray;
     group->mesh.verticesLength = vertices.size();
 
     uint32_t *indicesArray = new uint32_t[indices.size()];
     for (int i = 0; i < indices.size(); i++)
-        indicesArray[i] = indices.at(i);
+        indicesArray[i] = indices[i];
 
     group->mesh.indices = indicesArray;
     group->mesh.indicesLength = indices.size();

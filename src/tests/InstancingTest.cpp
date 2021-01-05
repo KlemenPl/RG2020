@@ -20,6 +20,8 @@ void InstancingTest::init()
     this->lightShader = ResourceManager::getShader("light");
 
     ResourceManager::loadFont("res/fonts/Roboto-Black.ttf", "roboto");
+
+    LoaderSettings::useIBO=true;
     this->font = ResourceManager::getFont("roboto");
     bunny = Ref<RawModel>(Loader::loadOBJ("res/models/bunny.obj"));
     //bunny = Ref<RawModel>(Loader::loadOBJ("res/models/turret_single.obj"));

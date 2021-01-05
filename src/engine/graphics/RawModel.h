@@ -15,6 +15,12 @@
 
 class RawModel;
 
+struct Hitbox
+{
+    glm::vec3 top[4]{};
+    glm::vec3 bottom[4]{};
+};
+
 struct Group
 {
     std::string groupName;
@@ -96,17 +102,28 @@ public:
             else if (!mesh.hasTexCoords && mesh.hasNormals)
             {
                 // pos, normals
-                glEnableVertexAttribArray(0); // position
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (const void *) 0);
+                if (mesh.hasMaterial)
+                {
+                    glEnableVertexAttribArray(0); // position
+                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (const void *) 0);
 
-                glEnableVertexAttribArray(1); // normals
-                glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 7 * sizeof(float),
-                                      (const void *) (sizeof(float) * 3));
+                    glEnableVertexAttribArray(1); // normals
+                    glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 7 * sizeof(float),
+                                          (const void *) (sizeof(float) * 3));
 
-                glEnableVertexAttribArray(2); // material index
-                glVertexAttribPointer(2, 1, GL_FLOAT, GL_TRUE, 7 * sizeof(float),
-                                      (const void *) (sizeof(float) * 6));
+                    glEnableVertexAttribArray(2); // material index
+                    glVertexAttribPointer(2, 1, GL_FLOAT, GL_TRUE, 7 * sizeof(float),
+                                          (const void *) (sizeof(float) * 6));
+                }
+                else
+                {
+                    glEnableVertexAttribArray(0); // position
+                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (const void *) 0);
 
+                    glEnableVertexAttribArray(1); // normals
+                    glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(float),
+                                          (const void *) (sizeof(float) * 3));
+                }
             }
             else
             {

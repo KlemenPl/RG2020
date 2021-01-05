@@ -107,11 +107,11 @@ void processTerrainTriangle(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3, std::ve
 
 Terrain::Terrain()
 {
-    ResourceManager::loadTexture("res/textures/waterDuDvMap.png","waterDuDvMap", false,
+    ResourceManager::loadTexture("res/textures/waterDuDvMap.png", "waterDuDvMap", false,
                                  GL_REPEAT, GL_REPEAT);
     waterDuDvMap = ResourceManager::getTexture2D("waterDuDvMap");
 
-    ResourceManager::loadTexture("res/textures/waterMatchingNormalMap.png","waterNormalMap", false,
+    ResourceManager::loadTexture("res/textures/waterMatchingNormalMap.png", "waterNormalMap", false,
                                  GL_REPEAT, GL_REPEAT);
     waterNormalMap = ResourceManager::getTexture2D("waterNormalMap");
 }
@@ -150,8 +150,14 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
     heightsWidth = xSize * detailX;
     heightsHeight = ySize * detailY;
 
+    this->terrainXSize = (float) xSize;
+    this->terrainYSize = (float) ySize;
+
     float halfXSize = xSize / 2.0f;
     float halfYSize = ySize / 2.0f;
+
+    this->terrainHXSize = halfXSize;
+    this->terrainHYSize = halfYSize;
 
     float stepX = (float) xSize / heightsWidth;
     float stepY = (float) ySize / heightsHeight;
@@ -343,8 +349,7 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
      */
 
 
-    float yLevel = 2.6f;
-    this->waterLevel = yLevel;
+    float yLevel = this->waterLevel;
     // @formatter:off
     float waterVertices[]{
              halfXSize, yLevel,  halfYSize,  1.0f, 1.0f, // top     right
@@ -381,6 +386,120 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, waterMesh.IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, waterMesh.indicesLength * sizeof(uint32_t), waterIndices, GL_STATIC_DRAW);
 
+    std::uniform_real_distribution<float> terrainX(-halfXSize, halfXSize);
+    std::uniform_real_distribution<float> terrainY(-halfYSize, halfYSize);
+    std::uniform_int_distribution<uint32_t> object(0, 2);
+
+    // spawning trees
+    trees.clear();
+    for (uint32_t i = 0; i < biome.treeFrequency; i++)
+    {
+        float posX = terrainX(generator);
+        float posY = terrainY(generator);
+        float height = getHeight(posX, posY);
+        if (height > waterLevel + 0.5f && height < maxHeight - 5)
+        {
+            //Model tree = ResourceManager::getModel("tree_" + std::to_string(object(generator)));
+            uint32_t treeVariant = object(generator);
+            Model tree = ResourceManager::getModel("tree_" + std::to_string(treeVariant));
+            for (auto &group:tree.modelGroups)
+            {
+                group.position.x = posX;
+                group.position.z = posY;
+                if(treeVariant==0)
+                {
+                    group.position.y = height + 0.5f;
+                } else if(treeVariant==1)
+                {
+                    group.position.y = height + 1.5f;
+                } else {
+                    group.position.y = height + 1.0f;
+                }
+
+                group.scale.x = group.scale.y = group.scale.z = 0.35f;
+
+                group.makeStatic();
+            }
+            trees.emplace_back(tree);
+        }
+    }
+
+    // spawning rocks
+    rocks.clear();
+    for (uint32_t i = 0; i < biome.rockFrequency; i++)
+    {
+        float posX = terrainX(generator);
+        float posY = terrainY(generator);
+        float height = getHeight(posX, posY);
+        if (height > 0.5f && height < maxHeight - 6)
+        {
+            //Model tree = ResourceManager::getModel("tree_" + std::to_string(object(generator)));
+            uint32_t rockVariant = object(generator);
+            Model rock = ResourceManager::getModel("rock_" + std::to_string(rockVariant));
+            for (auto &group:rock.modelGroups)
+            {
+                group.position.x = posX;
+                group.position.z = posY;
+                group.position.y = height + 0.0f;
+
+                group.scale.x = group.scale.y = group.scale.z = 0.25f;
+
+                group.makeStatic();
+            }
+            rocks.emplace_back(rock);
+        }
+    }
+
+    // spawning shrubs
+    shrubs.clear();
+    for (uint32_t i = 0; i < biome.shrubFrequency; i++)
+    {
+        float posX = terrainX(generator);
+        float posY = terrainY(generator);
+        float height = getHeight(posX, posY);
+        if (height > 3.0f && height < maxHeight - 7)
+        {
+            //Model tree = ResourceManager::getModel("tree_" + std::to_string(object(generator)));
+            uint32_t shrubVariant = object(generator);
+            Model shrub = ResourceManager::getModel("shrub_" + std::to_string(shrubVariant));
+            for (auto &group:shrub.modelGroups)
+            {
+                group.position.x = posX;
+                group.position.z = posY;
+                group.position.y = height + 0.25f;
+
+                group.scale.x = group.scale.y = group.scale.z = 0.4f;
+
+                group.makeStatic();
+            }
+            shrubs.emplace_back(shrub);
+        }
+    }
+
+    // spawning flowers
+    for (uint32_t i = 0; i < biome.flowerFrequency; i++)
+    {
+        float posX = terrainX(generator);
+        float posY = terrainY(generator);
+        float height = getHeight(posX, posY);
+        if (height > 3.0f && height < maxHeight - 7)
+        {
+            //Model tree = ResourceManager::getModel("tree_" + std::to_string(object(generator)));
+            uint32_t flowerVariant = object(generator);
+            Model flower = ResourceManager::getModel("flower_" + std::to_string(flowerVariant));
+            for (auto &group:flower.modelGroups)
+            {
+                group.position.x = posX;
+                group.position.z = posY;
+                group.position.y = height;
+
+                group.scale.x = group.scale.y = group.scale.z = 0.4f;
+
+                group.makeStatic();
+            }
+            shrubs.emplace_back(flower);
+        }
+    }
 
 }
 
@@ -423,9 +542,9 @@ float getColour(float height, float minValue, float maxValue, const Biome &biome
     cLower = clamp<uint32_t>(cLower, 0u, biome.colours.size() - 1);
     cHigher = clamp<uint32_t>(cHigher, 0u, biome.colours.size() - 1);
 
-    float colorInterpolation = deltaValue - ((uint32_t) deltaValue);
+    float colourInterpolation = deltaValue - ((uint32_t) deltaValue);
 
-    Color interpolated = Color::interpolate(biome.colours[cLower], biome.colours[cHigher], colorInterpolation);
+    Color interpolated = Color::interpolate(biome.colours[cLower], biome.colours[cHigher], colourInterpolation);
     return interpolated.pack();
 
 }
@@ -489,9 +608,66 @@ Terrain::~Terrain()
     waterMesh.dispose();
 }
 
+float Terrain::getHeightFast(float xPos, float yPos)
+{
+    xPos += terrainHXSize;
+    yPos += terrainHYSize;
+
+    if (xPos < 0 || xPos > terrainXSize ||
+        yPos < 0 || yPos > terrainYSize)
+        return -1.0f;
+
+    float deltaX = xPos / terrainXSize;
+    float deltaY = yPos / terrainYSize;
+    uint32_t xIdx = std::round(heightsWidth * deltaX);
+    uint32_t yIdx = std::round(heightsHeight * deltaY);
+    return heights[yIdx][xIdx];
+}
+
+float barryCentric(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos)
+{
+    float det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
+    float l1 = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
+    float l2 = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
+    float l3 = 1.0f - l1 - l2;
+    return l1 * p1.y + l2 * p2.y + l3 * p3.y;
+}
+
 float Terrain::getHeight(float xPos, float yPos)
 {
-    return -1.0f;
+    xPos += terrainHXSize;
+    yPos += terrainHYSize;
+
+    if (xPos < 0 || xPos > terrainXSize ||
+        yPos < 0 || yPos > terrainYSize)
+        return -1.0f;
+
+    float grideSizeX = terrainXSize / ((float) heightsWidth - 1);
+    float grideSizeY = terrainYSize / ((float) heightsHeight - 1);
+
+    uint32_t gridX = std::floor(xPos / grideSizeX);
+    uint32_t gridY = std::floor(yPos / grideSizeY);
+
+    float xCoord = std::fmod(xPos, grideSizeX) / grideSizeX;
+    float yCoord = std::fmod(yPos, grideSizeY) / grideSizeY;
+    float answer;
+
+    if (xCoord <= (1 - yCoord))
+    {
+        answer = barryCentric(glm::vec3(0, heights[gridY][gridX], 0),
+                              glm::vec3(1, heights[gridY + 1][gridX], 0),
+                              glm::vec3(0, heights[gridY][gridX + 1], 1),
+                              glm::vec2(xCoord, yCoord));
+    }
+    else
+    {
+        answer = barryCentric(glm::vec3(1, heights[gridY + 1][gridX], 0),
+                              glm::vec3(1, heights[gridY + 1][gridX + 1], 1),
+                              glm::vec3(0, heights[gridY][gridX + 1], 1),
+                              glm::vec2(xCoord, yCoord));
+    }
+
+    return answer;
 }
 
 glm::vec3 calculateNormal(glm::vec3 &v1, glm::vec3 &v2, glm::vec3 &v3)

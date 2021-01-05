@@ -49,21 +49,22 @@ void TerrainTest::init()
     ResourceManager::loadModel("res/models/shrub_1.obj", "shrub_1");
     ResourceManager::loadModel("res/models/shrub_2.obj", "shrub_2");
 
-    ResourceManager::loadModel("res/models/flower_blue.obj", "flower_blue");
-    ResourceManager::loadModel("res/models/flower_red.obj", "flower_red");
-    ResourceManager::loadModel("res/models/flower_yellow.obj", "flower_yellow");
+    ResourceManager::loadModel("res/models/flower_blue.obj", "flower_0");
+    ResourceManager::loadModel("res/models/flower_red.obj", "flower_1");
+    ResourceManager::loadModel("res/models/flower_yellow.obj", "flower_2");
 
-    Loader::settings.seperateMaterials = true;
+    LoaderSettings::seperateMaterials = true;
     ResourceManager::loadModel("res/models/tree_0.obj", "tree_0");
     ResourceManager::loadModel("res/models/tree_1.obj", "tree_1");
     ResourceManager::loadModel("res/models/tree_2.obj", "tree_2");
-    Loader::settings.seperateMaterials = false;
+    LoaderSettings::seperateMaterials = false;
 
     auto model = ResourceManager::getModel("tree_0");
 
     activeSeed = new uint32_t;
     *activeSeed = 8462;
     *activeSeed = 6051;
+    *activeSeed = 513;
     tempSeed = new uint32_t;
     *tempSeed = *activeSeed;
 
@@ -152,6 +153,7 @@ void TerrainTest::start()
         renderer3D->end();
         renderer3D->drawTerrain(*terrain);
         auto end = chrono_now();
+        //std::cout<<terrain->getHeight(0,0)<<std::endl;
 
         std::chrono::duration<float> duration = end - start;
         float fDuration = duration.count() * 1000.0f; // to ms

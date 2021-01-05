@@ -13,13 +13,15 @@ Renderer3D::Renderer3D() :
         reflectionFB(FrameBuffer(Game::width / 4, Game::height / 4)),
         refractionFB(FrameBuffer(Game::width, Game::height))
 {
-    ShaderSourceArgument args[2];
-    args[0] = {VERTEX, "MAX_DIR_LIGHTS", std::to_string(DIR_LIGHT_LIMIT)};
-    args[1] = {VERTEX, "MAX_POINT_LIGHTS", std::to_string(POINT_LIGHT_LIMIT)};
     ResourceManager::loadShader("res/shaders/default3D_VS.glsl",
                                 "res/shaders/default3D_FS.glsl",
-                                nullptr, "default3D", args, 2);
+                                nullptr, "default3D");
     shader = ResourceManager::getShader("default3D");
+    ResourceManager::loadShader("res/shaders/wavey_VS.glsl",
+                                "res/shaders/default3D_FS.glsl",
+                                nullptr, "wavey");
+    waveyShader = ResourceManager::getShader("wavey");
+
     shadowShader = ResourceManager::getShader("shadowShader");
     lightShader = ResourceManager::getShader("LightShader");
 
@@ -41,7 +43,7 @@ Renderer3D::Renderer3D() :
     ResourceManager::loadShader("res/shaders/skybox_VS.glsl",
                                 "res/shaders/skybox_FS.glsl",
                                 nullptr, "skybox"
-                                );
+    );
     skyboxShader = ResourceManager::getShader("skybox");
     skyboxShader->bind();
     skyboxShader->setUniform("skybox", 0);
@@ -128,6 +130,17 @@ void Renderer3D::prepareRawModel(const RawModel &model)
     }
 }
 
+void Renderer3D::clearModelsQueue()
+{
+    for (auto &modelsByShader:modelsQueue)
+    {
+        for (auto &models:modelsByShader.second)
+            models.second.clear();
+        modelsByShader.second.clear();
+    }
+    modelsQueue.clear();
+}
+
 void Renderer3D::drawTerrain()
 {
 
@@ -145,8 +158,9 @@ void Renderer3D::drawSkybox()
     skyboxShader->setUniform("projection", camera->getProjectionMatrix());
     skyboxShader->setUniform("view",
                              glm::mat4(glm::mat3(camera->getViewMatrix())));
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    //glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT, nullptr);
+    //glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void *) 0);
+    skybox->unbind();
 
     //glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
@@ -158,7 +172,6 @@ void Renderer3D::drawTerrain(const Terrain &terrain)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     //glDisable(GL_CULL_FACE);
-    terrainShader->bind();
     terrain.terrainMesh.bind();
 
     // seting vpMatrices UBO
@@ -176,6 +189,7 @@ void Renderer3D::drawTerrain(const Terrain &terrain)
     setupCamera();
     // reflection
     reflectionFB.bind();
+    terrainShader->bind();
     terrainShader->setUniform("plane", glm::vec4(0, 1, 0, -terrain.waterLevel));
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDrawElements(GL_TRIANGLES, terrain.terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
@@ -185,8 +199,11 @@ void Renderer3D::drawTerrain(const Terrain &terrain)
     camera->setPitch(-camera->getPitch());
     camera->update();
     setupCamera();
-    // refraction
+    drawSkybox();
+    terrain.terrainMesh.bind();
+    terrainShader->bind();
     reflectionFB.unbind();
+    // refraction
     refractionFB.bind();
     terrainShader->setUniform("plane", glm::vec4(0, -1, 0, terrain.waterLevel));
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -226,6 +243,21 @@ void Renderer3D::drawTerrain(const Terrain &terrain)
     //glDrawArrays(GL_TRIANGLES,0,terrain.terrainMesh.verticesLength);
 
     glDisable(GL_BLEND);
+
+    begin();
+    for (const auto & tree : terrain.trees)
+    {
+        draw( (Model *) &tree);
+    }
+    for (const auto & rock : terrain.rocks)
+    {
+        draw( (Model *) &rock);
+    }
+    for (const auto & shrub : terrain.shrubs)
+    {
+        draw( (Model *) &shrub);
+    }
+    end();
 
     drawSkybox();
 }
@@ -267,6 +299,7 @@ void Renderer3D::end()
 
     setupCamera();
     shader->bind();
+    shader->setUniform("time",(float) glfwGetTime());
 
     // sorting point lights
     //std::sort(pointLights.begin(), pointLights.end(), DistanceFromCamera::compareDistance);

@@ -72,6 +72,11 @@ public:
     {
         return *this;
     }
+
+    Model *_getPointer()
+    {
+        return this;
+    };
 };
 
 #endif //TOWERDEFENSE_MODEL_H

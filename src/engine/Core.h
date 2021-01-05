@@ -53,8 +53,32 @@ public:
         return refrence;
     }
 
+    bool operator==(const Ref &rhs) const
+    {
+        return refrence == rhs.refrence;
+    }
+    bool operator!=(const Ref &rhs) const
+    {
+        return !(rhs == *this);
+    }
+
 
 };
+
+namespace std {
+
+    template <typename T>
+    struct hash<Ref<T>>
+    {
+
+        std::size_t operator()(const Ref<T>& k) const
+        {
+            using std::hash;
+            return hash<uint32_t>()(k._getRefrence());
+        }
+    };
+
+}
 
 // std::unique_ptr / std::shared_ptr is a mouthful to write
 template<typename T>

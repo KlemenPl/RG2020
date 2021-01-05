@@ -137,6 +137,17 @@ bool Shader::validate(uint32_t object, ShaderType type)
 
     return true;
 }
+
+bool Shader::operator==(const Shader &rhs) const
+{
+    return ID == rhs.ID;
+}
+bool Shader::operator!=(const Shader &rhs) const
+{
+    return !(rhs == *this);
+}
+
+
 void Shader::setUniform(const std::string &name, float value)
 {
     glUniform1f(getUniformLocation(name), value);

@@ -40,15 +40,20 @@ private:
     uint32_t getUniformLocation(const std::string &name);
 
 public:
+    uint32_t ID;
+
     // constructor
     Shader();
+    virtual ~Shader();
 
     // binds shader, and returns refrence for chaining
     Shader &bind();
 
     void compile(const char *vsSource, const char *fsSource, const char *gsSource = nullptr);
-
     bool validate(uint32_t object, ShaderType type);
+
+    bool operator==(const Shader &rhs) const;
+    bool operator!=(const Shader &rhs) const;
 
     // @formatter:off
 
@@ -74,10 +79,6 @@ public:
     void setUniformDirLight(  const std::string& name, const DirLight& light);
 
     // @formatter:on
-
-    virtual ~Shader();
-
-    uint32_t ID;
 };
 
 

@@ -25,6 +25,11 @@ struct Biome
 
     float waterLevel = 1.0f;
 
+    uint32_t treeFrequency = 100;
+    uint32_t rockFrequency = 40;
+    uint32_t flowerFrequency = 280;
+    uint32_t shrubFrequency = 60;
+
     bool operator==(const Biome &rhs) const;
     bool operator!=(const Biome &rhs) const;
 
@@ -44,14 +49,20 @@ public:
     uint32_t heightsWidth;
     uint32_t heightsHeight; // ¯\_(ツ)_/¯
 
+    float terrainXSize;
+    float terrainYSize;
+
+    float terrainHXSize;
+    float terrainHYSize;
+
     float minHeight;
     float maxHeight;
 
-    float waterLevel = 0;
+    float waterLevel = 2.6;
 
     std::vector<Model> trees;
-    std::vector<Model> shrubs;
     std::vector<Model> rocks;
+    std::vector<Model> shrubs;
 
     Ref<Texture2D> waterDuDvMap;
     Ref<Texture2D> waterNormalMap;
@@ -61,6 +72,7 @@ public:
     void generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_t detailY, uint32_t seed = 20,
                   uint32_t resolution = 1.0f, const Biome &biome = {});
 
+    float getHeightFast(float xPos, float yPos);
     float getHeight(float xPos, float yPos);
     virtual ~Terrain();
 

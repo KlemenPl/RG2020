@@ -7,19 +7,23 @@
 
 #include "../graphics/RawModel.h"
 
+struct LoaderSettings
+{
+public:
+    inline static bool useIBO = true;
+    inline static bool seperateMaterials = false;
+
+    static void init()
+    {
+    }
+};
+
+
 namespace Loader {
     // https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
-    struct LoaderSettings
-    {
-        bool useIBO = true;
-        bool seperateMaterials = false;
-    };
-
-    static LoaderSettings settings{};
-
     RawModel *loadOBJ(const char *filePath);
-    void loadOBJObjects(const char *filePath, std::vector<std::pair<std::string,RawModel *>> &output);
+    void loadOBJObjects(const char *filePath, std::vector<std::pair<std::string, RawModel *>> &output);
 
 }
 

@@ -23,9 +23,9 @@ void Instancing2Test::init()
     this->renderer3D = new Renderer3D;
 
     //tree = Ref<RawModel>(Loader::loadOBJ("res/models/tree_01.obj"));
-    Loader::settings.useIBO = false;
+    LoaderSettings::useIBO = false;
     tree = Ref<RawModel>(Loader::loadOBJ("res/models/turret_single.obj"));
-    Loader::settings.useIBO = true;
+    LoaderSettings::useIBO = true;
     tree->generateMeshes();
     treeModel = new Model(*tree);
 
@@ -48,17 +48,6 @@ void Instancing2Test::init()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-
-    glm::perlin(glm::vec2(1, 1));
-
-    for (int i = 0; i < 50; i++)
-    {
-        for (int j = 0; j < 50; j++)
-        {
-            std::cout << glm::perlin(glm::vec2(i / 20.0f, j / 20.0f)) << "\t";
-        }
-        std::cout << std::endl;
-    }
 
 }
 void Instancing2Test::start()
