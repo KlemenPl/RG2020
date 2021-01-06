@@ -2,10 +2,9 @@
 // Created by klemen on 27/12/2020.
 //
 #include "Terrain.h"
-#include "../Core.h"
 #include "../ResourceManager.h"
+#include "../utils/Hash.h"
 #include <gtc/noise.hpp>
-#include <gtx/hash.hpp>
 #include <random>
 #include <iostream>
 #include <unordered_map>
@@ -31,15 +30,15 @@ struct TerrainVertex
         {
             size_t seed = 0;
             std::hash<float> hasher;
-            glm::detail::hash_combine(seed, hasher(key.position.x));
-            glm::detail::hash_combine(seed, hasher(key.position.y));
-            glm::detail::hash_combine(seed, hasher(key.position.z));
+            Utils::hash_combine(seed, hasher(key.position.x));
+            Utils::hash_combine(seed, hasher(key.position.y));
+            Utils::hash_combine(seed, hasher(key.position.z));
 
-            glm::detail::hash_combine(seed, hasher(key.normal.x));
-            glm::detail::hash_combine(seed, hasher(key.normal.y));
-            glm::detail::hash_combine(seed, hasher(key.normal.z));
+            Utils::hash_combine(seed, hasher(key.normal.x));
+            Utils::hash_combine(seed, hasher(key.normal.y));
+            Utils::hash_combine(seed, hasher(key.normal.z));
 
-            glm::detail::hash_combine(seed, hasher(key.colour));
+            Utils::hash_combine(seed, hasher(key.colour));
 
             return seed;
         }
@@ -393,6 +392,9 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
     solid.clear();
     shrubs.clear();
 
+    std::uniform_real_distribution<float> rotation(0.0f,360.0f);
+    std::uniform_real_distribution<float> scale(-0.1f,0.1f);
+
     // spawning trees
     for (uint32_t i = 0; i < biome.treeFrequency; i++)
     {
@@ -403,29 +405,34 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
         {
             //Model tree = ResourceManager::getModel("tree_" + std::to_string(object(generator)));
             uint32_t treeVariant = object(generator);
-            treeVariant=1;
-            Ref<RawModel> rawTree = ResourceManager::getRawModel("tree_"+std::to_string(treeVariant));
+            //treeVariant = 1;
+            Ref<RawModel> rawTree = ResourceManager::getRawModel("tree_" + std::to_string(treeVariant));
             Model trunk = Model{*rawTree};
             trunk.disableGroup(1);
             Model leaves = Model{*rawTree};
             leaves.disableGroup(0);
 
-
+            float treeRotation = rotation(generator);
+            float treeScale = scale(generator);
             for (auto &group:trunk.modelGroups)
             {
                 group.position.x = posX;
                 group.position.z = posY;
-                if(treeVariant==0)
+                if (treeVariant == 0)
                 {
                     group.position.y = height + 0.5f;
-                } else if(treeVariant==1)
+                }
+                else if (treeVariant == 1)
                 {
                     group.position.y = height + 1.5f;
-                } else {
+                }
+                else
+                {
                     group.position.y = height + 1.0f;
                 }
 
-                group.scale.x = group.scale.y = group.scale.z = 0.35f;
+                group.scale.x = group.scale.y = group.scale.z = 0.35f + treeScale;
+                group.rotation.y = treeRotation;
 
                 group.makeStatic();
             }
@@ -435,17 +442,15 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
             {
                 group.position.x = posX;
                 group.position.z = posY;
-                if(treeVariant==0)
-                {
+                if (treeVariant == 0)
                     group.position.y = height + 0.5f;
-                } else if(treeVariant==1)
-                {
+                else if (treeVariant == 1)
                     group.position.y = height + 1.5f;
-                } else {
+                else
                     group.position.y = height + 1.0f;
-                }
 
-                group.scale.x = group.scale.y = group.scale.z = 0.35f;
+                group.scale.x = group.scale.y = group.scale.z = 0.35f + treeScale;
+                group.rotation.y = treeRotation;
 
                 group.makeStatic();
             }
@@ -459,7 +464,7 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
         float posX = terrainX(generator);
         float posY = terrainY(generator);
         float height = getHeight(posX, posY);
-        if (height > 0.5f && height < maxHeight - 6)
+        if (height > 1.2f && height < maxHeight - 6)
         {
             //Model tree = ResourceManager::getModel("tree_" + std::to_string(object(generator)));
             uint32_t rockVariant = object(generator);
@@ -470,7 +475,8 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
                 group.position.z = posY;
                 group.position.y = height + 0.0f;
 
-                group.scale.x = group.scale.y = group.scale.z = 0.25f;
+                group.scale.x = group.scale.y = group.scale.z = 0.25f + scale(generator);
+                group.rotation.y = rotation(generator);
 
                 group.makeStatic();
             }
@@ -495,7 +501,8 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
                 group.position.z = posY;
                 group.position.y = height + 0.25f;
 
-                group.scale.x = group.scale.y = group.scale.z = 0.4f;
+                group.scale.x = group.scale.y = group.scale.z = 0.4f + scale(generator);
+                group.rotation.y = rotation(generator);
 
                 group.makeStatic();
             }
@@ -520,7 +527,8 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
                 group.position.z = posY;
                 group.position.y = height;
 
-                group.scale.x = group.scale.y = group.scale.z = 0.4f;
+                group.scale.x = group.scale.y = group.scale.z = 0.4f + scale(generator);
+                group.rotation.y = rotation(generator);
 
                 group.makeStatic();
             }

@@ -34,7 +34,7 @@ void GameScreen::init()
     biome.colours.emplace_back(Color::create(80, 171, 93));
     biome.colours.emplace_back(Color::create(120, 120, 120));
     biome.colours.emplace_back(Color::create(200, 200, 210));
-    terrain->generate(50, 50, 123413, 2,5,5, biome);
+    //terrain->generate(50, 50, 2, 2,5,5, biome);
 
     glEnable(GL_DEPTH_TEST);
 }
@@ -58,8 +58,8 @@ void GameScreen::render()
     camera->update();
     orthoCamera->update();
 
-    game->renderer3D->begin();
-    game->renderer3D->end();
+    //game->renderer3D->begin();
+    //game->renderer3D->end();
 
 }
 void GameScreen::resize(int width, int height)

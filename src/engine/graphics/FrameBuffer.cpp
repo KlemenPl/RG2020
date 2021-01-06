@@ -3,12 +3,11 @@
 //
 
 #include "FrameBuffer.h"
-#include <stack>
+#include "../../game/Game.h"
 
-inline static std::stack<uint32_t> *fbStack = new std::stack<uint32_t>();
 FrameBuffer::FrameBuffer(uint32_t _width, uint32_t _height)
-//: width(_width), height(_height)
-        : width(1280), height(720)
+        : width(_width), height(_height)
+//: width(1280), height(720)
 {
     glGenFramebuffers(1, &fboID);
     glBindFramebuffer(GL_FRAMEBUFFER, fboID);
@@ -33,15 +32,21 @@ void FrameBuffer::bind() const
     glBindFramebuffer(GL_FRAMEBUFFER, fboID);
     glViewport(0, 0, width, height);
 
-    fbStack->push(fboID);
+    fbStack->push(this);
 }
 void FrameBuffer::unbind() const
 {
     fbStack->pop();
-    uint32_t buffer = 0;
-    if(!fbStack->empty())
+    const FrameBuffer *buffer = nullptr;
+    if (!fbStack->empty())
+    {
         buffer = fbStack->top();
-    glBindFramebuffer(GL_FRAMEBUFFER, buffer);
+        glViewport(0, 0, buffer->width, buffer->height);
+    }
+    else
+        glViewport(0, 0, Game::width, Game::height);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, buffer == nullptr ? 0 : buffer->fboID);
 }
 
 void FrameBuffer::createColourAttachment(GLint format,
@@ -76,7 +81,7 @@ void FrameBuffer::createColourAttachment(GLint format,
     unbind();
 }
 
-void FrameBuffer::createDepthAttachment(uint32_t filterMin, uint32_t filterMag)
+void FrameBuffer::createDepthAndColourAttachment(uint32_t filterMin, uint32_t filterMag)
 {
     delete colourAttachment;
     delete depthAttachment;
@@ -109,4 +114,29 @@ void FrameBuffer::createDepthAttachment(uint32_t filterMin, uint32_t filterMag)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMag);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthAttachment->ID, 0);
     unbind();
+}
+
+void FrameBuffer::createDepthAttachment(uint32_t filterMin, uint32_t filterMag)
+{
+    depthAttachment = new Texture2D();
+    depthAttachment->width = width;
+    depthAttachment->height = height;
+    depthAttachment->filterMin = filterMin;
+    depthAttachment->filterMag = filterMag;
+
+    glGenTextures(1, &depthAttachment->ID);
+    glBindTexture(GL_TEXTURE_2D, depthAttachment->ID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+                 width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fboID, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 }

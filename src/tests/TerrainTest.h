@@ -28,6 +28,7 @@ private:
     Renderer3D *renderer3D;
     Terrain *terrain;
     Ref<CubeMap> skybox;
+    Ref<Shader> debugDepthShader;
 
     float deltaTime{};
     float lastFrame{};

@@ -43,9 +43,22 @@ public:
         return *refrence;
     }
 
-    T *_getRefrence()
+    T *_get_ptr()
     {
         return refrence;
+    }
+    T *_get_ptr() const
+    {
+        return refrence;
+    }
+
+    T &_get_ref()
+    {
+        return *refrence;
+    }
+    T &_get_ref() const
+    {
+        return *refrence;
     }
 
     const T *_getRefrence() const
@@ -67,14 +80,14 @@ public:
 
 namespace std {
 
-    template <typename T>
+    template<typename T>
     struct hash<Ref<T>>
     {
 
-        std::size_t operator()(const Ref<T>& k) const
+        std::size_t operator()(const Ref<T> &k) const
         {
             using std::hash;
-            return hash<uint32_t>()(k._getRefrence());
+            return hash<uint32_t>()(k._get_ptr());
         }
     };
 

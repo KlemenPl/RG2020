@@ -8,6 +8,8 @@
 #include <fstream>
 #include "ResourceManager.h"
 #include "loader/Loader.h"
+#include "graphics/Terrain.h"
+#include "graphics/CubeMap.h"
 #include <stb_image.h>
 
 void ResourceManager::init()
@@ -30,17 +32,17 @@ ResourceManager::~ResourceManager()
 
     // shaders
     for (auto &shader:shaders)
-        delete shader.second._getRefrence();
+        delete shader.second._get_ptr();
     ResourceManager::shaders.clear();
 
     // textures
     for (auto &texture:textures)
-        delete texture.second._getRefrence();
+        delete texture.second._get_ptr();
     ResourceManager::textures.clear();
 
     // bitmap font cleanup
     for (auto &font:fonts)
-        delete font.second._getRefrence();
+        delete font.second._get_ptr();
     ResourceManager::fonts.clear();
 }
 
@@ -190,6 +192,27 @@ void ResourceManager::loadModel(const char *modelFile, std::string name)
     instance->models[name] = Ref<RawModel>(rawModel);
 }
 
+void ResourceManager::loadCubeMap(const std::string &folderPath, const std::string &extension, std::string name)
+{
+    CubeMap *cubeMap = new CubeMap();
+    std::vector<std::string> faces
+            {
+                    folderPath + "/right." + extension,
+                    folderPath + "/left." + extension,
+                    folderPath + "/top." + extension,
+                    folderPath + "/bottom." + extension,
+                    folderPath + "/front." + extension,
+                    folderPath + "/back." + extension
+            };
+    cubeMap->loadCubeMap(faces);
+    instance->cubemaps[name] = Ref<CubeMap>(cubeMap);
+}
+
+void ResourceManager::loadBiome(Biome *biome, std::string name)
+{
+    instance->biomes[name] = Ref<Biome>(biome);
+}
+
 Model ResourceManager::getModel(const std::string &name)
 {
     return Model{instance->models[name].operator*()};
@@ -212,4 +235,13 @@ Ref<BitmapFont> ResourceManager::getFont(const std::string &name)
 Ref<RawModel> ResourceManager::getRawModel(const std::string &name)
 {
     return instance->models[name];
+}
+
+Ref<CubeMap> ResourceManager::getCubeMap(const std::string &name)
+{
+    return instance->cubemaps[name];
+}
+Ref<Biome> ResourceManager::getBiome(const std::string &name)
+{
+    return instance->biomes[name];
 }

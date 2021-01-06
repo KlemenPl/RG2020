@@ -11,6 +11,7 @@
 #include <functional>
 #include "../graphics/Model.h"
 #include "../graphics/Light.h"
+#include "../graphics/Shader.h"
 #include "../camera/PerspectiveCamera.h"
 #include "../graphics/Terrain.h"
 #include "../graphics/FrameBuffer.h"
@@ -55,12 +56,12 @@ private:
     const uint32_t DIR_LIGHT_LIMIT = 2;
     const uint32_t POINT_LIGHT_LIMIT = 5;
 
-    std::unordered_map<uint32_t, std::vector<Model *>> instancedQueue;
-    std::unordered_map<uint32_t, std::vector<Model *>> shadowQueue;
-    std::unordered_map<ShaderSetup,
-            std::unordered_map<uint32_t, std::vector<Model *>>> modelsQueue;
-    std::unordered_map<ShaderSetup,
-            std::unordered_map<uint32_t, std::vector<Model *>>> reflectionQueue;
+    using ModelQueue = std::unordered_map<ShaderSetup,
+            std::unordered_map<uint64_t, std::vector<Model *>>>;
+
+    ModelQueue modelsQueue;
+    ModelQueue reflectionQueue;
+    //ModelQueue shadowQueue;
 
     std::vector<DirLight> dirLights;
     std::vector<PointLight> pointLights;
@@ -95,12 +96,13 @@ private:
     Ref<Shader> terrainShader;
     Ref<Shader> skyboxShader;
     Ref<Shader> waterShader;
-    Ref<Shader> shadowShader;
+    //Ref<Shader> shadowShader;
     Ref<Shader> normalDebugShader;
     Ref<Shader> lightShader;
 
     FrameBuffer reflectionFB;
     FrameBuffer refractionFB;
+    //FrameBuffer shadowFB;
 
     CubeMap *skybox = nullptr;
     Terrain *terrain = nullptr;
@@ -112,10 +114,17 @@ private:
     void drawTerrain();
     void drawSkybox();
 
-    void clearModelsQueue();
+    void clearQueue(ModelQueue& queue);
+    void clearQueues();
+
+    void transformMatrices();
 
     void drawModelsGroup(const Group &group);
-    void drawModels();
+    void drawModels(ModelQueue &queue);
+
+    void insertIntoQueue(ModelQueue &queue,
+                         Model *model, Shader *useShader,
+                         std::function<void(Shader *)> shaderUniforms = [](Shader *) {});
 
 public:
     Renderer3D();
@@ -124,15 +133,10 @@ public:
     void begin();
     void draw(Model *model, bool reflection = false, bool shadows = false);
     void draw(Model *model, bool reflection, bool shadows,
-              Shader *useShader, std::function<void(Shader *)> shaderUniforms = [](Shader *) {});
+              Shader *useShader, const std::function<void(Shader *)>& shaderUniforms = [](Shader *) {});
     void end();
 
     void drawNormals(Model *model);
-
-    void beginShadows(DirLight *dirLight);
-    void drawShadow(Model *model);
-    void endShadows();
-    void flushShadows();
 
     void setCamera(PerspectiveCamera *_camera);
 

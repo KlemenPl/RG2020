@@ -7,8 +7,8 @@ out vec3 texCoords;
 uniform mat4 projection;
 uniform mat4 view;
 
+
 void main() {
     texCoords = position;
-    // gl_Position = (combined * vec4(position, 1.0)).xyww;
     gl_Position = (projection * view * vec4(position, 1.0)).xyww;
 }

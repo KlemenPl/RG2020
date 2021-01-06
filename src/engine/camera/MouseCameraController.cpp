@@ -5,64 +5,68 @@
 #include "MouseCameraController.h"
 #include "../input/Input.h"
 
+void MouseCameraController::updateCamera(float deltaX, float deltaY)
+{
+    this->camera->translate(0, deltaY, 0);
+
+    totalRotation -= deltaX;
+    float angle = glm::radians(totalRotation);
+    float sinX = sinf(angle) * zoom;
+    float cosY = cosf(angle) * zoom;
+
+    glm::vec3 pos = camera->getPosition();
+    pos.x = sinX;
+    pos.z = cosY;
+    camera->setPosition(pos);
+    camera->lookAt(glm::vec3(0, 0, 0));
+}
+void MouseCameraController::updateZoom(float delta)
+{
+    zoom -= delta;
+    if(zoom<10)
+        zoom=10;
+    else if(zoom>65)
+        zoom = 65;
+    updateCamera(0, 0);
+}
 void MouseCameraController::setup()
 {
     std::function<bool(float, float, float, float)> mouseMove =
             [this](float mouseX, float mouseY, float deltaX, float deltaY) -> bool {
-                if (Input::isMouseButtonDown(MOUSE_BUTTON_1))
+                if (Input::isMouseButtonDown(MOUSE_BUTTON_2))
                 {
-                    //std::cout << deltaX << std::endl;
-                    float scale = 0.01f * (std::abs(deltaX) + std::abs(deltaY));
-                    this->camera->translateWFront(-deltaX * scale, deltaY * scale, 0);
+                    updateCamera(deltaX, deltaY);
                 }
-                else if (Input::isMouseButtonDown(MOUSE_BUTTON_2))
-                {
-                    float scale = 0.5f * (std::abs(deltaX) + std::abs(deltaY));
-                    this->camera->setYaw(camera->getYaw() + (-deltaX * scale));
-                    this->camera->setPitch(camera->getPitch() + deltaY * scale);
-
-                    //scale*=0.2f;
-                    //glm::vec3 pos = this->camera->getPosition();
-                    //pos.x+=deltaX*scale;
-                    //pos.y+=-deltaY*scale;
-                    //this->camera->setPosition(pos);
-                }
-                return true;
-            };
-
-    std::function<bool(float, float)> mosuseScroll =
-            [this](float amountX, float amountY) -> bool {
-                this->camera->translateWFront(0, 0, amountY);
                 return true;
             };
 
     Input::addMouseMoveEvent(MouseMoveEvent(mouseMove));
+
+    std::function<bool(float, float)> mosuseScroll =
+            [this](float amountX, float amountY) -> bool {
+                updateZoom(amountY*1.5f);
+                return true;
+            };
     Input::addMouseScrollEvent(MouseScrollEvent(mosuseScroll));
 
-    float moveSpeed = 0.08f;
+
+    float moveSpeed = 0.4f;
 
     Input::addKeyEvent(KeyEvent(KEY_W, PRESS | REPEAT, [this, moveSpeed]() -> bool {
-        this->camera->translateWFront(0, 0, moveSpeed);
+        updateZoom(moveSpeed);
         return false;
     }));
     Input::addKeyEvent(KeyEvent(KEY_S, PRESS | REPEAT, [this, moveSpeed]() -> bool {
-        this->camera->translateWFront(0, 0, -moveSpeed);
+        updateZoom(-moveSpeed);
         return false;
     }));
     Input::addKeyEvent(KeyEvent(KEY_A, PRESS | REPEAT, [this, moveSpeed]() -> bool {
-        this->camera->translateWFront(-moveSpeed, 0, 0);
+        updateCamera(moveSpeed,0);
         return false;
     }));
     Input::addKeyEvent(KeyEvent(KEY_D, PRESS | REPEAT, [this, moveSpeed]() -> bool {
-        this->camera->translateWFront(moveSpeed, 0, 0);
+        updateCamera(-moveSpeed,0);
         return false;
     }));
-    Input::addKeyEvent(KeyEvent(KEY_SPACE, PRESS | REPEAT, [this, moveSpeed]() -> bool {
-        this->camera->translateWFront(0, moveSpeed, 0);
-        return false;
-    }));
-    Input::addKeyEvent(KeyEvent(KEY_LEFT_CONTROL, PRESS | REPEAT, [this, moveSpeed]() -> bool {
-        this->camera->translateWFront(0, -moveSpeed, 0);
-        return false;
-    }));
+    updateCamera(0,0);
 }

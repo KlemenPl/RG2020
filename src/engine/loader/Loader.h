@@ -13,9 +13,6 @@ public:
     inline static bool useIBO = true;
     inline static bool seperateMaterials = false;
 
-    static void init()
-    {
-    }
 };
 
 

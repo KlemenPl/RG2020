@@ -9,10 +9,12 @@
 #include "Renderer3D.h"
 #include "../ResourceManager.h"
 #include "../../game/Game.h"
+#include "../utils/Hash.h"
 
 Renderer3D::Renderer3D() :
         reflectionFB(FrameBuffer(Game::width / 4, Game::height / 4)),
         refractionFB(FrameBuffer(Game::width, Game::height))
+        //,shadowFB(FrameBuffer(Game::width / 2, Game::height / 2))
 {
     ResourceManager::loadShader("res/shaders/default3D_VS.glsl",
                                 "res/shaders/default3D_FS.glsl",
@@ -23,7 +25,7 @@ Renderer3D::Renderer3D() :
                                 nullptr, "wavey");
     waveyShader = ResourceManager::getShader("wavey");
 
-    shadowShader = ResourceManager::getShader("shadowShader");
+    //shadowShader = ResourceManager::getShader("shadowShader");
     lightShader = ResourceManager::getShader("LightShader");
 
     ResourceManager::loadShader("res/shaders/debug_normal_VS.glsl",
@@ -57,7 +59,8 @@ Renderer3D::Renderer3D() :
     waterShader->setUniform("depthSample", 4);
 
     reflectionFB.createColourAttachment();
-    refractionFB.createDepthAttachment();
+    refractionFB.createDepthAndColourAttachment();
+    //shadowFB.createDepthAttachment();
 
     // generating SSBOs
     glGenBuffers(1, &modelMatricesSSBO);
@@ -103,14 +106,13 @@ void Renderer3D::reset()
 {
     clearDirLights();
     clearPointLights();
-    clearModelsQueue();
+    clearQueues();
 
     camera = nullptr;
     terrain = nullptr;
     skybox = nullptr;
 
     drawing = false;
-    drawingShadows = false;
     drawCalls = 0;
     currentCullStrategy = GL_NONE;
     preparedModels.clear();
@@ -150,25 +152,43 @@ void Renderer3D::prepareRawModel(const RawModel &model)
     }
 }
 
-void Renderer3D::clearModelsQueue()
+void Renderer3D::clearQueue(Renderer3D::ModelQueue &queue)
 {
-    for (auto &modelsByShader:modelsQueue)
+    for (auto &modelsByShader:queue)
     {
         for (auto &models:modelsByShader.second)
             models.second.clear();
         modelsByShader.second.clear();
     }
-    modelsQueue.clear();
+    queue.clear();
+}
+void Renderer3D::clearQueues()
+{
+    clearQueue(modelsQueue);
+    clearQueue(reflectionQueue);
+    //clearQueue(shadowQueue);
 }
 
 void Renderer3D::drawTerrain()
 {
     if (terrain == nullptr)
         return;
+
+    for (const auto &tree : terrain->solid)
+    {
+        draw((Model *) &tree, true, true);
+    }
+    for (const auto &shrub : terrain->shrubs)
+    {
+        draw((Model *) &shrub, true, true,
+             waveyShader._get_ptr(),
+             [](Shader *s) {
+                 s->setUniform("time", (float) glfwGetTime());
+             });
+    }
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    terrain->terrainMesh.bind();
 
     glm::vec3 camPos = camera->getPosition();
     float distance = 2 * (camera->getPosition().y - terrain->waterLevel);
@@ -179,9 +199,11 @@ void Renderer3D::drawTerrain()
     setupCamera();
     // reflection
     reflectionFB.bind();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    drawModels(reflectionQueue);
+    terrain->terrainMesh.bind();
     terrainShader->bind();
     terrainShader->setUniform("plane", glm::vec4(0, 1, 0, -terrain->waterLevel));
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDrawElements(GL_TRIANGLES, terrain->terrainMesh.indicesLength, GL_UNSIGNED_INT, (void *) 0);
 
     camPos.y += distance;
@@ -227,19 +249,6 @@ void Renderer3D::drawTerrain()
 
     glDisable(GL_BLEND);
 
-    for (const auto &tree : terrain->solid)
-    {
-        draw((Model *) &tree);
-    }
-    for (const auto &shrub : terrain->shrubs)
-    {
-        draw((Model *) &shrub, false, false,
-             waveyShader._getRefrence(),
-             [](Shader *s) {
-                 s->setUniform("time", (float) glfwGetTime());
-             });
-    }
-
     drawSkybox();
 }
 void Renderer3D::drawSkybox()
@@ -282,21 +291,31 @@ void Renderer3D::begin()
 
 void Renderer3D::draw(Model *model, bool reflection, bool shadows)
 {
-    draw(model, reflection, shadows, defaultShader._getRefrence());
+    draw(model, reflection, shadows, defaultShader._get_ptr());
 }
 
 void Renderer3D::draw(Model *model, bool reflection, bool shadows, Shader *useShader,
-                      std::function<void(Shader *)> shaderUniforms)
+                      const std::function<void(Shader *)> &shaderUniforms)
 {
-    uint32_t id = model->rawModel.modelID;
-    ShaderSetup shaderSetup{useShader, std::move(shaderUniforms)};
-    modelsQueue[shaderSetup][id].push_back(model);
+    insertIntoQueue(modelsQueue, model, useShader, shaderUniforms);
+
     if (reflection)
-        reflectionQueue[shaderSetup][id].push_back(model);
-    if (shadows)
-        shadowQueue[id].push_back(model);
+        insertIntoQueue(reflectionQueue, model, useShader, shaderUniforms);
+    //if (shadows)
+    //    insertIntoQueue(shadowQueue, model, useShader, shaderUniforms);
 }
 
+void Renderer3D::insertIntoQueue(ModelQueue &queue, Model *model,
+                                 Shader *useShader, std::function<void(Shader *)> shaderUniforms)
+{
+    size_t seed = 0;
+    Utils::hash_combine<uint32_t>(seed, model->rawModel.modelID);
+    for (auto &group:model->modelGroups)
+        if (!group.enabled)
+            Utils::hash_combine<uint32_t>(seed, group.mesh->VAO);
+    ShaderSetup shaderSetup{useShader, std::move(shaderUniforms)};
+    queue[shaderSetup][seed].push_back(model);
+}
 void Renderer3D::drawModelsGroup(const Group &group)
 {
     glBindVertexArray(group.mesh.VAO);
@@ -347,9 +366,9 @@ void Renderer3D::drawModelsGroup(const Group &group)
 
     modelMatrices.clear();
 }
-void Renderer3D::drawModels()
+void Renderer3D::drawModels(ModelQueue &queue)
 {
-    for (auto &byShader:modelsQueue)
+    for (auto &byShader:queue)
     {
         Shader *shader = byShader.first.shaderProgram;
         shader->bind();
@@ -363,7 +382,7 @@ void Renderer3D::drawModels()
 
 
             auto &modelVector = models.second;
-            prepareRawModel(modelVector.front()->rawModel);
+            //prepareRawModel(modelVector.front()->rawModel);
 
             auto &model = modelVector.front();
             auto &rawModel = modelVector.front()->rawModel;
@@ -375,10 +394,13 @@ void Renderer3D::drawModels()
             }
 
             uint32_t groupSize = modelVector.front()->modelGroups.size();
+            uint32_t modelLength = models.second.size();
 
             for (int i = 0; i < groupSize; i++)
             {
-                uint32_t modelLength = models.second.size();
+
+                if (!model->modelGroups[i].enabled)
+                    continue;
 
                 for (int j = 0; j < modelLength; j++)
                 {
@@ -387,9 +409,6 @@ void Renderer3D::drawModels()
 
                     // transforming
                     auto &modelGroup = modelVector[j]->modelGroups[i];
-
-                    if (!modelGroup.isStatic)
-                        modelGroup.transform();
                     modelMatrices.push_back(modelGroup.modelMatrix);
                 }
                 drawModelsGroup(rawModel.groups[i]);
@@ -405,6 +424,40 @@ void Renderer3D::setupCamera()
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, vpMatricesUBO);
     // should be fine, since p,v, combined are in sequential order
     glBufferSubData(GL_UNIFORM_BUFFER, 0, 3 * sizeof(glm::mat4), &camera->getProjectionMatrix()[0][0]);
+}
+
+void Renderer3D::transformMatrices()
+{
+    for (auto &byShader:modelsQueue)
+    {
+        // iterating over meshes
+        for (auto &models : byShader.second)
+        {
+            if (models.second.empty())
+                continue;
+
+            auto &modelVector = models.second;
+            prepareRawModel(modelVector.front()->rawModel);
+
+            auto &model = modelVector.front();
+            uint32_t groupSize = modelVector.front()->modelGroups.size();
+            uint32_t modelLength = models.second.size();
+
+            for (int i = 0; i < groupSize; i++)
+            {
+                if (!model->modelGroups[i].enabled)
+                    continue;
+                for (int j = 0; j < modelLength; j++)
+                {
+                    // transforming
+                    auto &modelGroup = modelVector[j]->modelGroups[i];
+
+                    if (!modelGroup.isStatic)
+                        modelGroup.transform();
+                }
+            }
+        }
+    }
 }
 
 void Renderer3D::end()
@@ -506,9 +559,15 @@ void Renderer3D::end()
     glBufferSubData(GL_UNIFORM_BUFFER, 0, lightsBufferSize, lightsBufferUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+
     drawTerrain();
-    drawModels();
-    clearModelsQueue();
+    transformMatrices();
+    //shadowFB.bind();
+    //glClear(GL_DEPTH_BUFFER_BIT);
+    //drawModels(shadowQueue);
+    //shadowFB.unbind();
+    drawModels(modelsQueue);
+    clearQueues();
 
     drawing = false;
 }
@@ -538,42 +597,6 @@ void Renderer3D::drawNormals(Model *model)
         glDrawElements(GL_TRIANGLES, rawModel.groups[i].mesh.indicesLength, GL_UNSIGNED_INT, nullptr);
     }
 
-}
-
-DirLight *shadowDirLight = nullptr;
-void Renderer3D::beginShadows(DirLight *dirLight)
-{
-    if (drawing)
-        throw std::runtime_error("Renderer3D::beginShadows(): Cannot begin drawing shadows!");
-    if (drawingShadows)
-        throw std::runtime_error("Renderer3D::beginShadows(): Cannot begin shadows while already drawing shadows!");
-
-    drawingShadows = true;
-    shadowDirLight = dirLight;
-
-
-}
-void Renderer3D::drawShadow(Model *model)
-{
-    //shadowQueue.insert(model.rawModel.modelID,model);
-    uint32_t id = model->rawModel.modelID;
-    shadowQueue[id].push_back(model);
-}
-void Renderer3D::endShadows()
-{
-    if (!drawingShadows)
-        throw std::runtime_error("Renderer3D::endShadows(): beginShadows() must first be called!");
-    drawingShadows = false;
-
-    flushShadows();
-
-    shadowDirLight = nullptr;
-}
-
-void Renderer3D::flushShadows()
-{
-    for (auto &it:shadowQueue)
-        it.second.clear();
 }
 
 void Renderer3D::setCamera(PerspectiveCamera *_camera)

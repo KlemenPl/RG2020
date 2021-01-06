@@ -13,7 +13,8 @@
 class PerspectiveCamera : public Camera
 {
 private:
-    glm::vec3 front;
+    glm::vec3 center{};
+    glm::vec3 front{};
     glm::vec3 right{};
     glm::vec3 up{};
     glm::vec3 worldUp;
@@ -54,6 +55,7 @@ public:
     {
         if (updateMatrix)
         {
+
             front.x = glm::cos(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
             front.y = glm::sin(glm::radians(pitch));
             front.z = glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
@@ -62,9 +64,9 @@ public:
             right = glm::normalize(glm::cross(front, worldUp));
             up = glm::normalize(glm::cross(right, front));
 
-            view = glm::lookAt(position, position + front, up);
+            // position + front for fps like camera
+            view = glm::lookAt(position, center + front, up);
         }
-
 
         if (updateProjection)
         {
@@ -72,7 +74,7 @@ public:
         }
 
         if (updateMatrix || updateProjection)
-            combined =  projection * view;
+            combined = projection * view;
 
         updateMatrix = false;
         updateProjection = false;
@@ -84,6 +86,14 @@ public:
         this->height = screenY;
         this->aspect = width / height;
         updateProjection = true;
+    }
+
+    void lookAt(const glm::vec3 &_center)
+    {
+        glm::vec3 direction = glm::normalize(_center - position);
+        pitch = glm::radians(asinf(direction.y));
+        yaw = glm::radians(atan2f(direction.x, direction.z));
+        updateMatrix = true;
     }
 
     void translateWFront(glm::vec3 &value)
@@ -167,9 +177,9 @@ public:
         updateMatrix = true;
     }
 
-    const glm::vec3 &getFront() const
+    const glm::vec3 &getCenter() const
     {
-        return front;
+        return center;
     }
     const glm::vec3 &getRight() const
     {
@@ -184,18 +194,26 @@ public:
     {
         return worldUp;
     }
-    void setWorldUp(const glm::vec3 &worldUp)
+    void setWorldUp(const glm::vec3 &_worldUp)
     {
-        PerspectiveCamera::worldUp = worldUp;
+        worldUp = _worldUp;
     }
 
-    void setFront(const glm::vec3 &front)
+    void setFront(const glm::vec3 &_front)
     {
-        PerspectiveCamera::front = front;
+        front = _front;
         updateMatrix = true;
 
     }
 
+    void setCenter(const glm::vec3 &_center)
+    {
+        center = _center;
+    }
+    const glm::vec3 &getFront() const
+    {
+        return front;
+    }
 
 };
 

@@ -12,6 +12,7 @@
 #include "Game.h"
 #include "../engine/ResourceManager.h"
 #include "../engine/rendering/RenderingCapabilities.h"
+#include "../engine/loader/Loader.h"
 
 Screen *currentScreenStatic;
 std::string gameTitle;
@@ -100,10 +101,6 @@ bool Game::init()
 
 void Game::start()
 {
-    initScreens();
-    //setScreen(TEST);
-    setScreen(GAME_SCREEN);
-
     RenderingCapabilities::init();
     ResourceManager::init();
 
@@ -120,6 +117,43 @@ void Game::start()
 
     ResourceManager::loadFont("res/fonts/Roboto-Black.ttf", "roboto");
 
+    // loading models
+    ResourceManager::loadModel("res/models/rock_0.obj", "rock_0");
+    ResourceManager::loadModel("res/models/rock_1.obj", "rock_1");
+    ResourceManager::loadModel("res/models/rock_2.obj", "rock_2");
+
+    ResourceManager::loadModel("res/models/shrub_0.obj", "shrub_0");
+    ResourceManager::loadModel("res/models/shrub_1.obj", "shrub_1");
+    ResourceManager::loadModel("res/models/shrub_2.obj", "shrub_2");
+
+    ResourceManager::loadModel("res/models/flower_blue.obj", "flower_0");
+    ResourceManager::loadModel("res/models/flower_red.obj", "flower_1");
+    ResourceManager::loadModel("res/models/flower_yellow.obj", "flower_2");
+
+    LoaderSettings::seperateMaterials = true;
+    ResourceManager::loadModel("res/models/tree_0.obj", "tree_0");
+    ResourceManager::loadModel("res/models/tree_1.obj", "tree_1");
+    ResourceManager::loadModel("res/models/tree_2.obj", "tree_2");
+    LoaderSettings::seperateMaterials = false;
+
+    // skybox
+    ResourceManager::loadCubeMap("res/textures/skybox","jpg","skybox");
+    // biome
+    Biome *terrainBiome = new Biome();
+    float d = 2.0f;
+    terrainBiome->colours.emplace_back(Color::create(201 / d, 178 / d, 99 / d));
+    terrainBiome->colours.emplace_back(Color::create(201 / d, 178 / d, 99 / d));
+    terrainBiome->colours.emplace_back(Color::create(201 / d, 178 / d, 99 / d));
+    terrainBiome->colours.emplace_back(Color::create(135 / d, 184 / d, 82 / d));
+    terrainBiome->colours.emplace_back(Color::create(135 / d, 184 / d, 82 / d));
+    terrainBiome->colours.emplace_back(Color::create(80 / d, 171 / d, 93 / d));
+    terrainBiome->colours.emplace_back(Color::create(80 / d, 171 / d, 93 / d));
+    terrainBiome->colours.emplace_back(Color::create(120 / d, 120 / d, 120 / d));
+    terrainBiome->colours.emplace_back(Color::create(120 / d, 120 / d, 120 / d));
+    terrainBiome->colours.emplace_back(Color::create(200 / d, 200 / d, 210 / d));
+    terrainBiome->colours.emplace_back(Color::create(200 / d, 200 / d, 210 / d));
+    ResourceManager::loadBiome(terrainBiome, "defaultBiome");
+
 
     renderer2D = new Renderer2D(ResourceManager::getShader("default2D"));
     renderer3D = new Renderer3D();
@@ -133,8 +167,12 @@ void Game::start()
     glfwSetWindowSizeCallback(window, Input::WindowSizeCallback);
 
 
+    initScreens();
     for (auto &it:screenMap)
         it.second->init();
+
+    //setScreen(TEST);
+    setScreen(MAIN_MENU_SCREEN);
 }
 
 std::stringstream ss;
@@ -147,7 +185,7 @@ void Game::run()
     int frames = 0;
     double time = 0;
     double lastTime;
-    double currentTime;
+    double currentTime = 0;
 
     /* Main game loop with
      *
@@ -157,6 +195,7 @@ void Game::run()
     {
         // update
         lastTime = currentTime;
+        elapsedTime = (float)glfwGetTime();
         currentTime = glfwGetTime();
         frames++;
         auto dt = (float) (currentTime - lastTime);
@@ -215,5 +254,5 @@ void Game::setTitle(std::string newTitle)
 
 void Game::setIsRunning(bool _isRunning)
 {
-    Game::isRunning = isRunning;
+    Game::isRunning = _isRunning;
 }

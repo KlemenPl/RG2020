@@ -54,6 +54,7 @@ public:
     void setScreen(ScreenType type);
     void setTitle(std::string newTitle);
     void setIsRunning(bool _isRunning);
+    float elapsedTime = 0;
 };
 
 

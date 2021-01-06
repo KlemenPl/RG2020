@@ -8,6 +8,8 @@
 #include "../Core.h"
 #include "Texture2D.h"
 #include <vector>
+#include <stack>
+
 
 /*
  * Very simple utility class for
@@ -16,6 +18,7 @@
 class FrameBuffer
 {
 private:
+    inline static std::stack<const FrameBuffer *> *fbStack = new std::stack<const FrameBuffer *>();
     std::vector<uint32_t> renderBuffers;
 public:
     const uint32_t width;
@@ -38,6 +41,9 @@ public:
                                 uint32_t wrapT = GL_REPEAT,
                                 uint32_t filterMin = GL_LINEAR,
                                 uint32_t filterMag = GL_LINEAR);
+    void createDepthAndColourAttachment(uint32_t filterMin = GL_LINEAR,
+                                        uint32_t filterMag = GL_LINEAR);
+
     void createDepthAttachment(uint32_t filterMin = GL_LINEAR,
                                uint32_t filterMag = GL_LINEAR);
 

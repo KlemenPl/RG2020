@@ -15,7 +15,7 @@
  * Constructor for Renderer2D.
  * Takes in a pointer to the Shader for drawing.
  */
-Renderer2D::Renderer2D(Ref<Shader> shader) : shader(shader)
+Renderer2D::Renderer2D(Ref<Shader> shader) : defaultShader(shader)
 {
     init();
 }
@@ -34,7 +34,7 @@ Renderer2D::Renderer2D()
                                 nullptr, "default2D",
                                 args, 1);
 
-    shader = ResourceManager::getShader("default2D");
+    defaultShader = ResourceManager::getShader("default2D");
 
     init();
 }
@@ -114,12 +114,12 @@ Renderer2D::~Renderer2D()
     delete[] sampledTextures;
 }
 
-
 /*
  * Begins the batch.
  */
-void Renderer2D::begin()
+void Renderer2D::begin(Shader *_useShader)
 {
+    useShader = _useShader;
     if (drawing)
         throw std::runtime_error("Renderer2D::begin(): Cannot begin batch while it is already drawing!");
 
@@ -145,7 +145,13 @@ void Renderer2D::begin()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    shader->bind();
+    useShader->bind();
+}
+
+
+void Renderer2D::begin()
+{
+    begin(defaultShader._get_ptr());
 }
 /*
  * Renders 2D texture at the specified position.
@@ -401,7 +407,7 @@ void Renderer2D::flush()
     glBufferSubData(GL_ARRAY_BUFFER, 0, drawOffset * sizeof(float), vertices);
 
     // todo: only set projMatrix when projMatrix is changed
-    shader->setUniform("projectionMatrix", *projMatrix);
+    useShader->setUniform("projectionMatrix", *projMatrix);
 
     // binding textures
     for (auto &it:boundTextures)
@@ -413,7 +419,7 @@ void Renderer2D::flush()
     }
 
     // setting sampler2D[] uniform
-    shader->setUniform("textures", maxTextures, sampledTextures);
+    useShader->setUniform("textures", maxTextures, sampledTextures);
 
     // drawing elements
     glDrawElements(GL_TRIANGLES, drawElements, GL_UNSIGNED_INT, nullptr);

@@ -13,6 +13,8 @@
 #include "graphics/BitmapFont.h"
 #include "graphics/Model.h"
 
+class CubeMap;
+class Biome;
 // singleton class for loading and managing resources (singleton so there will be only one instance)
 class ResourceManager
 {
@@ -25,6 +27,8 @@ private:
     //std::unordered_map<std::string, Ref<Sound>> sounds;
     std::unordered_map<std::string, Ref<BitmapFont>> fonts;
     std::unordered_map<std::string, Ref<RawModel>> models;
+    std::unordered_map<std::string, Ref<CubeMap>> cubemaps;
+    std::unordered_map<std::string, Ref<Biome>> biomes;
 
 public:
     static void init();
@@ -45,6 +49,8 @@ public:
                          float fontSize = 64.0, int atlasWidth = 1024, int atlasHeight = 1024,
                          int padding = 2, int startChar = 32, int numChars = 95);
     static void loadModel(const char *modelFile, std::string name);
+    static void loadCubeMap(const std::string &folderPath, const std::string &extension, std::string name);
+    static void loadBiome(Biome *biome, std::string name);
 
     // accessing
     static Ref<Shader> getShader(const std::string &name);
@@ -54,6 +60,8 @@ public:
     static Ref<BitmapFont> getFont(const std::string &name);
     static Ref<RawModel> getRawModel(const std::string &name);
     static Model getModel(const std::string &name);
+    static Ref<CubeMap> getCubeMap(const std::string &name);
+    static Ref<Biome> getBiome(const std::string &name);
 
     // clear
     static void dispose();

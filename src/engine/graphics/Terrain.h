@@ -27,7 +27,7 @@ struct Biome
 
     uint32_t treeFrequency = 100;
     uint32_t rockFrequency = 40;
-    uint32_t flowerFrequency = 280;
+    uint32_t flowerFrequency = 480;
     uint32_t shrubFrequency = 60;
 
     bool operator==(const Biome &rhs) const;
@@ -42,21 +42,21 @@ private:
     Model *terrainModels = nullptr;
     uint32_t terrianModelsLength = 0;
 public:
-    Mesh waterMesh;
-    Mesh terrainMesh;
+    Mesh waterMesh{};
+    Mesh terrainMesh{};
 
     float **heights = nullptr; // pointer to pointer for 2D array
-    uint32_t heightsWidth;
-    uint32_t heightsHeight; // ¯\_(ツ)_/¯
+    uint32_t heightsWidth{};
+    uint32_t heightsHeight{}; // ¯\_(ツ)_/¯
 
-    float terrainXSize;
-    float terrainYSize;
+    float terrainXSize{};
+    float terrainYSize{};
 
-    float terrainHXSize;
-    float terrainHYSize;
+    float terrainHXSize{};
+    float terrainHYSize{};
 
-    float minHeight;
-    float maxHeight;
+    float minHeight{};
+    float maxHeight{};
 
     float waterLevel = 2.6;
 

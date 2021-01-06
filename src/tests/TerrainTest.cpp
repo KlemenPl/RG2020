@@ -5,6 +5,7 @@
 #include "TerrainTest.h"
 #include "../engine/input/Input.h"
 #include "../engine/loader/Loader.h"
+#include "../game/Game.h"
 #include <chrono>
 
 #define chrono_now() std::chrono::high_resolution_clock::now()
@@ -20,6 +21,8 @@ FrameBuffer *testFrameBuffer;
 void TerrainTest::init()
 {
 
+    Game::width = 1280;
+    Game::height = 720;
     this->renderer3D = new Renderer3D();
     this->camera = new PerspectiveCamera(1280, 720);
 
@@ -27,6 +30,15 @@ void TerrainTest::init()
 
     this->renderer3D->setCamera(camera);
     this->renderer3D->addDirLight(DirLight(glm::vec3(0.2f, -0.5f, 0.0f)));
+
+    ShaderSourceArgument args[1];
+    args[0] = ShaderSourceArgument{FRAGMENT, "TEXTURE_SLOTS",
+                                   std::to_string(RenderingCapabilities::MAX_TEXTURE_IMAGE_UNITS)};
+    ResourceManager::loadShader("res/shaders/default2D_VS.glsl",
+                                "res/shaders/debug_depth_FS.glsl",
+                                nullptr, "debug_depth",
+                                args,1);
+    debugDepthShader = ResourceManager::getShader("debug_depth");
 
     this->skybox = Ref<CubeMap>(new CubeMap());
     std::vector<std::string> skyboxFaces
@@ -39,7 +51,7 @@ void TerrainTest::init()
                     "res/textures/skybox/back.jpg"
             };
     this->skybox->loadCubeMap(skyboxFaces);
-    renderer3D->setSkybox(skybox._getRefrence());
+    renderer3D->setSkybox(skybox._get_ptr());
 
     ResourceManager::loadModel("res/models/rock_0.obj", "rock_0");
     ResourceManager::loadModel("res/models/rock_1.obj", "rock_1");
@@ -162,9 +174,6 @@ void TerrainTest::start()
         renderer2D->setProjectionMatrix(orthoCamera->getCombined());
 
         renderer2D->begin();
-        renderer2D->end();
-
-        renderer2D->begin();
         renderer2D->draw(*renderer3D->getReflectionFb().colourAttachment, glm::vec2(0, 0), glm::vec2(128, 72),
                          0, 0, 2, 2);
         renderer2D->draw(*renderer3D->getRefractionFb().colourAttachment, glm::vec2(128 * 2, 0), glm::vec2(128, 72),
@@ -181,7 +190,7 @@ void TerrainTest::start()
                     ImGui::GetIO().Framerate);
 
         ImGui::Text("Game loop: %.3f ms.", deltaTime *= 1000);
-        ImGui::Text("Drawin terrain: %.3f ms.", fDuration);
+        ImGui::Text("Drawing terrain: %.3f ms.", fDuration);
         ImGui::Text("");
         ImGui::SliderInt("Seed: %d.", (int *) tempSeed, 0, 10000);
         ImGui::SliderInt("Octaves", (int *) &tempBiome->octaves, 0, 20);
@@ -200,7 +209,7 @@ void TerrainTest::start()
     delete renderer3D;
     delete camera;
     delete terrain;
-    delete skybox._getRefrence();
+    delete skybox._get_ptr();
     ResourceManager::dispose();
 
 }

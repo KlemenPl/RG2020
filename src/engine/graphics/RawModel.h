@@ -9,7 +9,6 @@
 #include <string>
 #include <vector>
 #include "../Core.h"
-#include "../graphics/Shader.h"
 #include "../graphics/Mesh.h"
 #include "Material.h"
 
@@ -36,7 +35,6 @@ private:
 public:
     uint32_t modelID;
     std::vector<Group> groups;
-    Ref<Shader> modelShader;
     uint32_t cullStrategy;
 
     RawModel()

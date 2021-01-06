@@ -33,7 +33,8 @@ class Renderer2D
 {
 
 private:
-    Ref<Shader> shader;
+    Ref<Shader> defaultShader;
+    Shader *useShader = nullptr;
     uint32_t VAO{};
     uint32_t VBO{};
     uint32_t IBO{};
@@ -77,6 +78,7 @@ public:
               float scaleX = 1.0f, float scaleY = 1.0f,
               const Color &color = Colors::WHITE, float rotation = 0.0f);
 
+    void begin(Shader* _useShader);
     void begin();
 
     void flush();
