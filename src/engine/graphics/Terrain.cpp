@@ -350,11 +350,21 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
 
     float yLevel = this->waterLevel;
     // @formatter:off
+    /*
     float waterVertices[]{
              halfXSize, yLevel,  halfYSize,  1.0f, 1.0f, // top     right
             -halfXSize, yLevel,  halfYSize,  0.0f, 1.0f, // top     left
             -halfXSize, yLevel, -halfYSize,  0.0f, 0.0f, // bottom  left
              halfXSize, yLevel, -halfYSize,  1.0f, 0.0f, // bottom  right
+    };
+     */
+    float xS=terrainXSize*2.0f;
+    float yS=terrainYSize*2.0f;
+    float waterVertices[]{
+            xS, yLevel,  yS,  1.0f, 1.0f, // top     right
+            -xS, yLevel,  yS,  0.0f, 1.0f, // top     left
+            -xS, yLevel, -yS,  0.0f, 0.0f, // bottom  left
+            xS, yLevel, -yS,  1.0f, 0.0f, // bottom  right
     };
 
     uint32_t waterIndices[]{
@@ -392,8 +402,8 @@ void Terrain::generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_
     solid.clear();
     shrubs.clear();
 
-    std::uniform_real_distribution<float> rotation(0.0f,360.0f);
-    std::uniform_real_distribution<float> scale(-0.1f,0.1f);
+    std::uniform_real_distribution<float> rotation(0.0f, 360.0f);
+    std::uniform_real_distribution<float> scale(-0.1f, 0.1f);
 
     // spawning trees
     for (uint32_t i = 0; i < biome.treeFrequency; i++)
@@ -643,7 +653,7 @@ Terrain::~Terrain()
     waterMesh.dispose();
 }
 
-float Terrain::getHeightFast(float xPos, float yPos)
+float Terrain::getHeightFast(float xPos, float yPos) const
 {
     xPos += terrainHXSize;
     yPos += terrainHYSize;
@@ -654,8 +664,8 @@ float Terrain::getHeightFast(float xPos, float yPos)
 
     float deltaX = xPos / terrainXSize;
     float deltaY = yPos / terrainYSize;
-    uint32_t xIdx = std::round(heightsWidth * deltaX);
-    uint32_t yIdx = std::round(heightsHeight * deltaY);
+    uint32_t xIdx = std::round((heightsWidth - 1.0f) * deltaX);
+    uint32_t yIdx = std::round((heightsHeight - 1.0f) * deltaY);
     return heights[yIdx][xIdx];
 }
 

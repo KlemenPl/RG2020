@@ -59,6 +59,15 @@ public:
     const glm::mat4 &getViewMatrix() const { return view; };
     const glm::mat4 &getCombined() const { return combined; };
 
+    float getWidth() const
+    {
+        return width;
+    }
+    float getHeight() const
+    {
+        return height;
+    }
+
 };
 
 #endif //TOWERDEFENSE_CAMERA_H

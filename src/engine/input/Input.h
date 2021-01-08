@@ -50,6 +50,7 @@ private:
 
     // mouse button input
     int buttons[MOUSE_BUTTON_LAST]{}; // 7 * 4 bytes
+    int buttonsJustDown[MOUSE_BUTTON_LAST]{}; // 7 * 4 bytes
 
     // mouse move input
     float mouseX{}, mouseY{};
@@ -60,6 +61,7 @@ public:
     static bool init();
     static void dispose();
 
+    static void reset();
     static void handleEvents();
     static void clearEventListiners();
 
@@ -69,11 +71,10 @@ public:
     static void addMouseScrollEvent(const MouseScrollEvent &event);
     static void addResizeEvent(const ResizeEvent &event);
 
-
     // is key is continiously pressed down
     static bool isKeyDown(int key);
     // is key is just pressed down
-    static bool isKeyJustDown(int key);
+    //static bool isKeyJustDown(int key);
     // is key is just released
     static bool isKeyUp(int key);
     // is mouse button down

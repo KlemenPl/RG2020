@@ -2,6 +2,7 @@
 // Created by klemen on 25/12/2020.
 //
 
+#include <iostream>
 #include "FrameBuffer.h"
 #include "../../game/Game.h"
 
@@ -17,9 +18,13 @@ FrameBuffer::FrameBuffer(uint32_t _width, uint32_t _height)
 
 FrameBuffer::~FrameBuffer()
 {
+    dispose();
+}
+
+void FrameBuffer::dispose()
+{
     delete colourAttachment;
     delete depthAttachment;
-    delete stencilAttachment;
 
     for (auto i:renderBuffers)
         glDeleteRenderbuffers(1, &i);
@@ -47,6 +52,12 @@ void FrameBuffer::unbind() const
         glViewport(0, 0, Game::width, Game::height);
 
     glBindFramebuffer(GL_FRAMEBUFFER, buffer == nullptr ? 0 : buffer->fboID);
+}
+
+void FrameBuffer::validate()
+{
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "FrameBuffer::validate() Framebuffer is not complete!" << std::endl;
 }
 
 void FrameBuffer::createColourAttachment(GLint format,
@@ -77,7 +88,7 @@ void FrameBuffer::createColourAttachment(GLint format,
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
     renderBuffers.push_back(depthBuffer);
-
+    validate();
     unbind();
 }
 
@@ -113,11 +124,13 @@ void FrameBuffer::createDepthAndColourAttachment(uint32_t filterMin, uint32_t fi
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMin);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMag);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthAttachment->ID, 0);
+    validate();
     unbind();
 }
 
 void FrameBuffer::createDepthAttachment(uint32_t filterMin, uint32_t filterMag)
 {
+    bind();
     depthAttachment = new Texture2D();
     depthAttachment->width = width;
     depthAttachment->height = height;
@@ -138,5 +151,7 @@ void FrameBuffer::createDepthAttachment(uint32_t filterMin, uint32_t filterMag)
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+    validate();
+    unbind();
 }
+

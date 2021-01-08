@@ -5,6 +5,8 @@
 #ifndef TOWERDEFENSE_COLOR_H
 #define TOWERDEFENSE_COLOR_H
 
+#include <memory>
+
 class Color
 {
 public:
@@ -87,6 +89,7 @@ namespace Colors {
     // @formatter:off
     static const Color TRANSPARENT        {1.0f, 1.0f, 1.0f, 0.0f};
     static const Color WHITE              {1.0f, 1.0f, 1.0f, 1.0f};
+    static const Color GRAY               {0.2f, 0.2f, 0.2f, 1.0f};
     static const Color BLACK              {0.0f, 0.0f, 0.0f, 1.0f};
     static const Color RED                {1.0f, 0.0f, 0.0f, 1.0f};
     static const Color GREEN              {0.0f, 1.0f, 0.0f, 1.0f};

@@ -11,11 +11,12 @@ Windows bo ob zagonu opozoril da je datoteka lahko škodljiva, ker jo ne prepozn
 
 Postopek je precej enostaven. Naprej potrebujemo programe za idelavo izvršljive datoteke:
 
-Debian based:
-`sudo apt install cmake make gcc g++ libgl1-mesa-dev`
+Ubuntu:
+`sudo apt install cmake make gcc g++ glfw`
 
-Fedora: `sudo dnf install cmake make gcc g++ libXrandr-devel.x86_64 libXinerama-devel.x86_64 libXcursor-devel.x86_64 libXi-devel.x86_64`
+Fedora: `sudo dnf install cmake make gcc g++ glfw`
 
+Navodila za prevajanje:
 ```
 mkdir build && cd build
 cmake ../
@@ -30,7 +31,8 @@ Po izvršenih ukazih bo nastala nova datoteka `TowerDefense` znotraj `build` ime
 
 Postopek je malo bolj zahteven. Naprej je treba namestiti programe za izdelavo izvršljive datoteke:
 - https://cmake.org/download/ (vsaj 3.17 verzija)
-- http://mingw-w64.org/doku.php/download/mingw-builds (lahko tudi Visual Studio 2012-2019 prevajalnik)
+- http://mingw-w64.org/doku.php/download/mingw-builds (lahko tudi Visual Studio 2012-2019 prevajalnik, 
+  vendar ne vem če bo pravilno delalo)
 
 ```
 mkdir build
@@ -44,12 +46,10 @@ Po izvršenih ukazih bo nastala nova datoteka `TowerDefense.exe` znotraj `build`
 
 #### Uporabljene knjižnice:
 - GLFW (ustvarjanje okna in za uporabnikov vnos) - https://www.glfw.org/
-- GLEW (dostop do OpenGL konteksta) - http://glew.sourceforge.net/
+- glad (za lažji dostop do OpenGL funkcij) - https://github.com/go-gl/glfw/blob/master/v3.1/glfw/glfw/deps/glad/glad.h
 - stb_image (nalaganje slik, Public Domain :D) - https://github.com/nothings/stb
-- Assimp (nalaganje objektov) - https://assimp.org/
 - Dear_ImGui (UI za razhroščevanje igre) - https://github.com/ocornut/imgui
 - stb_truetype (font) - https://github.com/nothings/stb/blob/master/stb_truetype.h
-- raudio.h (audio) - https://www.raylib.com/ (od raylib-a je samo uporabljena raudo.h knjižnica, ki je samostojna)
-- spdlog (logging) - https://github.com/gabime/spdlog
+- glm (za računanje) - https://glm.g-truc.net/0.9.9/index.html
 
 Za urejanje projekta se lahko uporablja poljubni urejevalnik besedila oziroma IDE, ki podpira cmake (jaz sem uporabljal CLion od JetBrains)

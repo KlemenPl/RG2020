@@ -44,6 +44,21 @@ ResourceManager::~ResourceManager()
     for (auto &font:fonts)
         delete font.second._get_ptr();
     ResourceManager::fonts.clear();
+
+    // cubemap cleanup
+    for (auto &cubemap:cubemaps)
+        delete cubemap.second._get_ptr();
+    ResourceManager::cubemaps.clear();
+
+    // model cleanup
+    for (auto &model:models)
+        delete model.second._get_ptr();
+    ResourceManager::models.clear();
+
+    // biome cleanup
+    for (auto &biome:biomes)
+        delete biome.second._get_ptr();
+    ResourceManager::biomes.clear();
 }
 
 std::string readFile(const char *path)

@@ -144,6 +144,7 @@ void Renderer2D::begin(Shader *_useShader)
     // enable transperency
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
 
     useShader->bind();
 }
@@ -152,6 +153,7 @@ void Renderer2D::begin(Shader *_useShader)
 void Renderer2D::begin()
 {
     begin(defaultShader._get_ptr());
+    glDisable(GL_DEPTH_TEST);
 }
 /*
  * Renders 2D texture at the specified position.
@@ -355,6 +357,16 @@ void Renderer2D::draw(const UVRegion &region, const glm::vec2 &pos, const glm::v
 
     drawOffset += 24; // IBO offset
     drawElements += 6; // IBO offset
+}
+
+void Renderer2D::draw(const glm::vec2 &pos, const glm::vec2 &size,
+                      float originX, float originY, float scaleX, float scaleY,
+                 const Color &color, float rotation, bool flipX, bool flipY)
+{
+    static Texture2D& whitePixel = ResourceManager::getTexture2D("sshape")._get_ref();
+
+    draw(whitePixel,pos,size,originX,originY,scaleX,scaleY,
+         color,rotation,flipX,flipY);
 }
 
 // utility function for drawing fonts

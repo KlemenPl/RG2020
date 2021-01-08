@@ -25,7 +25,7 @@ private:
 public:
     Ref() : refrence(nullptr)
     {}
-    Ref(T *refrence) : refrence(refrence)
+    explicit Ref(T *refrence) : refrence(refrence)
     {}
 
     T *operator->()

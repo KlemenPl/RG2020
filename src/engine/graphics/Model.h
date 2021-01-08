@@ -49,6 +49,15 @@ public:
         modelMatrix = glm::scale(modelMatrix, scale);
     }
 
+    void reset()
+    {
+        position = glm::vec3{0.0f, 0.0f, 0.0f};
+        rotation = glm::vec3{0.0f, 0.0f, 0.0f};
+        scale = glm::vec3{1.0f, 1.0f, 1.0f};
+        isStatic = false;
+        enabled = true;
+    }
+
 };
 
 
@@ -62,6 +71,8 @@ class Model
 public:
     const RawModel &rawModel;
     std::vector<ModelGroup> modelGroups;
+
+    Model() = delete;
 
     explicit Model(const RawModel &rawModel) : rawModel(rawModel)
     {

@@ -71,7 +71,7 @@ public:
     void generate(uint32_t xSize, uint32_t ySize, uint32_t detailX, uint32_t detailY, uint32_t seed = 20,
                   uint32_t resolution = 1.0f, const Biome &biome = {});
 
-    float getHeightFast(float xPos, float yPos);
+    float getHeightFast(float xPos, float yPos) const;
     float getHeight(float xPos, float yPos);
     virtual ~Terrain();
 

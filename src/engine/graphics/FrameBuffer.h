@@ -20,6 +20,8 @@ class FrameBuffer
 private:
     inline static std::stack<const FrameBuffer *> *fbStack = new std::stack<const FrameBuffer *>();
     std::vector<uint32_t> renderBuffers;
+
+    void validate();
 public:
     const uint32_t width;
     const uint32_t height;
@@ -35,6 +37,8 @@ public:
 
     void bind() const;
     void unbind() const;
+
+    void dispose();
 
     void createColourAttachment(GLint format = GL_RGB,
                                 uint32_t wrapS = GL_REPEAT,

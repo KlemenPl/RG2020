@@ -23,9 +23,9 @@ void MouseCameraController::updateCamera(float deltaX, float deltaY)
 void MouseCameraController::updateZoom(float delta)
 {
     zoom -= delta;
-    if(zoom<10)
-        zoom=10;
-    else if(zoom>65)
+    if (zoom < 10)
+        zoom = 10;
+    else if (zoom > 65)
         zoom = 65;
     updateCamera(0, 0);
 }
@@ -33,19 +33,23 @@ void MouseCameraController::setup()
 {
     std::function<bool(float, float, float, float)> mouseMove =
             [this](float mouseX, float mouseY, float deltaX, float deltaY) -> bool {
+                if (!enabled)
+                    return false;
                 if (Input::isMouseButtonDown(MOUSE_BUTTON_2))
                 {
                     updateCamera(deltaX, deltaY);
                 }
-                return true;
+                return false;
             };
 
     Input::addMouseMoveEvent(MouseMoveEvent(mouseMove));
 
     std::function<bool(float, float)> mosuseScroll =
             [this](float amountX, float amountY) -> bool {
-                updateZoom(amountY*1.5f);
-                return true;
+                if (!enabled)
+                    return false;
+                updateZoom(amountY * 1.5f);
+                return false;
             };
     Input::addMouseScrollEvent(MouseScrollEvent(mosuseScroll));
 
@@ -53,20 +57,30 @@ void MouseCameraController::setup()
     float moveSpeed = 0.4f;
 
     Input::addKeyEvent(KeyEvent(KEY_W, PRESS | REPEAT, [this, moveSpeed]() -> bool {
+        if (!enabled)
+            return false;
         updateZoom(moveSpeed);
         return false;
     }));
     Input::addKeyEvent(KeyEvent(KEY_S, PRESS | REPEAT, [this, moveSpeed]() -> bool {
+        if (!enabled)
+            return false;
         updateZoom(-moveSpeed);
         return false;
     }));
     Input::addKeyEvent(KeyEvent(KEY_A, PRESS | REPEAT, [this, moveSpeed]() -> bool {
-        updateCamera(moveSpeed,0);
+        if (!enabled)
+            return false;
+        updateCamera(moveSpeed, 0);
         return false;
     }));
     Input::addKeyEvent(KeyEvent(KEY_D, PRESS | REPEAT, [this, moveSpeed]() -> bool {
-        updateCamera(-moveSpeed,0);
+        if (!enabled)
+            return false;
+        updateCamera(-moveSpeed, 0);
         return false;
     }));
-    updateCamera(0,0);
+    updateCamera(0, 0);
+
+    enabled = true;
 }

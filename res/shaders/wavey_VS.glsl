@@ -38,8 +38,8 @@ void main() {
 
     vec3 l = fs_out.fragPos.xyz;
 
-    // not gonna lie, borrwed this from some minecraft shader :D
-    fs_out.fragPos.t += sin(time * 3.5 + 2.0 * l.x + 2.0 * l.z + l.y) * 0.05 * fract(position.y);
+    //fs_out.fragPos.t += sin(time * 3.5 + 2.0 * l.x + 2.0 * l.z + l.y) * 0.05 * fract(position.y);
+    fs_out.fragPos.t += sin(time * 3.5 + 3.0 * l.x + 3.0 * l.z + l.y) * 0.08 * fract(position.y);
 
     fs_out.normal        = mat3(transpose(inverse(instanceMatrix))) * normal;
     fs_out.material      = materialData.materials[int(materialIndex)];

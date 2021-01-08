@@ -21,29 +21,10 @@ void Input::dispose()
 
 void Input::handleEvents()
 {
-    if(!instance->handleInput)
+    if (!instance->handleInput)
         return;
 
     ImGuiIO &io = ImGui::GetIO();
-
-    if (!io.WantCaptureKeyboard)
-    {
-        // handling key events
-        for (auto &it:instance->keyEvents)
-        {
-            if (instance->keys[it.keyCode] & it.action)
-                if (it.callback())
-                    break;
-        }
-
-        // handling button events
-        for (auto &it:instance->buttonEvents)
-        {
-            if (instance->buttons[it.buttonCode] & it.action)
-                if (it.callback(instance->mouseX, instance->mouseY))
-                    break;
-        }
-    }
 
     if (!io.WantCaptureMouse)
     {
@@ -59,6 +40,14 @@ void Input::handleEvents()
 
     instance->deltaMouseX = 0;
     instance->deltaMouseY = 0;
+}
+
+void Input::reset()
+{
+    for (int i = 0; i < MOUSE_BUTTON_LAST; i++)
+    {
+        instance->buttonsJustDown[i] = 0;
+    }
 }
 
 void Input::clearEventListiners()
@@ -101,12 +90,6 @@ bool Input::isKeyDown(int key)
            instance->keys[key] == REPEAT;
 }
 
-// is key is just pressed down
-bool Input::isKeyJustDown(int key)
-{
-    return instance->keys[key] == PRESS;
-}
-
 // is key is just released
 bool Input::isKeyUp(int key)
 {
@@ -117,11 +100,6 @@ bool Input::isMouseButtonDown(int button)
 {
     return instance->buttons[button] == PRESS ||
            instance->buttons[button] == REPEAT;
-}
-
-bool Input::isMouseButtonJustDown(int button)
-{
-    return instance->buttons[button] == PRESS;
 }
 
 bool Input::isMouseButtonUp(int button)
@@ -152,6 +130,24 @@ bool Input::isHandleInput() const
 void Input::KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     instance->keys[key] = action;
+    ImGuiIO &io = ImGui::GetIO();
+    if (!io.WantCaptureKeyboard)
+    {
+        // handling key events
+        for (auto &it:instance->keyEvents)
+        {
+            if (instance->keys[it.keyCode] & it.action)
+            {
+                if (it.callback())
+                    break;
+            }
+        }
+    }
+}
+
+bool Input::isMouseButtonJustDown(int button)
+{
+    return instance->buttonsJustDown[button] == PRESS;
 }
 
 void Input::CursorPositionCallback(GLFWwindow *window, double xpos, double ypos)
@@ -172,6 +168,20 @@ void Input::CursorPositionCallback(GLFWwindow *window, double xpos, double ypos)
 void Input::MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     instance->buttons[button] = action;
+    instance->buttonsJustDown[button] = action;
+    ImGuiIO &io = ImGui::GetIO();
+    if (!io.WantCaptureKeyboard)
+    {
+        // handling button events
+        for (auto &it:instance->buttonEvents)
+        {
+            if (instance->buttons[it.buttonCode] & it.action)
+            {
+                if (it.callback(instance->mouseX, instance->mouseY))
+                    break;
+            }
+        }
+    }
 }
 
 void Input::ScrollCallback(GLFWwindow *window, double xoffset, double yoffset)

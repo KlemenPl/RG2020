@@ -60,6 +60,7 @@ bool Game::init()
     width = 1280;
     height = 720;
 
+    glfwWindowHint(GLFW_SAMPLES, 4);
     window = glfwCreateWindow(width, height, gameTitle.c_str(), nullptr, nullptr);
     if (!window)
     {
@@ -76,6 +77,8 @@ bool Game::init()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return false;
     }
+
+    glEnable(GL_MULTISAMPLE);
 
     glViewport(0, 0, width, height);
     std::cout << glGetString(GL_VERSION) << std::endl;
@@ -104,7 +107,6 @@ void Game::start()
     RenderingCapabilities::init();
     ResourceManager::init();
 
-    // todo: loading assets asynchronous
     ResourceManager::loadWhitePixelTexture();
 
     ShaderSourceArgument args[1];
@@ -115,7 +117,9 @@ void Game::start()
                                 nullptr, "default2D",
                                 args, 1);
 
-    ResourceManager::loadFont("res/fonts/Roboto-Black.ttf", "roboto");
+    ResourceManager::loadFont("res/fonts/Roboto-Black.ttf", "roboto_black");
+    ResourceManager::loadFont("res/fonts/Roboto-Light.ttf", "roboto_light");
+    ResourceManager::loadFont("res/fonts/Bungee-Regular.ttf", "bungee");
 
     // loading models
     ResourceManager::loadModel("res/models/rock_0.obj", "rock_0");
@@ -130,14 +134,21 @@ void Game::start()
     ResourceManager::loadModel("res/models/flower_red.obj", "flower_1");
     ResourceManager::loadModel("res/models/flower_yellow.obj", "flower_2");
 
+    ResourceManager::loadModel("res/models/cube.obj", "cube");
+
     LoaderSettings::seperateMaterials = true;
+    // to enable wavey leaves effect
     ResourceManager::loadModel("res/models/tree_0.obj", "tree_0");
     ResourceManager::loadModel("res/models/tree_1.obj", "tree_1");
     ResourceManager::loadModel("res/models/tree_2.obj", "tree_2");
+
+    ResourceManager::loadModel("res/models/turret_00.obj", "turret_0");
+    ResourceManager::loadModel("res/models/turret_01.obj", "turret_1");
+
     LoaderSettings::seperateMaterials = false;
 
     // skybox
-    ResourceManager::loadCubeMap("res/textures/skybox","jpg","skybox");
+    ResourceManager::loadCubeMap("res/textures/skybox", "jpg", "skybox");
     // biome
     Biome *terrainBiome = new Biome();
     float d = 2.0f;
@@ -195,7 +206,7 @@ void Game::run()
     {
         // update
         lastTime = currentTime;
-        elapsedTime = (float)glfwGetTime();
+        elapsedTime = (float) glfwGetTime();
         currentTime = glfwGetTime();
         frames++;
         auto dt = (float) (currentTime - lastTime);
@@ -213,6 +224,7 @@ void Game::run()
         }
 
         /* Poll for and process events */
+        Input::reset();
         glfwPollEvents();
         Input::handleEvents();
 

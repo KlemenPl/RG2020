@@ -9,6 +9,7 @@
 #include "../../engine/camera/OrthographicCamera.h"
 #include "../../engine/camera/PerspectiveCamera.h"
 #include "../../engine/graphics/Terrain.h"
+#include "../ui/GUI.h"
 
 class MainMenuScreen : public Screen
 {
@@ -16,6 +17,7 @@ private:
     PerspectiveCamera *camera;
     OrthographicCamera *orthoCamera;
     Terrain *terrain;
+    GUI *gui;
 
 public:
     using Screen::Screen;

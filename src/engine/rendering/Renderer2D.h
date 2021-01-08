@@ -74,6 +74,12 @@ public:
               const Color &color = Colors::WHITE,
               float rotation = 0.0f, bool flipX = false, bool flipY = false);
 
+    void draw(const glm::vec2 &pos, const glm::vec2 &size,
+              float originX = 0, float originY = 0,
+              float scaleX = 1.0f, float scaleY = 1.0f,
+              const Color &color = Colors::WHITE,
+              float rotation = 0.0f, bool flipX = false, bool flipY = false);
+
     void draw(const BitmapFont &font, const std::string &text, const glm::vec2 &pos,
               float scaleX = 1.0f, float scaleY = 1.0f,
               const Color &color = Colors::WHITE, float rotation = 0.0f);

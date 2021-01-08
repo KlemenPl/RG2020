@@ -14,7 +14,7 @@
 Renderer3D::Renderer3D() :
         reflectionFB(FrameBuffer(Game::width / 4, Game::height / 4)),
         refractionFB(FrameBuffer(Game::width, Game::height))
-        //,shadowFB(FrameBuffer(Game::width / 2, Game::height / 2))
+//,shadowFB(FrameBuffer(Game::width / 2, Game::height / 2))
 {
     ResourceManager::loadShader("res/shaders/default3D_VS.glsl",
                                 "res/shaders/default3D_FS.glsl",
@@ -285,6 +285,7 @@ void Renderer3D::begin()
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_CLIP_DISTANCE0);
+    glEnable(GL_DEPTH_TEST);
     //glBlendFunc(GL_SRC_ALPHA,GL_SRC_ALPHA);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
@@ -570,6 +571,28 @@ void Renderer3D::end()
     clearQueues();
 
     drawing = false;
+}
+
+void Renderer3D::drawUninstanced(Model *model)
+{
+    for (auto &group:model->modelGroups)
+    {
+        if (!group.enabled)
+            continue;
+
+        if (!group.isStatic)
+            group.transform();
+
+        group.mesh->bind();
+        glDrawElements(GL_TRIANGLES, group.mesh->indicesLength, GL_UNSIGNED_INT, (void *) 0);
+    }
+}
+
+void Renderer3D::drawUninstanced(Model *model, Shader *useShader, const std::function<void(Shader *)> &shaderUniforms)
+{
+    useShader->bind();
+    shaderUniforms(useShader);
+    drawUninstanced(model);
 }
 
 void Renderer3D::setTerrain(Terrain *_terrain)

@@ -136,6 +136,9 @@ public:
               Shader *useShader, const std::function<void(Shader *)>& shaderUniforms = [](Shader *) {});
     void end();
 
+    void drawUninstanced(Model *model);
+    void drawUninstanced(Model *model, Shader *useShader, const std::function<void(Shader *)>& shaderUniforms = [](Shader *) {});
+
     void drawNormals(Model *model);
 
     void setCamera(PerspectiveCamera *_camera);

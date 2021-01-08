@@ -96,6 +96,27 @@ public:
         updateMatrix = true;
     }
 
+    /*
+    glm::vec3 unproject(float posX, float posY, float posZ,
+                        float viewportX, float viewportY, float viewportWidth, float viewportHeight)
+    {
+
+        glm::vec4 result{};
+        float x = posX, y = posY;
+        x = x - viewportX;
+        y = height - y;
+        y = y - viewportY;
+        x = (2 * x) / viewportWidth - 1;
+        y = (2 * y) / viewportHeight - 1;
+        result.x = x;
+        result.y = 0;
+        result.z = y;
+        result.w = 1.0f;
+        auto out = glm::inverse(projection) * result;
+        return {out.x, out.y, out.z};
+    }
+     */
+
     void translateWFront(glm::vec3 &value)
     {
         translateWFront(value.x, value.y, value.z);

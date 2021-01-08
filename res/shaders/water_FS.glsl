@@ -97,7 +97,7 @@ void main() {
 
     vec3 viewVector = normalize(fs_in.toCameraVector);
     float refractiveFactor = dot(viewVector, vec3(normal));
-    refractiveFactor = clamp(pow(refractiveFactor, 0.8), 0.0, 1.0);
+    refractiveFactor = clamp(pow(refractiveFactor, 5.0), 0.0, 1.0);
 
     vec3 specularHighlights = vec3(0, 0, 0);
 
@@ -110,7 +110,6 @@ void main() {
     }
 
     FragColor = mix(reflectColour, refractColour, refractiveFactor);
-    //FragColor.a = 0.6f;
     FragColor = mix(FragColor, vec4(0.1, 0.25, 0.4, 1.0), 0.45) + vec4(specularHighlights, 0.0f);
     FragColor.a = clamp(waterDepth / 2.5, 0.0, 1.0);
     //FragColor = normalMapColour;

@@ -2,27 +2,21 @@
 #include <sstream>
 
 #include "game/Game.h"
-#include "engine/loader/Loader.h"
 #include "engine/Core.h"
 
 #include "tests/BatchingTest.h"
-#include "tests/InstancingTest.h"
-#include "tests/Instancing2Test.h"
 #include "tests/TerrainTest.h"
 
 
 #define RUN_BATCHING_TEST 0
-#define RUN_INSTANCING_TEST 0
-#define RUN_INSTANCING2_TEST 0
 #define TERRAIN_TEST 0
-#define RUN_PARTICLE_TEST 0
 
-#define LOG_OPENGL_NOTIFICATIONS 0
+#define LOG_OPENGL_NOTIFICATIONS 1
 
 /*
  * Ena najboljših novosti v OpenGL 4.3 :)
- * Pokaže tudi call stack, da lahko veš kateri
- * OpenGL klic je povzročil napako.
+ * Pokaže tudi call stack, da se lahko vidi
+ * kateri OpenGL klic je povzročil napako.
  */
 // Callback function for printing debug statements
 void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
@@ -35,29 +29,12 @@ void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
  */
 int main(int argc, char **argv)
 {
-    //RawModel* model = Loader::loadOBJ("res/models/tree_01.obj");
-    //model->generateMeshes();
 
 #if RUN_BATCHING_TEST
     BatchingTest batchingTest{};
     batchingTest.initTest();
     batchingTest.init();
     batchingTest.start();
-    return 0;
-#elif RUN_INSTANCING_TEST
-    InstancingTest instancingTest{};
-    instancingTest.initTest();
-    instancingTest.init();
-    instancingTest.start();
-    return 0;
-#elif RUN_INSTANCING2_TEST
-    Instancing2Test instancingTest{};
-    instancingTest.initTest();
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(GLDebugMessageCallback, nullptr);
-    instancingTest.init();
-    instancingTest.start();
     return 0;
 #elif TERRAIN_TEST
     TerrainTest terrainTest{};

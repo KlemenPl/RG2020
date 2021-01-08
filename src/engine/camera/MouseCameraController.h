@@ -25,6 +25,7 @@ public:
     explicit MouseCameraController(PerspectiveCamera *camera) : camera(camera)
     {}
 
+    bool enabled = true;
     void setup();
 };
 
