@@ -17,12 +17,25 @@ private:
     ModelGroup *body;
     ModelGroup *head;
 
-    glm::mat4 modelMatrix;
+    Enemy *closestEnemy = nullptr;
+
+    float fireSpeed = 0.0f;
+    float elapsedTime = 0.0f;
+    float range=0.0f;
+    float damage = 0.0f;
 
 public:
-    explicit Turret(const glm::vec3 pos, RawModel *rawModel);
+    explicit Turret(const glm::vec3& pos, RawModel *rawModel, float fireSpeed, float damage, float range);
 
     void update(float dt, const std::deque<Enemy *> &enemies);
+    Enemy* shoot();
+
+    Model *getModelPtr();
+
+    void lookAt(const glm::vec3 &pos);
+
+    float getFireSpeed() const;
+    float getDamage() const;
 
 };
 

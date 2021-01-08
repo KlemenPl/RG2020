@@ -27,6 +27,16 @@ enum GameState : uint8_t
     GAME_OVER
 };
 
+/*
+ * Should probably use command patteren...
+ */
+enum SelectedTurret : uint8_t
+{
+    NONE,
+    TURRET_0,
+    TURRET_1,
+};
+
 class GameScreen : public Screen
 {
 private:
@@ -37,27 +47,38 @@ private:
     MouseCameraController *mcc;
     MousePicker *mousePicker;
 
-    RawModel *turret_0;
-    RawModel *turret_1;
+    const uint32_t turretPrice1 = 150;
+    const uint32_t turretPrice2 = 750;
+
+    PerspectiveCamera *previewCamera;
 
     Model *previewTurret_0;
     Model *previewTurret_1;
 
-    FrameBuffer *previewFB;
+    Model *turret_0;
+    Model *turret_1;
+
+    FrameBuffer *previewFB1;
+    FrameBuffer *previewFB2;
 
     GUI *gui;
 
+    float elapsedTime{};
+
     Ref<Shader> placementShader;
 
-    std::deque<Turret*> turrets{};
-    std::deque<Enemy*> enemies{};
-    std::deque<Particle*> particles{};
+    SelectedTurret selectedTurret = NONE;
+
+    std::deque<Turret *> turrets{};
+    std::deque<Enemy *> enemies{};
+    std::deque<Particle *> particles{};
 
     std::mt19937 generator;
     std::uniform_real_distribution<> randomAngle;
     std::uniform_real_distribution<> randomHeight;
     std::uniform_real_distribution<> randomDamage;
     std::uniform_real_distribution<> randomDir;
+    std::uniform_real_distribution<> randomSpawnChance;
 
     EnemyConfig enemyConfig{};
     RawModel *rawCubeModel{};
@@ -72,7 +93,6 @@ private:
 
     void spawnEnemy();
     void spawnParticles(const glm::vec3 &pos, uint32_t count);
-    void spawnBullet(const glm::vec3 &start, const glm::vec3 &target);
 public:
     using Screen::Screen;
 

@@ -141,11 +141,10 @@ void Game::start()
     ResourceManager::loadModel("res/models/tree_0.obj", "tree_0");
     ResourceManager::loadModel("res/models/tree_1.obj", "tree_1");
     ResourceManager::loadModel("res/models/tree_2.obj", "tree_2");
+    LoaderSettings::seperateMaterials = false;
 
     ResourceManager::loadModel("res/models/turret_00.obj", "turret_0");
     ResourceManager::loadModel("res/models/turret_01.obj", "turret_1");
-
-    LoaderSettings::seperateMaterials = false;
 
     // skybox
     ResourceManager::loadCubeMap("res/textures/skybox", "jpg", "skybox");

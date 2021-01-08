@@ -34,11 +34,11 @@ public:
     std::pair<bool, bool>
     TextButton(Ref<BitmapFont> font, const std::string &text, const glm::vec4 &pos, float scale = 1.0f,
                const Color &normalColor = Colors::WHITE, const Color &hoveredColor = Colors::GRAY);
-    std::pair<bool, bool> ImageButton(Ref<Texture2D> image, Ref<BitmapFont> font, const glm::vec4 &pos,
-                                      const std::string &topText, const std::string &bottomText,
-                                      float scale = 1.0f,
-                                      const Color &topColor = Colors::WHITE,
-                                      const Color &bottomColor = Colors::GRAY);
+    std::pair<bool, bool> ImageButton(Ref<Texture2D> image, const glm::vec4 &pos,
+                                      Ref<BitmapFont> font, const std::string &text,
+                                      float scale,
+                                      const Color &normalColor = Colors::WHITE,
+                                      const Color &hoveredColor = Colors::GRAY);
 };
 
 

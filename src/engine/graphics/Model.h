@@ -89,6 +89,36 @@ public:
         modelGroups[idx].enabled = false;
     }
 
+    void translate(const glm::vec3 &pos)
+    {
+        for (auto &group:modelGroups)
+            group.position += pos;
+    }
+
+    void setTranslation(const glm::vec3 &pos)
+    {
+        for (auto &group:modelGroups)
+            group.position = pos;
+    }
+
+    void rotate(const glm::vec3 &rotation)
+    {
+        for (auto &group:modelGroups)
+            group.rotation += rotation;
+    }
+
+    void setRotation(const glm::vec3 &rotation)
+    {
+        for (auto &group:modelGroups)
+            group.rotation = rotation;
+    }
+
+    void setScale(const glm::vec3 &scale)
+    {
+        for (auto &group:modelGroups)
+            group.rotation += scale;
+    }
+
 
     Model clone()
     {

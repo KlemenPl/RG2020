@@ -69,10 +69,15 @@ std::pair<bool, bool> GUI::TextButton(Ref<BitmapFont> font, const std::string &t
     return {mouseClicked && hovered, hovered};
 }
 
-std::pair<bool, bool> GUI::ImageButton(Ref<Texture2D> image, Ref<BitmapFont> font,
-                                       const glm::vec4 &pos, const std::string &topText,
-                                       const std::string &bottomText, float scale, const Color &topColor,
-                                       const Color &bottomColor)
+std::pair<bool, bool> GUI::ImageButton(Ref<Texture2D> image, const glm::vec4 &pos,
+                                       Ref<BitmapFont> font, const std::string &text,
+                                       float scale, const Color &normalColor, const Color &hoveredColor)
 {
-    return {false, false};
+    bool hovered = contains(pos, mousePos);
+
+    const Color &useColor = hovered ? hoveredColor : normalColor;
+    renderer2D->draw(*image,glm::vec2(pos.x,pos.y),glm::vec2(pos.z,pos.w));
+    TextLabel(font, text, pos, scale, useColor);
+
+    return {mouseClicked && hovered, hovered};
 }

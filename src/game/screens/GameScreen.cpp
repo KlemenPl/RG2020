@@ -2,16 +2,20 @@
 // Created by klemen on 27/12/2020.
 //
 
-#include <iostream>
 #include "GameScreen.h"
 #include "../Game.h"
 #include "../../engine/ResourceManager.h"
-#include "../../engine/camera/MouseCameraController.h"
 
 void GameScreen::init()
 {
     camera = new PerspectiveCamera(Game::width, Game::height);
     orthoCamera = new OrthographicCamera(0, Game::width, 0, Game::height);
+
+    uint32_t fbWidth = 128;
+    uint32_t fbHeight = 128;
+
+    previewCamera = new PerspectiveCamera(fbWidth, fbHeight);
+    previewCamera->setPosition(glm::vec3(0, 1, 2));
 
     mousePicker = new MousePicker(*camera);
 
@@ -36,7 +40,15 @@ void GameScreen::init()
 
     previewTurret_0 = new Model(ResourceManager::getRawModel("turret_0")._get_ref());
     previewTurret_1 = new Model(ResourceManager::getRawModel("turret_1")._get_ref());
-    previewFB = new FrameBuffer(128, 128);
+
+    turret_0 = new Model(ResourceManager::getRawModel("turret_0")._get_ref());
+    turret_1 = new Model(ResourceManager::getRawModel("turret_1")._get_ref());
+
+    previewFB1 = new FrameBuffer(fbWidth, fbHeight);
+    previewFB2 = new FrameBuffer(fbWidth, fbHeight);
+
+    previewFB1->createColourAttachment();
+    previewFB2->createColourAttachment();
 
     // loading placement shader
     ResourceManager::loadShader("res/shaders/default3D_VS.glsl",
@@ -78,6 +90,8 @@ void GameScreen::show()
             gamestate = PLAYING;
         else if (gamestate == PLAYING)
             gamestate = PAUSED;
+        else if (gamestate == PLACING_TURRET)
+            gamestate = PLAYING;
         return false;
     }));
     gui->initInput();
@@ -87,6 +101,7 @@ void GameScreen::show()
     randomHeight = std::uniform_real_distribution<>(terrain->waterLevel, terrain->maxHeight);
     randomDamage = std::uniform_real_distribution<>(0, 20.0f);
     randomDir = std::uniform_real_distribution<>(-1.0f, 1.0f);
+    randomSpawnChance = std::uniform_real_distribution<>(0.0f, 1.0f);
 
     /*
     Input::addMouseButtonEvent(ButtonEvent(MOUSE_BUTTON_1, PRESS, [this](float mX, float mY) -> bool {
@@ -99,15 +114,13 @@ void GameScreen::show()
      */
 
     reset();
-    for (int i = 0; i < 1000; i++)
-        spawnEnemy();
     gamestate = PLAYING;
 
 }
 
 void GameScreen::reset()
 {
-    balance = 100;
+    balance = 0;
     eliminations = 0;
     hitpoints = 1000;
 
@@ -122,6 +135,8 @@ void GameScreen::reset()
     turrets.clear();
     particles.clear();
 
+    elapsedTime = 0;
+
     gamestate = PLAYING;
 }
 void GameScreen::close()
@@ -133,8 +148,10 @@ GameScreen::~GameScreen()
 {
     delete camera;
     delete orthoCamera;
+    delete previewCamera;
     delete terrain;
-    delete previewFB;
+    delete previewFB1;
+    delete previewFB2;
     delete gui;
 }
 
@@ -168,37 +185,25 @@ void GameScreen::spawnParticles(const glm::vec3 &pos, uint32_t count)
                                          glm::vec3(-1.0f, -1.0f, -1.0f), 0.75f));
     }
 }
-void GameScreen::spawnBullet(const glm::vec3 &start, const glm::vec3 &target)
-{
-
-}
 
 void GameScreen::update(float dt)
 {
+
+    elapsedTime += dt;
+
     camera->update();
     orthoCamera->update();
+    previewCamera->update();
     auto pair = Input::getMousePos();
 
     mousePicker->update(pair.first, pair.second);
-
-    //auto pos = mousePicker->getCurrentRay();
-    auto pos = mousePicker->planePointIntersection(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-
-    for (auto &group:previewTurret_0->modelGroups)
-    {
-        group.position.x = pos.x;
-        group.position.z = pos.z;
-        group.position.y = terrain->getHeightFast(pos.x, pos.z);
-        group.scale.x = 2;
-        group.scale.y = 2;
-        group.scale.z = 2;
-    }
 
     if (gamestate == PLAYING || gamestate == PLACING_TURRET)
     {
         if (enemies.size() < 1000)
         {
-            // spawning new enemies
+            if (((elapsedTime/2.0f) / 850.0f) > randomSpawnChance(generator))
+                spawnEnemy();
 
         }
 
@@ -208,8 +213,18 @@ void GameScreen::update(float dt)
         while (itTurret != turrets.end())
         {
             auto &turret = *itTurret;
+            turret->update(dt, enemies);
+
+            Enemy *shotEnemy = turret->shoot();
+            if (shotEnemy != nullptr)
+            {
+                spawnParticles(shotEnemy->getModelGroup()->position, 30);
+                balance += 15;
+                shotEnemy->dealDamage(turret->getDamage());
+            }
 
 
+            itTurret++;
         }
 
         // updating enemies
@@ -295,7 +310,7 @@ void GameScreen::update(float dt)
 void GameScreen::render()
 {
     glViewport(0, 0, Game::width, Game::height);
-    glClearColor(0.1f, 0.1f, 0.25f, 1);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     game->renderer3D->setTerrain(terrain);
@@ -305,14 +320,61 @@ void GameScreen::render()
 
     if (gamestate == PLACING_TURRET)
     {
-        game->renderer3D->draw(previewTurret_0, true, false,
-                               placementShader._get_ptr(), [this](Shader *shader) {
-                    if (terrain->getHeight(previewTurret_0->modelGroups.front().position.x,
-                                           previewTurret_0->modelGroups.front().position.z) > terrain->waterLevel)
-                        shader->setUniform("colour", glm::vec4(0, 1, 0, 1));
-                    else
-                        shader->setUniform("colour", glm::vec4(1, 0, 0, 1));
-                });
+
+        //auto pos = mousePicker->getCurrentRay();
+        auto pos = mousePicker->planePointIntersection(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+
+        if (selectedTurret == TURRET_0)
+        {
+            if (balance < turretPrice1)
+                gamestate = PLAYING;
+            turret_0->setTranslation(glm::vec3(pos.x, terrain->getHeight(pos.x, pos.z), pos.z));
+            game->renderer3D->draw(turret_0, true, false,
+                                   placementShader._get_ptr(), [this](Shader *shader) {
+                        if (terrain->getHeight(turret_0->modelGroups.front().position.x,
+                                               turret_0->modelGroups.front().position.z) > terrain->waterLevel)
+                            shader->setUniform("colour", glm::vec4(0, 1, 0, 1));
+                        else
+                            shader->setUniform("colour", glm::vec4(1, 0, 0, 1));
+                    });
+        }
+        else
+        {
+            if (balance < turretPrice2)
+                gamestate = PLAYING;
+            turret_1->setTranslation(glm::vec3(pos.x, terrain->getHeight(pos.x, pos.z), pos.z));
+            game->renderer3D->draw(turret_1, true, false,
+                                   placementShader._get_ptr(), [this](Shader *shader) {
+                        if (terrain->getHeight(turret_1->modelGroups.front().position.x,
+                                               turret_1->modelGroups.front().position.z) > terrain->waterLevel)
+                            shader->setUniform("colour", glm::vec4(0, 1, 0, 1));
+                        else
+                            shader->setUniform("colour", glm::vec4(1, 0, 0, 1));
+                    });
+        }
+
+        if (Input::isMouseButtonJustDown(MOUSE_BUTTON_1))
+        {
+            Turret *turret = nullptr;
+            // placing turret
+            if (selectedTurret == TURRET_0)
+            {
+                glm::vec3 tPos = turret_0->modelGroups.front().position;
+                turret = new Turret(tPos, ResourceManager::getRawModel("turret_0")._get_ptr(),
+                                    1.0f, 50, 50);
+                balance -= turretPrice1;
+            }
+            else if (selectedTurret == TURRET_1)
+            {
+                glm::vec3 tPos = turret_1->modelGroups.front().position;
+                turret = new Turret(tPos, ResourceManager::getRawModel("turret_1")._get_ptr(),
+                                    0.25f, 20, 30);
+                balance -= turretPrice2;
+            }
+            turrets.push_back(turret);
+        }
+        else if (Input::isMouseButtonDown(MOUSE_BUTTON_2))
+            gamestate = PLAYING;
     }
 
     // drawing enemies
@@ -324,18 +386,74 @@ void GameScreen::render()
         game->renderer3D->draw(particle->getModelPtr(), false);
 
     // drawing turrets
-    //for (auto &turret:turrets)
-    //    game->renderer3D->draw(turret->getModelPtr(), true);
+    for (auto &turret:turrets)
+        game->renderer3D->draw(turret->getModelPtr(), true);
 
     game->renderer3D->end();
 
+    // drawing turret previews
+    game->renderer3D->setTerrain(nullptr);
+    game->renderer3D->setCamera(previewCamera);
+
+    previewFB1->bind();
+    Color drawColor = balance >= turretPrice1 ? Colors::GREEN : Colors::RED;
+    glClearColor(drawColor.r, drawColor.g, drawColor.b, drawColor.a);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    game->renderer3D->begin();
+    game->renderer3D->draw(previewTurret_0, false);
+    game->renderer3D->end();
+    previewFB1->unbind();
+
+    previewFB2->bind();
+    drawColor = balance >= turretPrice2 ? Colors::GREEN : Colors::RED;
+    glClearColor(drawColor.r, drawColor.g, drawColor.b, drawColor.a);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    game->renderer3D->begin();
+    game->renderer3D->draw(previewTurret_1, false);
+    game->renderer3D->end();
+    previewFB2->unbind();
+
     game->renderer2D->setProjectionMatrix(orthoCamera->getCombined());
+
     gui->begin();
+
     Ref<BitmapFont> robotoFont = ResourceManager::getFont("roboto_black");
     float w = (float) Game::width;
     float h = (float) Game::height;
     float hW = w / 2.0f;
     float hH = h / 2.0f;
+
+    Ref<Texture2D> fbTexture1(previewFB1->colourAttachment);
+    Ref<Texture2D> fbTexture2(previewFB2->colourAttachment);
+
+    auto r1 = gui->ImageButton(fbTexture1, glm::vec4(10, 10, 128, 128),
+                               robotoFont, "  $" + std::to_string(turretPrice1), 0.6f);
+
+    auto r2 = gui->ImageButton(fbTexture2, glm::vec4(148, 10, 128, 128),
+                               robotoFont, "  $" + std::to_string(turretPrice2), 0.6f);
+
+    if (r1.second)
+        previewTurret_0->rotate(glm::vec3(0, 0.8f, 0));
+    else
+        previewTurret_0->setRotation(glm::vec3(0, 0, 0));
+
+    if (r2.second)
+        previewTurret_1->rotate(glm::vec3(0, 0.8f, 0));
+    else
+        previewTurret_1->setRotation(glm::vec3(0, 0, 0));
+
+    if (r1.first | r2.first)
+    {
+        if (gamestate == PLACING_TURRET)
+            gamestate = PLAYING;
+        else
+            gamestate = PLACING_TURRET;
+
+        if (r1.first)
+            selectedTurret = TURRET_0;
+        else
+            selectedTurret = TURRET_1;
+    }
 
     if (gamestate == PAUSED || gamestate == GAME_OVER)
     {
