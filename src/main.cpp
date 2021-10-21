@@ -9,25 +9,17 @@
 
 
 #define RUN_BATCHING_TEST 0
-#define TERRAIN_TEST 0
+#define TERRAIN_TEST 1
 
 #define LOG_OPENGL_NOTIFICATIONS 1
 
-/*
- * Ena najboljših novosti v OpenGL 4.3 :)
- * Pokaže tudi call stack, da se lahko vidi
- * kateri OpenGL klic je povzročil napako.
- */
 // Callback function for printing debug statements
 void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
                                      GLenum severity, GLsizei length,
-                                     const GLchar *msg, const void *data);
+                                     const GLchar* msg, const void* data);
 
 
-/*
- * Todo: start using smart pointers more
- */
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
 
 #if RUN_BATCHING_TEST
@@ -47,20 +39,18 @@ int main(int argc, char **argv)
     return 0;
 #else
     // declaring game on the free store (heap memory)
-    Game *game = new Game;
-    game->init();
+    Game game{};
+    game.init();
 
 #if DEBUG_MODE
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(GLDebugMessageCallback, nullptr);
 #endif
-    game->start();
-    game->setTitle("IslandDefense");
+    game.start();
+    game.setTitle("IslandDefense");
     // runs the game
-    game->run();
-    // cleaning up
-    delete game;
+    game.run();
 
     return 0;
 #endif
@@ -68,7 +58,7 @@ int main(int argc, char **argv)
 
 void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
                                      GLenum severity, GLsizei length,
-                                     const GLchar *msg, const void *data)
+                                     const GLchar* msg, const void* data)
 {
     std::string _source;
     std::string _type;

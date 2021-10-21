@@ -1,6 +1,6 @@
 # @formatter:off
 cmake_minimum_required(VERSION 3.17)
-project(TowerDefense)
+project(RG2020)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE DEBUG)
@@ -39,7 +39,7 @@ include_directories(external/glm/)
 #include_directories(external/reactphysics3d/include)
 
 set(SOURCE src/main.cpp)
-set(PROJECT_NAME TowerDefense)
+set(PROJECT_NAME RG2020)
 set(EXTERNAL
     ${OPENGL_LIBRARY}
     glfw

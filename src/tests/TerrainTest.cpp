@@ -202,6 +202,10 @@ void TerrainTest::start()
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
+
+        static char buf[256] = {0};
+        snprintf(buf, sizeof(buf), "Draw time: %.2f ms | FPS: %.2f", fDuration, ImGui::GetIO().Framerate);
+        glfwSetWindowTitle(window, buf);
     }
 
     glfwTerminate();

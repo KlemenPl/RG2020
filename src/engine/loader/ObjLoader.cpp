@@ -38,7 +38,9 @@ static void loadMaterials(const char *filePath, std::unordered_map<std::string, 
 {
     std::string materialName;
     auto *material = new Material{};
-    std::ifstream matFile(filePath);
+    std::ifstream matFile;
+    matFile.rdbuf()->pubsetbuf(nullptr,0);
+    matFile.open(filePath);
     std::string line;
 
     while (std::getline(matFile, line))
@@ -181,6 +183,8 @@ static void processGroup(std::ifstream &objFile, Group *group,
     {
         if (!line.empty() && line[line.size() - 1] == '\r')
             line.erase(line.size() - 1);
+
+        //std::cout<<line<<std::endl;
 
         if (StringUtils::startsWith(line, "g "))
         {
@@ -371,7 +375,14 @@ RawModel *processObject(std::ifstream &objFile, const char *filePath,
 namespace Loader {
     RawModel *loadOBJ(const char *filePath)
     {
-        std::ifstream objFile(filePath);
+        std::ifstream objFile;
+        /*
+         * Res nevem zakaj, ampak seekg() nedeluje pravilno pri branju
+         * in zarade tega je potrebno izklopiti bufferanje
+         * Po vsej verjetnosti MiniGW bug, gcc deluje pravilno.
+         */
+        objFile.rdbuf()->pubsetbuf(nullptr,0);
+        objFile.open(filePath);
         if (!objFile.is_open())
         {
             std::cout << "Loader::loadOBJ() could not open file: " << filePath << "." << std::endl;
@@ -388,12 +399,13 @@ namespace Loader {
         std::unordered_map<std::string, Material *> materials;
         std::vector<Group> groups;
 
-        int place = 0;
+        std::streampos place;
 
         while (std::getline(objFile, line))
         {
             if (!line.empty() && line[line.size() - 1] == '\r')
                 line.erase(line.size() - 1);
+            //std::cout<<line<<std::endl;
             if (StringUtils::startsWith(line, "mtllib "))
             {
                 // load materials
@@ -413,18 +425,18 @@ namespace Loader {
 
             }
             else if (StringUtils::startsWith(line, "v ")||
-            StringUtils::startsWith(line,"usemtl "))
+                     StringUtils::startsWith(line,"usemtl "))
             {
                 // no group specified
                 Group group;
                 // moving back to prev line
+                objFile.clear();
                 objFile.seekg(place);
                 processGroup(objFile, &group, vertexCoords, vertexNormals,
                              textureCoords, materials);
                 group.groupName=std::to_string(groups.size());
                 groups.push_back(std::move(group));
             }
-
             place = objFile.tellg(); // last pos
         }
 
@@ -442,7 +454,9 @@ namespace Loader {
 
     void loadOBJObjects(const char *filePath, std::vector<std::pair<std::string, RawModel *>> &output)
     {
-        std::ifstream objFile(filePath);
+        std::ifstream objFile;
+        objFile.rdbuf()->pubsetbuf(nullptr,0);
+        objFile.open(filePath);
         std::string line;
 
         std::unordered_map<std::string, Material *> materials;
