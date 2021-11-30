@@ -1,5 +1,5 @@
 # RG2020
-Low-poly procesdually generated terrain and water using C++ and OpenGL.
+Low-poly procedurally generated terrain and water using C++ and OpenGL.
 
 ![](example_1.png)
 ![](example_2.png)
@@ -12,7 +12,7 @@ make
 ./RG2020
 ```
 
-## Used librariesknjižnice:
+## Used libraries:
 - GLFW (window managment) - https://www.glfw.org/
 - glad (OpenGL loader) - https://github.com/go-gl/glfw/blob/master/v3.1/glfw/glfw/deps/glad/glad.h
 - stb_image (loading images) - https://github.com/nothings/stb
